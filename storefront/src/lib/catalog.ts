@@ -60,7 +60,8 @@ export async function getProducts(opts: { category?: string; q?: string; page?: 
     (p) => (!opts.category || p.categorySlug === opts.category) && (!q || p.name.includes(q)),
   );
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const page = Math.min(Math.max(opts.page ?? 1, 1), pageCount);
+  // Not clamped: callers decide what an out-of-range page means (the pages answer 404).
+  const page = Math.max(opts.page ?? 1, 1);
   return { items: filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), total: filtered.length, page, pageCount };
 }
 
