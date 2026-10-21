@@ -1,0 +1,216 @@
+<main id="main" class="ui-container sg-page" tabindex="-1">
+  <h1 class="sg-page-title">کامپوننت‌ها</h1>
+  <p class="ui-text-muted">همه‌چیز در حالت‌های معمول، فوکوس، غیرفعال، خطا و بارگذاری. با دکمه‌های پایین صفحه تیره/روشن و RTL/LTR را بررسی کنید.</p>
+
+  <!-- Buttons -->
+  <section class="sg-section" id="buttons">
+    <h2>دکمه‌ها</h2>
+    <div class="sg-demo">
+      <button uiButton type="button">افزودن به سبد خرید</button>
+      <button uiButton variant="secondary" type="button">مقایسه</button>
+      <button uiButton variant="ghost" type="button">انصراف</button>
+      <button uiButton variant="danger" type="button">حذف</button>
+      <a uiButton variant="secondary" href="#buttons">لینک شبیه دکمه</a>
+    </div>
+    <span class="sg-label">اندازه‌ها</span>
+    <div class="sg-demo">
+      <button uiButton size="sm" type="button">کوچک</button>
+      <button uiButton size="md" type="button">متوسط (۴۴ پیکسل)</button>
+      <button uiButton size="lg" type="button">بزرگ</button>
+    </div>
+    <span class="sg-label">حالت‌ها</span>
+    <div class="sg-demo">
+      <button uiButton type="button" disabled>غیرفعال</button>
+      <button uiButton type="button" [loading]="loadingDemo()" (click)="simulateLoading()">{{ loadingDemo() ? 'در حال ثبت…' : 'ثبت سفارش' }}</button>
+      <button uiButton variant="secondary" iconOnly type="button" aria-label="علاقه‌مندی"><ui-icon name="heart" /></button>
+      <button uiButton variant="ghost" iconOnly type="button" aria-label="حذف"><ui-icon name="trash" /></button>
+    </div>
+    <div class="sg-demo">
+      <button uiButton block size="lg" type="button">پرداخت (دکمه تمام‌عرض موبایل)</button>
+    </div>
+  </section>
+
+  <!-- Icons -->
+  <section class="sg-section" id="icons">
+    <h2>آیکون‌ها</h2>
+    <p class="ui-text-muted">دو آیکون جهت‌دار (<code>chevron-start</code> و <code>chevron-end</code>) در RTL خودکار آینه می‌شوند.</p>
+    <div class="icon-grid">
+      @for (name of iconNames; track name) {
+        <div class="icon-cell">
+          <ui-icon [name]="name" style="--icon-size: 1.5rem" />
+          <code dir="ltr">{{ name }}</code>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Forms -->
+  <section class="sg-section" id="forms">
+    <h2>فرم‌ها</h2>
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <ui-field label="ایمیل" required [error]="errorFor('email')" hint="برای ورود و اطلاع‌رسانی سفارش.">
+        <input uiControl type="email" formControlName="email" autocomplete="email" placeholder="name@example.com" />
+      </ui-field>
+      <ui-field label="شماره موبایل" required [error]="errorFor('phone')">
+        <input uiControl type="tel" formControlName="phone" autocomplete="tel" inputmode="tel" placeholder="۰۹۱۲۱۲۳۴۵۶۷" />
+      </ui-field>
+      <ui-field label="شهر" required [error]="errorFor('city')">
+        <select uiControl formControlName="city" autocomplete="address-level2">
+          <option value="">انتخاب کنید…</option>
+          <option value="tehran">تهران</option>
+          <option value="isfahan">اصفهان</option>
+          <option value="shiraz">شیراز</option>
+        </select>
+      </ui-field>
+      <ui-field label="آدرس کامل" required [error]="errorFor('address')">
+        <textarea uiControl formControlName="address" rows="3" autocomplete="street-address"></textarea>
+      </ui-field>
+      <div class="check-block">
+        <label class="ui-check-row">
+          <input uiCheck type="checkbox" formControlName="terms" [attr.aria-invalid]="errorFor('terms') ? 'true' : null" />
+          <span>قوانین و شرایط را می‌پذیرم</span>
+        </label>
+        @if (errorFor('terms'); as message) {
+          <p class="check-error" role="alert">{{ message }}</p>
+        }
+      </div>
+      <div class="form-actions">
+        <button uiButton type="submit">ثبت اطلاعات</button>
+      </div>
+    </form>
+
+    <span class="sg-label">حالت‌های ورودی</span>
+    <div class="sg-demo form-row">
+      <ui-field label="غیرفعال"><input uiControl disabled value="غیرقابل ویرایش" /></ui-field>
+      <ui-field label="دارای خطا" error="مقدار واردشده معتبر نیست."><input uiControl value="۱۲۳" /></ui-field>
+      <ui-field label="تعداد">
+        <ui-quantity-stepper [(value)]="quantity" [max]="5" />
+      </ui-field>
+    </div>
+    <p class="ui-text-muted ui-text-sm">مقدار انتخاب‌شده: {{ quantity() }} (حداکثر ۵؛ ارقام فارسی و لاتین پذیرفته می‌شود)</p>
+  </section>
+
+  <!-- Feedback -->
+  <section class="sg-section" id="feedback">
+    <h2>بازخورد و وضعیت‌ها</h2>
+    <div class="stack">
+      <ui-alert variant="info" heading="ارسال رایگان">سفارش‌های بالای ۲ میلیون تومان رایگان ارسال می‌شود.</ui-alert>
+      <ui-alert variant="success">سفارش شما با موفقیت ثبت شد.</ui-alert>
+      <ui-alert variant="warning">موجودی این کالا رو به اتمام است.</ui-alert>
+      @if (alertVisible()) {
+        <ui-alert variant="danger" heading="پرداخت ناموفق بود" dismissible (dismissed)="alertVisible.set(false)">مبلغی از حساب شما کسر نشده است. دوباره تلاش کنید.</ui-alert>
+      }
+    </div>
+    <span class="sg-label">نشان‌ها</span>
+    <div class="sg-demo">
+      <ui-badge>جدید</ui-badge>
+      <ui-badge variant="primary">پیشنهاد ویژه</ui-badge>
+      <ui-badge variant="sale">۲۰٪ تخفیف</ui-badge>
+      <ui-badge variant="success">موجود</ui-badge>
+      <ui-badge variant="warning">کم‌موجود</ui-badge>
+      <ui-badge variant="danger">لغو شده</ui-badge>
+    </div>
+    <span class="sg-label">بارگذاری</span>
+    <div class="sg-demo" aria-busy="true">
+      <ui-spinner />
+      <div class="skeleton-lines">
+        <ui-skeleton height="1.2em" width="60%" />
+        <ui-skeleton height="1em" />
+        <ui-skeleton height="1em" width="80%" />
+      </div>
+      <ui-skeleton shape="circle" width="3rem" height="3rem" />
+    </div>
+    <span class="sg-label">حالت خالی و خطا</span>
+    <div class="sg-demo state-demo">
+      <ui-empty-state icon="cart" heading="سبد خرید شما خالی است" description="محصولات را مرور کنید و کالاهای دلخواه را به سبد اضافه کنید.">
+        <a uiButton href="#products">مشاهده محصولات</a>
+      </ui-empty-state>
+      <ui-error-state reference="00-a1b2c3d4e5" (retry)="simulateLoading()" />
+    </div>
+  </section>
+
+  <!-- Price & rating -->
+  <section class="sg-section" id="price">
+    <h2>قیمت و امتیاز</h2>
+    <div class="sg-demo">
+      <ui-price [amount]="1250000" />
+      <ui-price [amount]="4250000" [compareAt]="5000000" />
+      <ui-price [amount]="null" />
+      <ui-price [amount]="3890000" [compareAt]="4590000" size="lg" />
+    </div>
+    <div class="sg-demo">
+      <ui-rating [value]="4.6" [count]="128" />
+      <ui-rating [value]="3" [count]="1" />
+      <ui-rating [value]="5" />
+      <ui-rating [value]="null" />
+    </div>
+  </section>
+
+  <!-- Product cards -->
+  <section class="sg-section" id="products">
+    <h2>کارت محصول</h2>
+    <p class="ui-text-muted">شامل: تخفیف، ناموجود، بدون تصویر، بدون امتیاز، تماس بگیرید و نام طولانی.</p>
+    <ul class="ui-product-grid">
+      @for (product of products; track product.slug; let i = $index) {
+        <li><ui-product-card [product]="product" [priority]="i < 2" /></li>
+      }
+    </ul>
+    <span class="sg-label">در حال بارگذاری (هم‌اندازه کارت، بدون جابه‌جایی چیدمان)</span>
+    <ul class="ui-product-grid" aria-busy="true">
+      @for (n of [1, 2, 3, 4]; track n) {
+        <li><ui-product-card-skeleton /></li>
+      }
+    </ul>
+  </section>
+
+  <!-- Navigation -->
+  <section class="sg-section" id="navigation">
+    <h2>مسیر صفحه و صفحه‌بندی</h2>
+    <div class="sg-demo"><ui-breadcrumb [items]="breadcrumb" /></div>
+    <span class="sg-label">صفحه‌بندی لینکی (آدرس <code dir="ltr">?page=N</code>؛ قابل خزش برای موتور جستجو)</span>
+    <div class="sg-demo pagination-demo">
+      <ui-pagination label="صفحه‌بندی محصولات" [page]="currentPage()" [pageCount]="12" />
+    </div>
+    <span class="sg-label">صفحه‌بندی دکمه‌ای (جدول‌های ادمین)</span>
+    <div class="sg-demo pagination-demo">
+      <ui-pagination label="صفحه‌بندی جدول سفارش‌ها" [page]="buttonPage()" [pageCount]="12" [routed]="false" (pageChange)="buttonPage.set($event)" />
+    </div>
+    <div class="sg-demo pagination-demo">
+      <ui-pagination label="صفحه‌بندی نمونه کوتاه" [page]="2" [pageCount]="5" [routed]="false" />
+    </div>
+  </section>
+
+  <!-- Overlays -->
+  <section class="sg-section" id="overlays">
+    <h2>مودال و دراور</h2>
+    <div class="sg-demo">
+      <button uiButton variant="secondary" type="button" (click)="modalOpen.set(true)">باز کردن مودال</button>
+      <button uiButton variant="secondary" type="button" (click)="drawerOpen.set(true)">دراور (سمت انتها)</button>
+      <button uiButton variant="secondary" type="button" (click)="drawerStartOpen.set(true)">دراور (سمت ابتدا)</button>
+    </div>
+  </section>
+</main>
+
+<ui-modal [(open)]="modalOpen" heading="حذف آدرس">
+  <p>آیا از حذف این آدرس مطمئن هستید؟ این کار قابل بازگشت نیست.</p>
+  <div uiDialogFooter>
+    <button uiButton variant="ghost" type="button" (click)="modalOpen.set(false)">انصراف</button>
+    <button uiButton variant="danger" type="button" (click)="modalOpen.set(false)">حذف</button>
+  </div>
+</ui-modal>
+
+<ui-drawer [(open)]="drawerOpen" heading="فیلترها">
+  <div class="stack">
+    <label class="ui-check-row"><input uiCheck type="checkbox" /> فقط کالاهای موجود</label>
+    <label class="ui-check-row"><input uiCheck type="checkbox" /> دارای تخفیف</label>
+    <ui-field label="حداکثر قیمت"><input uiControl inputmode="numeric" placeholder="۵٬۰۰۰٬۰۰۰" /></ui-field>
+  </div>
+  <div uiDialogFooter>
+    <button uiButton variant="ghost" type="button" (click)="drawerOpen.set(false)">پاک کردن</button>
+    <button uiButton type="button" (click)="drawerOpen.set(false)">اعمال فیلتر</button>
+  </div>
+</ui-drawer>
+
+<ui-drawer [(open)]="drawerStartOpen" heading="منو" side="start">
+  <p>دراور سمت ابتدا: برای منوی موبایل.</p>
+</ui-drawer>

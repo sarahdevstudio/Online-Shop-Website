@@ -1,0 +1,151 @@
+/* Layout and text utilities shared by every page. Logical properties only. */
+
+.ui-container {
+  inline-size: 100%;
+  max-inline-size: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.ui-section {
+  padding-block: var(--space-8);
+}
+
+@media (min-width: 768px) {
+  .ui-section {
+    padding-block: var(--space-12);
+  }
+}
+
+.ui-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-gap, var(--space-4));
+}
+
+.ui-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cluster-gap, var(--space-3));
+}
+
+/* Product grid: 2 columns on phones, then 3, 4 and 5 as space allows. */
+.ui-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 640px) {
+  .ui-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ui-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+}
+
+@media (min-width: 1280px) {
+  .ui-product-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.ui-visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ui-skip-link {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: var(--space-2);
+  z-index: var(--z-skip-link);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  border-radius: var(--radius-md);
+  transform: translateY(-200%);
+}
+
+.ui-skip-link:focus {
+  transform: none;
+  color: var(--color-primary-contrast);
+}
+
+/* Text */
+.ui-text-muted { color: var(--color-text-muted); }
+.ui-text-subtle { color: var(--color-text-subtle); }
+.ui-text-sm { font-size: var(--font-size-sm); }
+.ui-text-xs { font-size: var(--font-size-xs); }
+.ui-text-lg { font-size: var(--font-size-lg); }
+.ui-text-bold { font-weight: var(--font-weight-bold); }
+
+.ui-heading-1 { font-size: var(--font-size-4xl); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+.ui-heading-2 { font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+.ui-heading-3 { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+.ui-heading-4 { font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); line-height: var(--line-height-snug); }
+
+/* Long-form content (blog, policy pages). */
+.ui-prose {
+  max-inline-size: 70ch;
+  font-size: var(--font-size-lg);
+}
+
+.ui-prose > * + * {
+  margin-block-start: var(--space-4);
+}
+
+.ui-prose h2,
+.ui-prose h3 {
+  margin-block-start: var(--space-8);
+}
+
+.ui-prose img {
+  border-radius: var(--radius-md);
+}
+
+.ui-surface {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+/* Mirror directional icons (previous/next chevrons) in RTL. */
+[dir='rtl'] .ui-icon--directional svg {
+  transform: scaleX(-1);
+}
+
+/* +1 in LTR, -1 in RTL: lets animations and offsets follow the reading direction. */
+:root {
+  --dir-sign: 1;
+}
+
+[dir='rtl'] {
+  --dir-sign: -1;
+}
+
+/* Checkbox / radio row with its label. */
+.ui-check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--control-height);
+  cursor: pointer;
+}

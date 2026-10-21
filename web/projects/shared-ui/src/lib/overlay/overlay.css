@@ -1,0 +1,134 @@
+.dialog {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  max-inline-size: 100vw;
+  max-block-size: 100dvh;
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background: var(--color-overlay);
+}
+
+.dialog[open] {
+  animation: dialog-in var(--duration-base) var(--ease-standard);
+}
+
+.dialog[open]::backdrop {
+  animation: fade-in var(--duration-base) var(--ease-standard);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  inline-size: min(32rem, calc(100vw - var(--space-8)));
+  max-block-size: calc(100dvh - var(--space-8));
+}
+
+.wide .panel {
+  inline-size: min(48rem, calc(100vw - var(--space-8)));
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-block-end: 1px solid var(--color-border);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--control-height);
+  block-size: var(--control-height);
+  margin-inline-end: calc(var(--space-2) * -1);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.close:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.body {
+  padding: var(--space-5);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.footer:has(*) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-block-start: 1px solid var(--color-border);
+}
+
+/* Drawer: full-height panel glued to one inline edge. */
+.drawer {
+  margin-inline: auto 0; /* end side by default: auto margin pushes it to the inline end */
+  margin-block: 0;
+  block-size: 100dvh;
+}
+
+.drawer.side-start {
+  margin-inline: 0 auto;
+}
+
+.drawer .panel {
+  inline-size: min(24rem, calc(100vw - var(--space-12)));
+  block-size: 100dvh;
+  max-block-size: 100dvh;
+  border-radius: 0;
+}
+
+.drawer[open] {
+  animation: drawer-in-end var(--duration-slow) var(--ease-standard);
+}
+
+.drawer.side-start[open] {
+  animation-name: drawer-in-start;
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* --dir-sign flips the slide origin in RTL so the panel always enters from its own edge. */
+@keyframes drawer-in-end {
+  from {
+    transform: translateX(calc(100% * var(--dir-sign, 1)));
+  }
+}
+
+@keyframes drawer-in-start {
+  from {
+    transform: translateX(calc(-100% * var(--dir-sign, 1)));
+  }
+}

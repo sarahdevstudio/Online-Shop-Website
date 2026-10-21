@@ -1,0 +1,8 @@
+.alert { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: 1px solid currentColor; font-size: var(--font-size-sm); line-height: var(--line-height-snug); }
+.info { background: var(--color-info-soft); color: var(--color-info); }
+.success { background: var(--color-success-soft); color: var(--color-success); }
+.warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.danger { background: var(--color-danger-soft); color: var(--color-danger); }
+.icon { margin-block-start: 0.2em; }
+.body { flex: 1; min-inline-size: 0; }
+.heading { display: block; margin-block-end: var(--space-1); }

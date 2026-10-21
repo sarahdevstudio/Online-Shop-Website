@@ -1,0 +1,114 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: var(--control-height);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-snug);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+:host(.ui-btn--sm) {
+  min-block-size: var(--control-height-sm);
+  padding-inline: var(--space-4);
+  font-size: var(--font-size-sm);
+}
+
+:host(.ui-btn--lg) {
+  min-block-size: 3.25rem;
+  padding-inline: var(--space-8);
+  font-size: var(--font-size-lg);
+}
+
+:host(.ui-btn--block) {
+  display: flex;
+  inline-size: 100%;
+}
+
+:host(.ui-btn--icon) {
+  inline-size: var(--control-height);
+  padding-inline: 0;
+}
+
+:host(.ui-btn--icon.ui-btn--sm) {
+  inline-size: var(--control-height-sm);
+}
+
+:host(.ui-btn--primary) {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+:host(.ui-btn--primary:hover) {
+  background: var(--color-primary-hover);
+  color: var(--color-primary-contrast);
+}
+:host(.ui-btn--primary:active) {
+  background: var(--color-primary-active);
+}
+
+:host(.ui-btn--secondary) {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border-control);
+}
+:host(.ui-btn--secondary:hover) {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+:host(.ui-btn--ghost) {
+  background: transparent;
+  color: var(--color-text);
+}
+:host(.ui-btn--ghost:hover) {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+:host(.ui-btn--danger) {
+  background: var(--color-danger);
+  color: var(--color-danger-contrast);
+}
+:host(.ui-btn--danger:hover) {
+  background: var(--color-danger-hover);
+  color: var(--color-danger-contrast);
+}
+
+:host([disabled]) {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+:host(.ui-btn--loading) {
+  opacity: 0.8;
+  cursor: progress;
+}
+
+.spinner {
+  inline-size: 1.1em;
+  block-size: 1.1em;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: var(--radius-full);
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

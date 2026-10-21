@@ -1,0 +1,8 @@
+.price { display: flex; flex-direction: column; gap: var(--space-1); font-variant-numeric: tabular-nums; }
+.row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
+.current { display: inline-flex; align-items: baseline; gap: var(--space-1); }
+.amount { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); }
+.lg .amount { font-size: var(--font-size-3xl); }
+.unit { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.compare { font-size: var(--font-size-sm); color: var(--color-text-subtle); text-decoration-thickness: 1px; }
+.call { font-weight: var(--font-weight-medium); color: var(--color-text-muted); }

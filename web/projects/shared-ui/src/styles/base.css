@@ -1,0 +1,227 @@
+/* Base: reset, typography, focus, native form controls. Logical properties only. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: break-word;
+}
+
+/* Scroll lock while a modal/drawer is open. */
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  text-wrap: balance;
+}
+
+h1 { font-size: var(--font-size-4xl); }
+h2 { font-size: var(--font-size-3xl); }
+h3 { font-size: var(--font-size-2xl); }
+h4 { font-size: var(--font-size-xl); }
+
+p {
+  margin-block: 0 var(--space-4);
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-inline-size: 100%;
+}
+
+img {
+  block-size: auto;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid transparent; /* keeps a ring in forced-colors mode */
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+::selection {
+  background: var(--color-primary-soft);
+  color: var(--color-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Native form controls (applied by the uiControl directive or by class) ---------- */
+
+.ui-control {
+  inline-size: 100%;
+  min-block-size: var(--control-height);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-md);
+  line-height: var(--line-height-snug);
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.ui-control::placeholder {
+  color: var(--color-text-subtle);
+  opacity: 1;
+}
+
+.ui-control:hover:not(:disabled) {
+  border-color: var(--color-text-muted);
+}
+
+.ui-control:focus-visible {
+  border-color: var(--color-focus);
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-md);
+}
+
+.ui-control:disabled {
+  background: var(--color-surface-sunken);
+  color: var(--color-text-subtle);
+  cursor: not-allowed;
+}
+
+.ui-control[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+textarea.ui-control {
+  min-block-size: 6rem;
+  resize: vertical;
+}
+
+select.ui-control {
+  appearance: none;
+  padding-inline-end: var(--space-10);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 1.25rem;
+  background-position: right 0.75rem center; /* rtl-ok: mirrored in the next rule */
+}
+
+[dir='rtl'] select.ui-control {
+  background-position: left 0.75rem center; /* rtl-ok */
+}
+
+/* Emails, phone numbers and passwords are always typed left-to-right. In RTL pages they stay
+   aligned to the inline start (right) so the caret does not jump when the user starts typing. */
+input[type='email'].ui-control,
+input[type='tel'].ui-control,
+input[type='url'].ui-control,
+input[type='number'].ui-control,
+input[type='password'].ui-control {
+  direction: ltr;
+}
+
+[dir='rtl'] input[type='email'].ui-control,
+[dir='rtl'] input[type='tel'].ui-control,
+[dir='rtl'] input[type='url'].ui-control,
+[dir='rtl'] input[type='number'].ui-control,
+[dir='rtl'] input[type='password'].ui-control {
+  text-align: right; /* rtl-ok: ltr-direction field pinned to the RTL start edge */
+}
+
+/* Checkbox and radio: custom look, native semantics. */
+input.ui-check {
+  appearance: none;
+  flex: none;
+  inline-size: 1.375rem;
+  block-size: 1.375rem;
+  margin: 0;
+  display: inline-grid;
+  place-content: center;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border-control);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+input.ui-check[type='radio'] {
+  border-radius: var(--radius-full);
+}
+
+input.ui-check:checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+input.ui-check[type='checkbox']:checked::after {
+  content: '';
+  inline-size: 0.7rem;
+  block-size: 0.4rem;
+  border-inline-start: 2px solid var(--color-primary-contrast);
+  border-block-end: 2px solid var(--color-primary-contrast);
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+input.ui-check[type='radio']:checked::after {
+  content: '';
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-contrast);
+}
+
+input.ui-check:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,0 +1,24 @@
+## Build output
+bin/
+obj/
+[Pp]ublish/
+*.user
+*.suo
+.vs/
+.idea/
+TestResults/
+*.log
+
+## Secrets and local configuration: never commit these
+.env
+.env.*
+secrets.json
+appsettings.Local.json
+appsettings.*.local.json
+*.pfx
+*.key
+
+## Node (storefront/admin arrive in later phases)
+node_modules/
+dist/
+.angular/

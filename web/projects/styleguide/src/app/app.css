@@ -1,0 +1,55 @@
+.toolbar {
+  position: fixed;
+  inset-block-end: var(--space-3);
+  inset-inline-start: var(--space-3);
+  z-index: 1500;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  max-inline-size: calc(100vw - var(--space-6));
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+nav {
+  display: flex;
+  gap: var(--space-1);
+}
+
+nav a {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+}
+
+nav a.active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.tools {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.axe {
+  max-inline-size: 60rem;
+  margin: var(--space-4) auto;
+  padding: var(--space-4);
+  background: var(--color-warning-soft);
+  color: var(--color-text);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.axe small {
+  display: block;
+  color: var(--color-text-muted);
+}

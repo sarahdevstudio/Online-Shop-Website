@@ -1,0 +1,206 @@
+.header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-header);
+  background: var(--color-surface);
+  border-block-end: 1px solid var(--color-border);
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    'menu brand actions'
+    'search search search';
+  align-items: center;
+  gap: var(--space-2) var(--space-2);
+  padding-block: var(--space-2);
+}
+
+.menuBtn { grid-area: menu; }
+.brand { grid-area: brand; }
+.actions { grid-area: actions; }
+.search { grid-area: search; }
+
+.iconBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-inline-size: var(--control-height);
+  min-block-size: var(--control-height);
+  padding-inline: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+  justify-self: start;
+}
+
+.brand:hover {
+  color: var(--color-text);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.accountName {
+  display: none;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.count {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-end: 0;
+  display: grid;
+  place-items: center;
+  min-inline-size: 1.25rem;
+  block-size: 1.25rem;
+  padding-inline: 0.3rem;
+  border-radius: var(--radius-full);
+  background: var(--color-sale);
+  color: var(--color-sale-contrast);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.search {
+  position: relative;
+  display: flex;
+}
+
+.search input {
+  padding-inline-end: calc(var(--control-height) + var(--space-1));
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+}
+
+.searchBtn {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  display: grid;
+  place-items: center;
+  inline-size: var(--control-height);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.searchBtn:hover {
+  color: var(--color-primary);
+}
+
+.primary {
+  display: none;
+  border-block-start: 1px solid var(--color-border);
+}
+
+.primary ul,
+.drawerNav {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.primary a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--control-height);
+  padding-inline: var(--space-3);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  border-block-end: 2px solid transparent;
+}
+
+.primary a:hover,
+.primary a.active {
+  color: var(--color-primary);
+}
+
+.primary a.active {
+  border-block-end-color: var(--color-primary);
+}
+
+.drawerNav {
+  flex-direction: column;
+}
+
+.drawerNav a {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--control-height);
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.drawerNav a:hover,
+.drawerNav a.active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+@media (min-width: 640px) {
+  .accountName {
+    display: inline;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'brand search actions';
+    gap: var(--space-6);
+    padding-block: var(--space-3);
+  }
+
+  .menuBtn {
+    display: none;
+  }
+
+  .search {
+    max-inline-size: 40rem;
+    inline-size: 100%;
+    justify-self: center;
+  }
+
+  .primary {
+    display: block;
+  }
+}
+
+.menuPanel { border-block-start: 1px solid var(--color-border); background: var(--color-surface); }
+.menuPanel .drawerNav { padding-block: var(--space-2); }
+@media (min-width: 1024px) { .menuPanel { display: none; } }

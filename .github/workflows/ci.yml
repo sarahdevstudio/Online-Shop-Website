@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Throwaway SQL Server for integration tests. The password is generated per run and masked,
+      # so no credential is stored in the repository.
+      - name: Start SQL Server
+        run: |
+          SA_PASSWORD="Aa1-$(openssl rand -hex 16)"
+          echo "::add-mask::$SA_PASSWORD"
+          docker run -d --name sql -p 1433:1433 \
+            -e ACCEPT_EULA=Y -e "MSSQL_SA_PASSWORD=$SA_PASSWORD" \
+            mcr.microsoft.com/mssql/server:2022-latest
+          echo "SHOP_TEST_SQL_CONNECTION=Server=localhost,1433;User Id=sa;Password=$SA_PASSWORD;TrustServerCertificate=True" >> "$GITHUB_ENV"
+          for i in $(seq 1 40); do
+            docker logs sql 2>&1 | grep -q "SQL Server is now ready for client connections" && exit 0
+            sleep 3
+          done
+          docker logs sql
+          exit 1
+
+      - run: dotnet restore Shop.slnx
+      - run: dotnet build Shop.slnx --no-restore -c Release
+      - run: dotnet test Shop.slnx --no-build -c Release --logger "trx;LogFileName=results.trx"
+
+      - name: Vulnerable packages
+        run: |
+          dotnet list Shop.slnx package --vulnerable --include-transitive 2>&1 | tee vuln.txt
+          if grep -q "has the following vulnerable packages" vuln.txt; then exit 1; fi

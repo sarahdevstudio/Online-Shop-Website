@@ -1,0 +1,187 @@
+/*
+ * Design tokens: the single source of truth for the storefront and admin look.
+ *
+ * Rules
+ *  - Components use only semantic tokens (--color-text, --color-primary ...), never raw hex values.
+ *  - Rebranding = editing the color block below. Contrast of every text/background pair is verified by
+ *    `npm run check:contrast` (WCAG 2.2 AA), so a bad color change fails CI instead of shipping.
+ *  - Dark theme = the same semantic names under [data-theme='dark'].
+ *  - Layout uses logical properties only (RTL first); verified by `npm run check:rtl`.
+ */
+
+:root {
+  /* ---------- Typography ---------- */
+  --font-sans: 'Vazirmatn Variable', 'Vazirmatn', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+
+  /* 13px is the floor: Persian letter forms lose legibility below it. */
+  --font-size-xs: 0.8125rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: clamp(1.375rem, 1.2rem + 0.8vw, 1.625rem);
+  --font-size-3xl: clamp(1.625rem, 1.3rem + 1.4vw, 2.125rem);
+  --font-size-4xl: clamp(1.875rem, 1.4rem + 2vw, 2.75rem);
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* Persian script needs more vertical room than Latin: body text 1.85, headings 1.35-1.5. */
+  --line-height-tight: 1.35;
+  --line-height-snug: 1.55;
+  --line-height-body: 1.85;
+
+  /* ---------- Spacing (4px base) ---------- */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ---------- Shape, elevation, motion ---------- */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-full: 999px;
+
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.08);
+  --shadow-md: 0 4px 8px -2px rgb(16 24 40 / 0.1), 0 2px 4px -2px rgb(16 24 40 / 0.06);
+  --shadow-lg: 0 16px 32px -8px rgb(16 24 40 / 0.18), 0 4px 8px -4px rgb(16 24 40 / 0.08);
+
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---------- Layout ---------- */
+  /* Breakpoints (CSS cannot use variables inside @media; keep these literals in sync):
+     sm 640px, md 768px, lg 1024px, xl 1280px. Mobile first: base styles are the phone layout. */
+  --container-max: 80rem;
+  --gutter: var(--space-4);
+  --header-height: 3.5rem;
+
+  /* Minimum touch target (WCAG 2.2 target size, comfortable on phones). */
+  --control-height: 2.75rem;
+  --control-height-sm: 2.25rem;
+
+  --z-header: 100;
+  --z-skip-link: 2000;
+
+  /* ---------- Color: light theme ---------- */
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f3ec;
+  --color-surface-sunken: #eee8de;
+  --color-overlay: rgb(20 14 6 / 0.55);
+
+  --color-border: #e4ddd1;
+  --color-border-control: #85796a; /* inputs and checkboxes: >= 3:1 against the page */
+
+  --color-text: #1b1712;
+  --color-text-muted: #51493e;
+  --color-text-subtle: #675e51;
+
+  /* Lighting store: warm brass/amber on warm neutrals (lamp-light feel, still AA on white). */
+  --color-primary: #8a4f00;
+  --color-primary-hover: #6f3f00;
+  --color-primary-active: #573200;
+  --color-primary-contrast: #ffffff;
+  --color-primary-soft: #fbefd9;
+
+  --color-danger: #b42318;
+  --color-danger-hover: #912018;
+  --color-danger-contrast: #ffffff;
+  --color-danger-soft: #fdecea;
+
+  --color-success: #067647;
+  --color-success-contrast: #ffffff;
+  --color-success-soft: #e4f5eb;
+
+  --color-warning: #9a3f00;
+  --color-warning-soft: #fff1de;
+
+  --color-info: #1849a9;
+  --color-info-soft: #e8f0fd;
+
+  --color-sale: #c01048;
+  --color-sale-contrast: #ffffff;
+
+  --color-star: #b46a00;
+  --color-star-empty: #98a1b0;
+
+  --color-focus: #1d4ed8;
+
+  --focus-ring: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-focus);
+
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --color-bg: #13100c;
+  --color-surface: #1c1712;
+  --color-surface-muted: #241e17;
+  --color-surface-sunken: #0f0c09;
+  --color-overlay: rgb(0 0 0 / 0.65);
+
+  --color-border: #3a3228;
+  --color-border-control: #8c8171;
+
+  --color-text: #f5efe4;
+  --color-text-muted: #c4baa9;
+  --color-text-subtle: #a89d8b;
+
+  --color-primary: #f2b84b;
+  --color-primary-hover: #f7cb78;
+  --color-primary-active: #fbdc9f;
+  --color-primary-contrast: #221500;
+  --color-primary-soft: #3a2a10;
+
+  --color-danger: #f97066;
+  --color-danger-hover: #fda29b;
+  --color-danger-contrast: #1a0604;
+  --color-danger-soft: #3a1a18;
+
+  --color-success: #47cd89;
+  --color-success-contrast: #062a17;
+  --color-success-soft: #12301f;
+
+  --color-warning: #fdb022;
+  --color-warning-soft: #3a2a0b;
+
+  --color-info: #84adff;
+  --color-info-soft: #172a4a;
+
+  --color-sale: #ff5c93;
+  --color-sale-contrast: #2a0714;
+
+  --color-star: #fdb022;
+  --color-star-empty: #6b7788;
+
+  --color-focus: #7ca8ff;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 16px 32px -8px rgb(0 0 0 / 0.6);
+
+  color-scheme: dark;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: var(--space-6);
+    --header-height: 4rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --gutter: var(--space-8);
+  }
+}

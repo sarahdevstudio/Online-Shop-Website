@@ -1,0 +1,31 @@
+<div class="toolbar" role="region" aria-label="ابزار بررسی طراحی">
+  <nav aria-label="صفحات راهنما">
+    <a routerLink="/tokens" routerLinkActive="active">توکن‌ها</a>
+    <a routerLink="/components" routerLinkActive="active">کامپوننت‌ها</a>
+    <a routerLink="/layout" routerLinkActive="active">هدر و فوتر</a>
+  </nav>
+  <div class="tools">
+    <button uiButton variant="secondary" size="sm" type="button" (click)="toggleTheme()">
+      <ui-icon [name]="theme() === 'light' ? 'moon' : 'sun'" />
+      {{ theme() === 'light' ? 'تیره' : 'روشن' }}
+    </button>
+    <button uiButton variant="secondary" size="sm" type="button" (click)="toggleDir()">{{ dir() === 'rtl' ? 'LTR' : 'RTL' }}</button>
+    <button uiButton variant="secondary" size="sm" type="button" [loading]="axeRunning()" (click)="runAxe()">بررسی دسترس‌پذیری</button>
+  </div>
+</div>
+
+@if (axeViolations(); as violations) {
+  <section class="axe" aria-live="polite" aria-label="نتیجه بررسی دسترس‌پذیری">
+    <strong data-testid="axe-count">{{ violations.length }} مورد نقض</strong>
+    <ul>
+      @for (v of violations; track v.id) {
+        <li>
+          <code>{{ v.id }}</code> ({{ v.impact }}) · {{ v.help }} · {{ v.nodes }} عنصر
+          <small dir="ltr">{{ v.targets.join(' | ') }}</small>
+        </li>
+      }
+    </ul>
+  </section>
+}
+
+<router-outlet />
