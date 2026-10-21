@@ -16,7 +16,7 @@ Update this file in the same commit as each item.
 ## P0 — launch blockers
 
 - [x] P0-1 Fix build: pin `System.Security.Cryptography.Pkcs` 10.0.13 (was 9.0.11 via SqlClient); 27 unit + 38 integration tests green
-- [ ] P0-2 Initial commit + CI for `storefront` (install, typecheck, build)
+- [x] P0-2 Initial commit + CI for `storefront` (npm ci, typecheck, build, npm audit)
 - [ ] P0-3 Small commit: out-of-range `?page` returns 404 (no false canonical)
 - [ ] P0-4 Non-production noindex: `X-Robots-Tag` header + disallow-all `robots.txt` (storefront and API)
 - [ ] P0-5 `ForwardedHeaders` with known proxies; restrict `AllowedHosts`; rate-limit partitioning by real client IP
@@ -55,4 +55,4 @@ Update this file in the same commit as each item.
 
 ## Log
 
-- 2026-10-21: audit approved; P0-1 done.
+- 2026-10-21: audit approved; P0-1 and P0-2 done (API CI job was already present; storefront job added).

@@ -11,6 +11,7 @@ src/
   Application/     use-case contracts, DTOs, validators, Result type, ports (ICurrentUser, IPaymentGateway)
   Infrastructure/  EF Core + Identity, migrations, startup seeding, adapters (FakePaymentGateway)
   Api/             minimal API, cookie auth, authorization policies, ProblemDetails, OpenAPI, health, Serilog
+storefront/       Next.js storefront (SSR/SSG, SEO); `npm ci && npm run dev`, set NEXT_PUBLIC_SITE_URL for canonical URLs
 tests/
   UnitTests/       domain, validators, result type, fake gateway
   IntegrationTests/ real API + real SQL Server (throwaway database per run)

@@ -43,3 +43,24 @@ jobs:
         run: |
           dotnet list Shop.slnx package --vulnerable --include-transitive 2>&1 | tee vuln.txt
           if grep -q "has the following vulnerable packages" vuln.txt; then exit 1; fi
+
+  storefront:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: storefront
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: storefront/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://staging.invalid
+      - run: npm audit --audit-level=high
