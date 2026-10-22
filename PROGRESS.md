@@ -5,55 +5,58 @@ Update this file in the same commit as each item.
 
 ## Decisions (approved 2026-10-21)
 
-- Slugs: English, lowercase, hyphenated (`/product/led-bulb-9w-e27-warm`). Immutable after publish; any change auto-creates a 301.
-- Auth: mobile OTP login/registration is primary; email optional. SMS behind `ISmsSender` (fake for dev/test; provider Kavenegar or SMS.ir, decided later). Rate limit + cooldown per phone AND per IP on OTP requests.
+- Slugs: English, lowercase, hyphenated (`/product/led-bulb-9w-e27-warm`). Immutable: set on create, never edited in the MVP (so no redirect table is needed yet).
+- Auth (revised 2026-10-22): MVP keeps the existing email+password accounts; checkout collects a phone number. Mobile OTP login moves to Post-MVP; when built it becomes primary, email optional. SMS behind `ISmsSender` (fake for dev/test; provider Kavenegar or SMS.ir, decided later). Rate limit + cooldown per phone AND per IP on OTP requests.
 - Payment: card-to-card and cash-on-delivery, manual admin confirmation. Order/Payment designed so an online gateway can be added later. All prices/totals computed server-side.
 - Hosting: `[your-domain.ir]`, preferred host non-www, behind a reverse proxy: `ForwardedHeaders` with known proxies only. (Domain/provider still to be filled in.)
 - Frontend: `storefront/` (Next.js) is the only storefront; admin panel lives in it under `/admin` (noindex, auth-protected). `web/` (Angular) is removed after tokens + RTL/contrast checks are ported.
 - Build fixes: upgrade/pin vulnerable packages; never suppress NU1902/NU1903.
 - Every non-production deployment sends `X-Robots-Tag: noindex` and serves disallow-all `robots.txt`.
+- Checkout (2026-10-22): guest checkout allowed (phone + address, no account). Shipping = one flat fee from configuration plus an optional free-shipping threshold (order subtotal), both server-side.
+- Catalog (2026-10-22): one category per product; design in `docs/06-catalog-design.md` approved. Color temperature labels use customer search terms (آفتابی / یخی/طبیعی / مهتابی), slugs stay English.
+- Persian text (2026-10-22): one shared normalizer (Arabic ي/ك → ی/ک, Persian/Arabic digits → Latin in search keys, trimmed/collapsed whitespace and ZWNJ); applied when saving names and when matching `q`. MVP search is a simple contains match on the normalized key.
+- Media (2026-10-22): uploaded images live in `media/` (git-ignored). **Production: `media/` must be included in backups** (together with the database).
 
-## P0 — launch blockers
+## MVP — required for launch
 
-- [x] P0-1 Fix build: pin `System.Security.Cryptography.Pkcs` 10.0.13 (was 9.0.11 via SqlClient); 27 unit + 38 integration tests green
-- [x] P0-2 Initial commit + CI for `storefront` (npm ci, typecheck, build, npm audit)
-- [x] P0-3 Paging: invalid or out-of-range `?page` returns 404, `?page=1` 308-redirects to the clean URL, canonical from the real page (category + search); vitest unit tests
-- [ ] P0-4 Non-production noindex: `X-Robots-Tag` header + disallow-all `robots.txt` (storefront and API)
-- [ ] P0-5 `ForwardedHeaders` with known proxies; restrict `AllowedHosts`; rate-limit partitioning by real client IP
-- [ ] P0-6 Mobile OTP auth: `ISmsSender` + fake, OTP entity, per-phone + per-IP rate limit/cooldown, optional email, tests
-- [ ] P0-7 Catalog backend: Category, Brand, Product, Variant, Attribute/Option (lighting attributes), Image/Media, Inventory; public read API + admin API; immutable slugs + 301 on change
-- [ ] P0-8 Storefront on real API; remove sample data from `storefront/src/lib/catalog.ts`
-- [ ] P0-9 Cart + checkout + order with server-side pricing; card-to-card / COD with manual admin confirmation (Payment/PaymentTransaction audit trail, gateway-ready)
-- [ ] P0-10 Inventory reservation/commit/release with concurrency tests
-- [ ] P0-11 Admin panel in Next.js under `/admin` (noindex, auth): products, categories, orders, customers
-- [ ] P0-12 Port Angular design-system checks (`check:contrast`, `check:rtl`) to `storefront/`, then remove `web/`
+- [x] M-1 Fix build: pin `System.Security.Cryptography.Pkcs` 10.0.13 (was 9.0.11 via SqlClient); 27 unit + 38 integration tests green
+- [x] M-2 Initial commit + CI for `storefront` (npm ci, typecheck, build, npm audit)
+- [x] M-3 Paging: invalid or out-of-range `?page` returns 404, `?page=1` 308-redirects to the clean URL, canonical from the real page (category + search); vitest unit tests
+- [ ] M-4 Catalog backend: categories (max 2 levels), brands, products, simple variants, images, stock, filterable lighting attributes (wattage, base/socket, color temperature); English immutable slugs; integer Toman prices. Design: `docs/06-catalog-design.md`
+- [ ] M-5 Public catalog API; storefront reads it (home, category, product, search, sitemap); remove sample data from `storefront/src/lib/catalog.ts`. Product page preselects the variant matching attribute params in the URL (e.g. `?wattage=9w&cct=3000k`)
+- [ ] M-6 Category-page filters (wattage, base, color temperature, brand, price); only unfiltered category URLs are indexable (filtered URLs: `noindex, follow` + canonical to the clean category URL); product links from a filtered category page carry the active attribute filter values
+- [ ] M-7 Cart (guest + logged-in, merged on login); guest checkout with phone number + address; flat shipping fee + optional free-shipping threshold from configuration; payment card-to-card or cash on delivery with manual admin confirmation; all prices/totals computed server-side; stock decremented atomically when the order is placed, restored on cancel
+- [ ] M-8 Minimal admin in Next.js under `/admin` (noindex, auth): products (incl. variants, images, stock), categories, brands, orders (status + payment confirmation)
+- [ ] M-9 Pages: contact, terms, returns
+- [ ] M-10 Production config: `ForwardedHeaders` with known proxies (rate limiting by real client IP), restricted `AllowedHosts`, `NEXT_PUBLIC_SITE_URL` required in production builds; `X-Robots-Tag: noindex` + disallow-all `robots.txt` on every non-production deployment (storefront and API)
 
-## P1 — SEO foundations and important features
+## Post-MVP
 
-- [ ] SeoMetadata + manual title/description override; Redirect manager (301/410), no chains
-- [ ] Split sitemaps (products, categories, blog, pages) with `lastmod`, generated from API
-- [ ] Faceted filters + indexing policy (index chosen landing pages, noindex/canonical the rest)
-- [ ] Persian search with autocomplete and typo tolerance
-- [ ] Image pipeline (AVIF/WebP, srcset) + `alt` conventions
-- [ ] JSON-LD: Review, FAQPage, LocalBusiness + automated validation
-- [ ] Legal/info pages (About, Contact, FAQ, Shipping, Returns, Privacy, Terms), trust badges, category intro/buying-guide text
-- [ ] Customer account: addresses, order history/tracking, IDOR tests
-- [ ] Storefront tests: axe, RTL, SEO-meta snapshot tests
-- [ ] Core Web Vitals measurement (Lighthouse CI) on home, category, product, cart
-- [ ] Discontinued products: keep page / 301 to alternative, never soft 404
-
-## P2 — growth
-
-- [ ] Blog and guides (color temperature, LED vs halogen, lumens vs watts, IP rating)
-- [ ] Reviews/ratings with moderation, Q&A
+- [ ] Mobile OTP login (`ISmsSender`, per-phone + per-IP rate limit/cooldown); SMS notifications (order status, back-in-stock)
 - [ ] Wishlist, product comparison (lamp specs)
-- [ ] Back-in-stock alerts, order SMS/email notifications
-- [ ] Coupons, CSV/Excel import/export, reports
+- [ ] Reviews/ratings with moderation, Q&A
+- [ ] Blog and guides (color temperature, LED vs halogen, lumens vs watts, IP rating)
+- [ ] Advanced Persian search: autocomplete, typo tolerance
+- [ ] CSV/Excel import/export
+- [ ] Image pipeline (AVIF/WebP, srcset, derivatives)
 - [ ] Analytics + e-commerce events, Search Console
 - [ ] Persistent logging/monitoring, automated backups
 - [ ] CSP and Permissions-Policy headers
+- [ ] Remove `web/` (Angular) after porting `check:contrast` / `check:rtl` to `storefront/`
+
+Also deferred (from the previous P1/P2 list, not in the MVP scope):
+
+- [ ] SeoMetadata (manual title/description override), redirect manager (301/410)
+- [ ] Split sitemaps with `lastmod`; indexable filter landing pages (e.g. "LED E27")
+- [ ] JSON-LD Review/FAQPage/LocalBusiness + automated validation
+- [ ] Customer account: addresses, order history/tracking, IDOR tests
+- [ ] Remaining info pages (About, FAQ, Shipping, Privacy), trust badges, category buying-guide text
+- [ ] Storefront tests (axe, RTL, SEO-meta snapshots); Core Web Vitals measurement (Lighthouse CI)
+- [ ] Discontinued products: keep page / 301 to alternative
+- [ ] Inventory reservations with expiry + stock movement ledger; coupons; reports
 
 ## Log
 
 - 2026-10-21: audit approved; P0-1 and P0-2 done (API CI job was already present; storefront job added).
 - 2026-10-21: P0-3 done; vitest added as storefront devDependency (`npm test`).
+- 2026-10-22: roadmap re-split into MVP / Post-MVP (P0-1..P0-3 are now M-1..M-3); catalog design in `docs/06-catalog-design.md`; both approved with changes (cct labels, normalizer, variant preselect, media backup, checkout/shipping answers).
