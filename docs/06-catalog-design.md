@@ -58,7 +58,16 @@ Cart/order/admin-order endpoints are designed with M-7.
 - **Attributes:** `wattage` (5/7/9/12/15/20 W), `base` (E27, E14, GU10), `cct` with labels customers search for: "آفتابی (۲۷۰۰K)" `2700k`, "آفتابی (۳۰۰۰K)" `3000k`, "یخی/طبیعی (۴۰۰۰K)" `4000k`, "مهتابی (۶۵۰۰K)" `6500k` — filterable options; `lumen`, `lifetime`, `arms`, `finish`, `ip` — text.
 - **Products (20, ~45 variants):** 8 LED bulbs (e.g. "لامپ LED حبابی ۹ وات E27" with 9/12 W × 3000K/6500K, 90–180 هزار تومان), 4 candle/flame bulbs (E14, 5–7 W, 2700K/6500K), 5 chandeliers (3/5/8/12 arms, gold/chrome/black finish, single variant, 4–35 میلیون تومان), 3 wall lights (1–2 variants, IP44 outdoor model, 1.2–4 میلیون تومان). Mix includes: one out-of-stock variant, one fully out-of-stock product, two with `CompareAtPrice`, one Draft and one Archived product, one product without brand. No images in seed (placeholder rendering is tested).
 
-## 6. Decisions (answers to the open questions)
+## 6. Implementation notes (M-4)
+
+- Attributes and their options are reference data ensured at startup in **every** environment (insert-missing only); the sample categories/brands/products are seeded in Development only and only into an empty catalog.
+- Facets include per-option product counts (a facet's own selection is ignored; zero-count options omitted).
+- `SearchKey` = normalized product name + brand name; `q` is split into words and every word must match (`LIKE %word%`).
+- Admin variant updates carry the variant's `rowVersion`; a stock change made meanwhile (e.g. by checkout) turns the update into a 409 instead of overwriting it.
+- Option values and variants are referenced through composite foreign keys, so an option of another attribute or a variant of another product is rejected by the database.
+- Seed: 20 products with 32 variants (fewer variants than the ~45 estimated above).
+
+## 7. Decisions (answers to the open questions)
 
 1. Guest checkout is allowed: phone + address, no account.
 2. Shipping: one flat fee from configuration plus an optional free-shipping threshold on the subtotal.

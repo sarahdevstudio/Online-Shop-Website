@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Shop.Domain.Catalog;
 using Shop.Domain.Customers;
 using Shop.Infrastructure.Identity;
 
@@ -10,6 +11,14 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>(options)
 {
     public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Brand> Brands => Set<Brand>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+    public DbSet<AttributeDefinition> Attributes => Set<AttributeDefinition>();
+    public DbSet<AttributeOption> AttributeOptions => Set<AttributeOption>();
+    public DbSet<ProductAttributeValue> ProductAttributeValues => Set<ProductAttributeValue>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

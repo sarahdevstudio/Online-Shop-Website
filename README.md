@@ -25,7 +25,7 @@ Requires the .NET 10 SDK and SQL Server (LocalDB is fine on Windows).
 dotnet run --project src/Api
 ```
 
-In `Development` the API uses LocalDB (`ShopMvp_Dev`, no credentials) and applies migrations on startup.
+In `Development` the API uses LocalDB (`ShopMvp_Dev`, no credentials) and applies migrations on startup. It also seeds a sample lighting catalog (5 categories, 5 brands, 20 products) into an empty database; no other environment gets sample data.
 OpenAPI document: `/openapi/v1.json` (Development/Testing only). Health: `/health/live`, `/health/ready`.
 
 ### Configuration and secrets
@@ -40,6 +40,8 @@ Nothing secret is committed. Provide values with environment variables (use `__`
 | `Auth__RequireSecureCookie` | Defaults to `true`; only `Development` turns it off |
 | `Cors__AllowedOrigins__0` | Allowed browser origins (none by default) |
 | `RateLimiting__AuthPermitLimit`, `RateLimiting__WindowSeconds` | Login/register throttle |
+| `Media__RootPath` | Folder for uploaded product images (default `media`, relative to the API content root; served under `/media`). Must be outside the application's binary folder (startup fails otherwise), so a published deployment needs an absolute path. Git-ignored: **include it in production backups** |
+| `Media__MaxImageBytes` | Largest accepted image upload (default 5242880 = 5 MB); JPEG/PNG/WebP only, checked by content |
 
 ```bash
 dotnet user-secrets --project src/Api set "Seed:AdminEmail" "admin@example.com"

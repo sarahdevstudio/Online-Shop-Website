@@ -4,8 +4,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Shop.Application.Accounts;
+using Shop.Application.Catalog;
 using Shop.Application.Payments;
 using Shop.Infrastructure.Accounts;
+using Shop.Infrastructure.Catalog;
 using Shop.Infrastructure.Identity;
 using Shop.Infrastructure.Payments;
 using Shop.Infrastructure.Persistence;
@@ -46,9 +48,15 @@ public static class DependencyInjection
 
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<ICatalogService, CatalogService>();
+        services.AddScoped<ICatalogAdminService, CatalogAdminService>();
+        services.AddScoped<IStockService, StockService>();
+        services.Configure<MediaOptions>(configuration.GetSection(MediaOptions.SectionName));
+        services.AddSingleton<IMediaStorage, LocalMediaStorage>();
 
         services.Configure<DatabaseOptions>(configuration.GetSection(DatabaseOptions.SectionName));
         services.Configure<SeedOptions>(configuration.GetSection(SeedOptions.SectionName));
+        services.AddScoped<CatalogSeeder>();
         services.AddScoped<DatabaseInitializer>();
 
         if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))

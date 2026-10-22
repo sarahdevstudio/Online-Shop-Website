@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shop.Domain.Security;
+using Shop.Infrastructure.Catalog;
 using Shop.Infrastructure.Identity;
 
 namespace Shop.Infrastructure.Persistence;
@@ -25,13 +27,18 @@ public sealed class SeedOptions
     public string AdminFullName { get; set; } = "Administrator";
 }
 
-/// <summary>Idempotent startup work: optional migration, role and permission sync, optional first admin.</summary>
+/// <summary>
+/// Idempotent startup work: optional migration, role and permission sync, optional first admin, catalog attributes,
+/// and sample catalog data in Development only.
+/// </summary>
 public sealed class DatabaseInitializer(
     ShopDbContext db,
     RoleManager<ApplicationRole> roleManager,
     UserManager<ApplicationUser> userManager,
     IOptions<DatabaseOptions> databaseOptions,
     IOptions<SeedOptions> seedOptions,
+    CatalogSeeder catalogSeeder,
+    IHostEnvironment environment,
     TimeProvider clock,
     ILogger<DatabaseInitializer> logger)
 {
@@ -45,6 +52,12 @@ public sealed class DatabaseInitializer(
 
         await SyncRolesAndPermissionsAsync();
         await EnsureAdminAsync();
+        await catalogSeeder.EnsureAttributesAsync(ct);
+
+        if (CatalogSeeder.ShouldSeedSampleData(environment))
+        {
+            await catalogSeeder.SeedDevelopmentDataAsync(ct);
+        }
     }
 
     private async Task SyncRolesAndPermissionsAsync()

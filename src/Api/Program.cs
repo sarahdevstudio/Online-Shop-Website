@@ -33,6 +33,7 @@ if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"
 }
 
 app.UseSecurityHeaders();
+app.UseMedia();
 app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
@@ -51,6 +52,8 @@ api.AddEndpointFilter<AntiforgeryFilter>();
 api.MapAuthEndpoints();
 api.MapCustomerEndpoints();
 api.MapAdminEndpoints();
+api.MapCatalogEndpoints();
+api.MapCatalogAdminEndpoints();
 
 await app.RunAsync();
 

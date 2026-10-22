@@ -22,3 +22,6 @@ appsettings.*.local.json
 node_modules/
 dist/
 .angular/
+
+## Uploaded media (product images); must be backed up in production
+media/

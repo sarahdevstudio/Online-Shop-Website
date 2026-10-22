@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -24,6 +26,10 @@ public static class ApiServiceCollectionExtensions
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
 
         services.AddValidatorsFromAssemblyContaining<RegisterCustomerRequestValidator>();
+
+        // Enums travel as camelCase strings ("published"), never as numbers.
+        services.ConfigureHttpJsonOptions(options =>
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 
         services.AddProblemDetails(options =>
             options.CustomizeProblemDetails = context =>

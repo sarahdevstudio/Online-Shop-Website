@@ -10,6 +10,7 @@ public static class Permissions
 
     public const string UserManage = "User.Manage";
     public const string SettingsManage = "Settings.Manage";
+    public const string CatalogManage = "Catalog.Manage";
 
-    public static IReadOnlyList<string> All { get; } = [UserManage, SettingsManage];
+    public static IReadOnlyList<string> All { get; } = [UserManage, SettingsManage, CatalogManage];
 }
