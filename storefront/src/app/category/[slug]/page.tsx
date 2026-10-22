@@ -2,12 +2,26 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { Breadcrumb } from '@/components/Breadcrumb';
+import { ListingFilters } from '@/components/ListingFilters';
+import { ListingToolbar } from '@/components/ListingToolbar';
 import { Pagination } from '@/components/Pagination';
 import { ProductCard } from '@/components/ProductCard';
 import { formatNumber } from '@/lib/format';
-import { getCategory, getProducts } from '@/lib/catalog';
+import { getCategory, getProducts, type FacetsDto } from '@/lib/catalog';
+import {
+  clearFilters,
+  hasFilters,
+  listingHref,
+  listingIndexing,
+  parseListing,
+  productLinkQuery,
+  serializeListing,
+  serializeRequest,
+  withPage,
+  type AllowedOptions,
+} from '@/lib/listing';
 import { messages } from '@/lib/messages';
-import { isPageInRange, pageOneRedirect, parsePageParam, type SearchParams } from '@/lib/paging';
+import { isPageInRange, type SearchParams } from '@/lib/paging';
 import { pageMetadata } from '@/lib/seo';
 
 type Props = {
@@ -17,9 +31,15 @@ type Props = {
 
 // No generateStaticParams: categories render on first request (the build never needs the API).
 
+/** Option slugs that exist in the category, from the unfiltered listing's facets. */
+function allowedOptions(facets: FacetsDto): AllowedOptions {
+  const slugs = (code: string) => new Set(facets.attributes.find((a) => a.code === code)?.options.map((o) => o.slug) ?? []);
+  return { brand: new Set(facets.brands.map((b) => b.slug)), wattage: slugs('wattage'), base: slugs('base'), cct: slugs('cct') };
+}
+
 /**
- * Resolves category + listing for the request, or null when the URL has no valid page to show (404).
- * `?page=1` on an existing category redirects (308) to the clean URL.
+ * Resolves category + listing, or null for a 404 (unknown category, invalid or out-of-range page).
+ * A URL that is not in normalized form (key order, sorted values, invalid keys/values, page=1) 308-redirects to it.
  */
 async function load({ params, searchParams }: Props) {
   const { slug } = await params;
@@ -27,32 +47,37 @@ async function load({ params, searchParams }: Props) {
   const category = await getCategory(slug);
   if (!category) return null;
 
-  const redirectTo = pageOneRedirect(`/category/${slug}`, query);
-  if (redirectTo) permanentRedirect(redirectTo);
+  // The unfiltered first page: what the category contains (valid filter values, labels) and its clean listing.
+  const all = await getProducts({ category: slug });
+  if (!all) return null;
 
-  const page = typeof query.page === 'string' || query.page === undefined ? parsePageParam(query.page) : null;
-  if (page === null) return null;
+  const basePath = `/category/${slug}`;
+  const { state, invalidPage } = parseListing(query, allowedOptions(all.facets));
+  if (invalidPage) return null;
+  if (serializeRequest(query) !== serializeListing(state)) permanentRedirect(listingHref(basePath, state));
 
-  const result = await getProducts({ category: slug, page });
-  return result && isPageInRange(page, result.pageCount) ? { slug, category, result } : null;
+  const result = serializeListing(state) === '' ? all : await getProducts({ category: slug, listing: state });
+  if (!result || !isPageInRange(state.page, result.pageCount)) return null;
+  return { slug, basePath, category, state, result, allFacets: all.facets };
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const data = await load(props);
   if (!data) return {};
-  const { slug, category, result } = data;
-  // Page 1 and ?page=1 share one canonical URL; deeper pages canonicalize to themselves.
+  const { basePath, category, state, result } = data;
   return pageMetadata({
     title: result.page > 1 ? `${category.name} - صفحه ${formatNumber(result.page)}` : category.name,
     description: category.description || category.name,
-    path: `/category/${slug}${result.page > 1 ? `?page=${result.page}` : ''}`,
+    path: listingHref(basePath, state),
+    ...listingIndexing(state),
   });
 }
 
 export default async function CategoryPage(props: Props) {
   const data = await load(props);
   if (!data) notFound();
-  const { slug, category, result } = data;
+  const { basePath, category, state, result, allFacets } = data;
+  const linkQuery = productLinkQuery(state);
 
   return (
     <div className="ui-container ui-section ui-stack">
@@ -76,16 +101,40 @@ export default async function CategoryPage(props: Props) {
           </ul>
         </nav>
       )}
-      {result.items.length === 0 ? (
-        <p>{messages.emptyTitle}</p>
-      ) : (
-        <div className="ui-product-grid">
-          {result.items.map((p, i) => (
-            <ProductCard key={p.slug} product={p} priority={i < 4} />
-          ))}
+
+      <div className="ui-listing-layout">
+        <aside aria-label={messages.filters}>
+          <ListingFilters basePath={basePath} state={state} facets={result.facets} allFacets={allFacets} />
+        </aside>
+
+        <div className="ui-stack">
+          <ListingToolbar basePath={basePath} state={state} allFacets={allFacets} total={result.total} />
+          {result.items.length === 0 ? (
+            <div className="ui-stack">
+              <p>{hasFilters(state) ? messages.noFilterResults : messages.emptyTitle}</p>
+              {hasFilters(state) && (
+                <p>
+                  <Link href={listingHref(basePath, clearFilters(state))} rel="nofollow">
+                    {messages.clearFilters}
+                  </Link>
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="ui-product-grid ui-product-grid--listing">
+              {result.items.map((p, i) => (
+                <ProductCard key={p.slug} product={p} linkQuery={linkQuery} priority={i < 4} />
+              ))}
+            </div>
+          )}
+          <Pagination
+            page={result.page}
+            pageCount={result.pageCount}
+            basePath={basePath}
+            hrefFor={(page) => listingHref(basePath, withPage(state, page))}
+          />
         </div>
-      )}
-      <Pagination page={result.page} pageCount={result.pageCount} basePath={`/category/${slug}`} />
+      </div>
     </div>
   );
 }

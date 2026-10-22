@@ -26,20 +26,24 @@ interface PaginationProps {
   pageCount: number;
   /** Path of the listing, e.g. /category/shoes. Page 1 drops ?page so it shares the canonical URL. */
   basePath: string;
-  /** Other query params (filters, sort) kept on every link. */
+  /** Other query params kept on every link. */
   query?: Record<string, string>;
+  /** Builds each page's URL instead (filtered listings use their normalized URL form). */
+  hrefFor?: (page: number) => string;
   label?: string;
 }
 
 /** Every page is a real link so crawlers can follow it. */
-export function Pagination({ page, pageCount, basePath, query = {}, label }: PaginationProps) {
+export function Pagination({ page, pageCount, basePath, query = {}, hrefFor, label }: PaginationProps) {
   if (pageCount <= 1) return null;
-  const href = (target: number) => {
-    const params = new URLSearchParams(query);
-    if (target > 1) params.set('page', String(target));
-    const qs = params.toString();
-    return qs ? `${basePath}?${qs}` : basePath;
-  };
+  const href =
+    hrefFor ??
+    ((target: number) => {
+      const params = new URLSearchParams(query);
+      if (target > 1) params.set('page', String(target));
+      const qs = params.toString();
+      return qs ? `${basePath}?${qs}` : basePath;
+    });
   return (
     <nav aria-label={label ?? messages.pagination}>
       <ul className={styles.list}>

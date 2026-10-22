@@ -66,3 +66,10 @@ describe('variantQuery', () => {
     expect(pickVariant(variants, selectionFromParams(axes, query))?.id).toBe(1);
   });
 });
+
+describe('selectionFromParams with links from filtered listings', () => {
+  it('takes the first comma-separated value this product has', () => {
+    expect(selectionFromParams(axes, { wattage: '20w,12w,9w', cct: '6500k' })).toEqual({ wattage: '12w', cct: '6500k' });
+    expect(pickVariant(variants, selectionFromParams(axes, { wattage: '12w,9w', cct: '6500k' }))?.id).toBe(3);
+  });
+});

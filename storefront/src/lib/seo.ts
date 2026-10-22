@@ -19,18 +19,23 @@ interface PageMetaInput {
   path: string;
   image?: string | null;
   type?: 'website' | 'article';
-  /** Keep a page out of the index (cart, account, filtered duplicates). */
-  noindex?: boolean;
+  /**
+   * Keep a page out of the index. `true`: noindex, nofollow (cart, account, search). `'follow'`: noindex, follow,
+   * for filtered/sorted listings whose links should still be crawled.
+   */
+  noindex?: boolean | 'follow';
+  /** Emit a canonical link (default). Off for noindex listings: noindex must not be mixed with a cross-page canonical. */
+  canonical?: boolean;
 }
 
 /** Builds title, description, canonical, Open Graph and Twitter tags in one place. */
-export function pageMetadata({ title, description, path, image, type = 'website', noindex }: PageMetaInput): Metadata {
+export function pageMetadata({ title, description, path, image, type = 'website', noindex, canonical = true }: PageMetaInput): Metadata {
   const url = absoluteUrl(path);
   return {
     title,
     description,
-    alternates: { canonical: url },
-    robots: noindex ? { index: false, follow: false } : undefined,
+    ...(canonical ? { alternates: { canonical: url } } : {}),
+    robots: noindex ? { index: false, follow: noindex === 'follow' } : undefined,
     openGraph: {
       title,
       description,

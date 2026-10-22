@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import type { ProductCardModel } from '@/components/ProductCard';
 import { apiGet, revalidate } from './api';
+import { OPTION_KEYS, type ListingState } from './listing';
 
 /**
  * Catalog reads for the pages: API DTOs (`/api/v1/catalog/*`, see docs/06-catalog-design.md) mapped to the shapes
@@ -39,11 +40,24 @@ export interface ProductCardDto {
   image: ImageDto | null;
 }
 
+export interface FacetOptionDto {
+  slug: string;
+  value: string;
+  count: number;
+}
+
+export interface FacetsDto {
+  brands: FacetOptionDto[];
+  attributes: { code: string; name: string; unit: string | null; options: FacetOptionDto[] }[];
+  price: { min: number; max: number } | null;
+}
+
 interface ProductListDto {
   items: ProductCardDto[];
   page: number;
   pageSize: number;
   total: number;
+  facets?: FacetsDto;
 }
 
 export interface VariantDto {
@@ -97,6 +111,8 @@ export interface ProductPage {
   total: number;
   page: number;
   pageCount: number;
+  /** Counts per option; a facet ignores its own selection (OR within, AND across). */
+  facets: FacetsDto;
 }
 
 export const PAGE_SIZE = 24;
@@ -120,6 +136,7 @@ export function toProductPage(dto: ProductListDto): ProductPage {
     total: dto.total,
     page: dto.page,
     pageCount: Math.max(1, Math.ceil(dto.total / dto.pageSize)),
+    facets: dto.facets ?? { brands: [], attributes: [], price: null },
   };
 }
 
@@ -139,26 +156,40 @@ export interface ProductQuery {
   page?: number;
   pageSize?: number;
   inStock?: boolean;
+  /** Category-page filters and sort (see ./listing). */
+  listing?: ListingState;
 }
 
 /** The API's q limit; longer input is cut rather than turned into an error page. */
 export const Q_MAX_LENGTH = 100;
 
-export function productListPath({ category, q, page = 1, pageSize = PAGE_SIZE, inStock }: ProductQuery): string {
+export function productListPath({ category, q, page = 1, pageSize = PAGE_SIZE, inStock, listing }: ProductQuery): string {
   const params = new URLSearchParams();
   if (category) params.set('category', category);
   const query = q?.trim().slice(0, Q_MAX_LENGTH);
   if (query) params.set('q', query);
-  if (inStock) params.set('inStock', 'true');
-  if (page > 1) params.set('page', String(page));
+  for (const key of OPTION_KEYS) {
+    const values = listing?.options[key] ?? [];
+    if (values.length > 0) params.set(key, values.join(','));
+  }
+  if (listing?.minPrice != null) params.set('minPrice', String(listing.minPrice));
+  if (listing?.maxPrice != null) params.set('maxPrice', String(listing.maxPrice));
+  if (inStock || listing?.inStock) params.set('inStock', 'true');
+  if (listing?.sort) params.set('sort', listing.sort);
+  const pageNumber = listing?.page ?? page;
+  if (pageNumber > 1) params.set('page', String(pageNumber));
   params.set('pageSize', String(pageSize));
   return `/catalog/products?${params}`;
 }
 
-/** Null when the API says the category doesn't exist. */
-export async function getProducts(query: ProductQuery): Promise<ProductPage | null> {
-  const dto = await apiGet<ProductListDto>(productListPath(query), revalidate.products);
+const getProductPage = cache(async (path: string): Promise<ProductPage | null> => {
+  const dto = await apiGet<ProductListDto>(path, revalidate.products);
   return dto && toProductPage(dto);
+});
+
+/** Null when the API says the category doesn't exist. Same query = one API call per render (metadata + page). */
+export function getProducts(query: ProductQuery): Promise<ProductPage | null> {
+  return getProductPage(productListPath(query));
 }
 
 export const getProduct = cache(async (slug: string): Promise<ProductDetailDto | null> =>

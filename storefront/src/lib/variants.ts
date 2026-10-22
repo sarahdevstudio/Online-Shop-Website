@@ -12,13 +12,19 @@ export interface Axis {
   options: { slug: string }[];
 }
 
-/** Attribute selections from the URL (`?wattage=9w&cct=3000k`), only for codes that are axes of this product. */
+/**
+ * Attribute selections from the URL (`?wattage=9w&cct=3000k`), only for codes that are axes of this product.
+ * A link from a filtered listing may carry several values (`?wattage=12w,9w`): the first one this product has wins.
+ */
 export function selectionFromParams(axes: readonly Axis[], params: SearchParams): Record<string, string> {
   const selection: Record<string, string> = {};
   for (const axis of axes) {
     const raw = params[axis.code];
-    const value = (Array.isArray(raw) ? raw[0] : raw)?.trim().toLowerCase();
-    if (value && axis.options.some((o) => o.slug === value)) selection[axis.code] = value;
+    const candidates = (Array.isArray(raw) ? raw : raw === undefined ? [] : [raw])
+      .flatMap((v) => v.split(','))
+      .map((v) => v.trim().toLowerCase());
+    const value = candidates.find((slug) => axis.options.some((o) => o.slug === slug));
+    if (value) selection[axis.code] = value;
   }
   return selection;
 }
