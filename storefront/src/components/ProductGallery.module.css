@@ -1,0 +1,35 @@
+.gallery {
+  display: grid;
+  gap: var(--space-3);
+}
+.main {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.main img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+.placeholder {
+  --icon-size: 4rem;
+  color: var(--color-text-subtle);
+}
+.thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+  gap: var(--space-2);
+}
+.thumbs img {
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}

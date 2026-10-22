@@ -11,7 +11,7 @@ src/
   Application/     use-case contracts, DTOs, validators, Result type, ports (ICurrentUser, IPaymentGateway)
   Infrastructure/  EF Core + Identity, migrations, startup seeding, adapters (FakePaymentGateway)
   Api/             minimal API, cookie auth, authorization policies, ProblemDetails, OpenAPI, health, Serilog
-storefront/       Next.js storefront (SSR/SSG, SEO); `npm ci && npm run dev`, set NEXT_PUBLIC_SITE_URL for canonical URLs
+storefront/       Next.js storefront (SSR, SEO); reads the catalog API server-side, see "Storefront" below
 tests/
   UnitTests/       domain, validators, result type, fake gateway
   IntegrationTests/ real API + real SQL Server (throwaway database per run)
@@ -47,6 +47,25 @@ Nothing secret is committed. Provide values with environment variables (use `__`
 dotnet user-secrets --project src/Api set "Seed:AdminEmail" "admin@example.com"
 dotnet user-secrets --project src/Api set "Seed:AdminPassword" "<choose a strong password>"
 ```
+
+## Storefront
+
+```bash
+cd storefront
+npm ci
+npm run dev        # http://localhost:3000, needs the API running (dotnet run --project src/Api)
+npm test           # vitest
+npm run build      # does not need the API
+```
+
+Configuration (see `storefront/.env.example`; copy it to `.env.local` for development):
+
+| Setting | Purpose |
+|---|---|
+| `API_BASE_URL` | **Server-only** base URL of the API, e.g. `http://localhost:5167` (no `/api/v1`). Never `NEXT_PUBLIC_*`: the browser never calls the API. Read at request time; required in production (`npm run dev` defaults to `http://localhost:5167`) |
+| `NEXT_PUBLIC_SITE_URL` | Public origin of the storefront for canonical URLs, sitemap and JSON-LD |
+
+Pages render on request (nothing is prerendered from the API at build time). API responses are cached for 60 s (products) / 300 s (categories, sitemap); only successful responses are cached. If the API is unreachable or answers 5xx, pages show an error page with HTTP 500 (an App Router page can't return another status), `Cache-Control: no-store` and `noindex`; only a real API 404 becomes a 404 page. Within the cache lifetime, pages already cached keep being served from cache during an API outage. Product images are served from the site's own origin through `/media/*`, which passes them through from the API.
 
 ## Database migrations
 

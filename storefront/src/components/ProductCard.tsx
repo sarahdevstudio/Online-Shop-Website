@@ -1,8 +1,8 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from './Badge';
 import { Icon } from './Icon';
 import { Price } from './Price';
-import { Rating } from './Rating';
 import { discountFraction, formatPercent } from '@/lib/format';
 import { messages } from '@/lib/messages';
 import styles from './ProductCard.module.css';
@@ -17,8 +17,6 @@ export interface ProductCardModel {
   /** Server-calculated sell price; null renders "call for price". */
   price: number | null;
   compareAtPrice?: number | null;
-  rating?: number | null;
-  ratingCount?: number | null;
   inStock: boolean;
 }
 
@@ -40,16 +38,13 @@ export function ProductCard({ product, linkBase = '/product', priority = false, 
       <article className={`${styles.card} ${product.inStock ? '' : styles.soldOut}`}>
         <div className={styles.media}>
           {product.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- plain <img> until the media pipeline/CDN is chosen
-            <img
+            <Image
               src={product.imageUrl}
               alt={product.imageAlt ?? ''}
               sizes={SIZES}
               width={imageSize}
               height={imageSize}
-              loading={priority ? 'eager' : 'lazy'}
-              fetchPriority={priority ? 'high' : undefined}
-              decoding="async"
+              priority={priority}
             />
           ) : (
             <Icon name="image" className={styles.placeholder} />
@@ -69,7 +64,6 @@ export function ProductCard({ product, linkBase = '/product', priority = false, 
           <h3 className={styles.name}>
             <Link href={`${linkBase}/${product.slug}`}>{product.name}</Link>
           </h3>
-          <Rating value={product.rating} count={product.ratingCount} />
           <div className={styles.priceBox}>
             <Price amount={product.price} compareAt={product.inStock ? product.compareAtPrice : null} showBadge={false} />
           </div>

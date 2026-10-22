@@ -1,12 +1,15 @@
 import Link from 'next/link';
 import { ProductCard } from '@/components/ProductCard';
-import { getCategories, getProducts } from '@/lib/catalog';
+import { getCategoryTree, getProducts } from '@/lib/catalog';
+import { messages } from '@/lib/messages';
 import { pageMetadata, site } from '@/lib/seo';
 
 export const metadata = pageMetadata({ title: `${site.name} | ${site.description}`, description: site.description, path: '/' });
 
+const NEWEST_COUNT = 8;
+
 export default async function HomePage() {
-  const [{ items }, categories] = await Promise.all([getProducts({ page: 1 }), getCategories()]);
+  const [categories, newest] = await Promise.all([getCategoryTree(), getProducts({ inStock: true, pageSize: NEWEST_COUNT })]);
 
   return (
     <div className="ui-container ui-section ui-stack">
@@ -15,7 +18,7 @@ export default async function HomePage() {
 
       <section aria-labelledby="cats">
         <h2 id="cats" className="ui-heading-3">
-          دسته‌بندی‌ها
+          {messages.categories}
         </h2>
         <ul className="ui-cluster">
           {categories.map((c) => (
@@ -26,16 +29,18 @@ export default async function HomePage() {
         </ul>
       </section>
 
-      <section aria-labelledby="latest">
-        <h2 id="latest" className="ui-heading-3">
-          جدیدترین محصولات
-        </h2>
-        <div className="ui-product-grid">
-          {items.slice(0, 8).map((p, i) => (
-            <ProductCard key={p.slug} product={p} priority={i < 4} />
-          ))}
-        </div>
-      </section>
+      {newest && newest.items.length > 0 && (
+        <section aria-labelledby="latest">
+          <h2 id="latest" className="ui-heading-3">
+            {messages.newestProducts}
+          </h2>
+          <div className="ui-product-grid">
+            {newest.items.map((p, i) => (
+              <ProductCard key={p.slug} product={p} priority={i < 4} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

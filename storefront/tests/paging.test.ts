@@ -3,7 +3,7 @@ import { isPageInRange, pageOneRedirect, parsePageParam } from '../src/lib/pagin
 
 describe('pageOneRedirect', () => {
   it('redirects ?page=1 to the clean URL', () => {
-    expect(pageOneRedirect('/category/clothing', { page: '1' })).toBe('/category/clothing');
+    expect(pageOneRedirect('/category/led-bulbs', { page: '1' })).toBe('/category/led-bulbs');
   });
 
   it('keeps other params, in order, and encodes them', () => {

@@ -3,7 +3,8 @@ import type { ReactNode } from 'react';
 import { JsonLd } from '@/components/JsonLd';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
-import { getCategories } from '@/lib/catalog';
+import { getCategoryTree } from '@/lib/catalog';
+import { messages } from '@/lib/messages';
 import { organizationJsonLd, site, websiteJsonLd } from '@/lib/seo';
 import './globals.css';
 
@@ -21,7 +22,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const categories = await getCategories();
+  const categories = await getCategoryTree();
   const navItems = categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` }));
 
   return (
@@ -36,7 +37,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <SiteFooter
           brandName={site.name}
           about={site.description}
-          groups={[{ title: 'دسته‌بندی‌ها', links: navItems }]}
+          groups={[{ title: messages.categories, links: navItems }]}
           copyright={`© ${site.name}`}
         />
       </body>

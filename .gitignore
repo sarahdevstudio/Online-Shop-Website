@@ -12,6 +12,7 @@ TestResults/
 ## Secrets and local configuration: never commit these
 .env
 .env.*
+!.env.example
 secrets.json
 appsettings.Local.json
 appsettings.*.local.json
@@ -24,4 +25,4 @@ dist/
 .angular/
 
 ## Uploaded media (product images); must be backed up in production
-media/
+/src/Api/media/

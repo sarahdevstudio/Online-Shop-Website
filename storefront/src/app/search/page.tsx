@@ -16,7 +16,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const q = typeof query.q === 'string' ? query.q : '';
   const pageNumber = typeof query.page === 'string' || query.page === undefined ? parsePageParam(query.page) : null;
   if (pageNumber === null) notFound();
-  const result = await getProducts({ q, page: pageNumber });
+  // Only the q param is sent to the API (cut to its length limit); the page stays noindex.
+  const result = (await getProducts({ q, page: pageNumber })) ?? { items: [], total: 0, page: pageNumber, pageCount: 1 };
   if (!isPageInRange(pageNumber, result.pageCount)) notFound();
 
   return (

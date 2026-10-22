@@ -60,6 +60,19 @@
   }
 }
 
+/* Product page: gallery and buy box stacked on phones, side by side from tablets. */
+.ui-product-layout {
+  display: grid;
+  gap: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .ui-product-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
 .ui-visually-hidden {
   position: absolute;
   inline-size: 1px;

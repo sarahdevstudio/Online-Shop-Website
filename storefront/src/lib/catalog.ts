@@ -1,70 +1,179 @@
+import { cache } from 'react';
 import type { ProductCardModel } from '@/components/ProductCard';
+import { apiGet, revalidate } from './api';
 
 /**
- * Catalog access. The API has no catalog endpoints yet (docs: phase 3), so this serves sample data behind
- * the functions the pages will keep calling. Replace the bodies with fetches to the API (use Next's
- * `fetch(..., { next: { revalidate, tags } })` for caching) and the pages stay unchanged.
+ * Catalog reads for the pages: API DTOs (`/api/v1/catalog/*`, see docs/06-catalog-design.md) mapped to the shapes
+ * the components use. Every function is request-time and cached per `revalidate` in ./api.
  */
+
+// ---- API DTOs ----
+
+interface CategoryLinkDto {
+  slug: string;
+  name: string;
+}
+
+interface CategoryTreeDto extends CategoryLinkDto {
+  children: CategoryLinkDto[];
+}
+
+interface CategoryDetailDto extends CategoryLinkDto {
+  description: string | null;
+  parent: CategoryLinkDto | null;
+  children: CategoryLinkDto[];
+}
+
+interface ImageDto {
+  url: string;
+  alt: string;
+}
+
+export interface ProductCardDto {
+  slug: string;
+  name: string;
+  brand: string | null;
+  price: number;
+  compareAtPrice: number | null;
+  inStock: boolean;
+  image: ImageDto | null;
+}
+
+interface ProductListDto {
+  items: ProductCardDto[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface VariantDto {
+  id: number;
+  sku: string;
+  price: number;
+  compareAtPrice: number | null;
+  inStock: boolean;
+  /** attribute code → option slug (axes) or text. */
+  attributes: Record<string, string>;
+}
+
+export interface VariantAxisDto {
+  code: string;
+  name: string;
+  unit: string | null;
+  options: { slug: string; value: string }[];
+}
+
+export interface ProductDetailDto {
+  slug: string;
+  name: string;
+  description: string | null;
+  status: 'published' | 'archived';
+  brand: { slug: string; name: string } | null;
+  breadcrumb: CategoryLinkDto[];
+  images: ImageDto[];
+  axes: VariantAxisDto[];
+  variants: VariantDto[];
+  specs: { code: string; name: string; value: string; unit: string | null }[];
+  updatedAtUtc: string;
+}
+
+interface SitemapDto {
+  categories: { slug: string; updatedAtUtc: string | null }[];
+  products: { slug: string; updatedAtUtc: string | null }[];
+}
+
+// ---- page models ----
 
 export interface Category {
   slug: string;
   name: string;
   description: string;
+  parent: CategoryLinkDto | null;
+  children: CategoryLinkDto[];
 }
 
-export interface Product extends ProductCardModel {
-  description: string;
-  sku: string;
-  categorySlug: string;
+export interface ProductPage {
+  items: ProductCardModel[];
+  total: number;
+  page: number;
+  pageCount: number;
 }
 
-export const categories: Category[] = [
-  { slug: 'clothing', name: 'پوشاک', description: 'انواع پوشاک روزمره و رسمی با کیفیت بالا' },
-  { slug: 'accessories', name: 'اکسسوری', description: 'کیف، کمربند و اکسسوری‌های متنوع' },
-  { slug: 'home', name: 'خانه و آشپزخانه', description: 'لوازم کاربردی و دکوری برای خانه' },
-];
+export const PAGE_SIZE = 24;
 
-const names = ['پیراهن نخی', 'کیف دستی چرم', 'ست ظروف سرامیکی', 'کفش اسپورت', 'شال حریر', 'ساعت رومیزی', 'کوله‌پشتی', 'لیوان سرامیکی'];
-
-export const products: Product[] = Array.from({ length: 30 }, (_, i) => {
-  const base = 250_000 + (i % 7) * 180_000;
+export function toProductCard(dto: ProductCardDto): ProductCardModel {
   return {
-    slug: `sample-${i + 1}`,
-    sku: `SKU-${1000 + i}`,
-    name: `${names[i % names.length]} مدل ${i + 1}`,
-    description: `${names[i % names.length]} با جنس مرغوب و دوخت استاندارد. این متن نمونه است و با داده واقعی فروشگاه جایگزین می‌شود.`,
-    categorySlug: categories[i % categories.length].slug,
-    imageUrl: null,
-    brand: i % 2 ? 'برند نمونه' : null,
-    price: base,
-    compareAtPrice: i % 3 === 0 ? Math.round(base * 1.25) : null,
-    rating: i % 4 === 3 ? null : 3.5 + (i % 4) * 0.5,
-    ratingCount: i % 4 === 3 ? null : 5 + i,
-    inStock: i % 9 !== 8,
+    slug: dto.slug,
+    name: dto.name,
+    brand: dto.brand,
+    price: dto.price,
+    compareAtPrice: dto.compareAtPrice,
+    inStock: dto.inStock,
+    imageUrl: dto.image?.url ?? null,
+    imageAlt: dto.image?.alt ?? dto.name,
   };
+}
+
+export function toProductPage(dto: ProductListDto): ProductPage {
+  return {
+    items: dto.items.map(toProductCard),
+    total: dto.total,
+    page: dto.page,
+    pageCount: Math.max(1, Math.ceil(dto.total / dto.pageSize)),
+  };
+}
+
+// ---- reads (React cache() dedupes repeated calls within one render, e.g. layout + page) ----
+
+export const getCategoryTree = cache(async (): Promise<CategoryTreeDto[]> =>
+  (await apiGet<CategoryTreeDto[]>('/catalog/categories', revalidate.categories)) ?? []);
+
+export const getCategory = cache(async (slug: string): Promise<Category | null> => {
+  const dto = await apiGet<CategoryDetailDto>(`/catalog/categories/${encodeURIComponent(slug)}`, revalidate.categories);
+  return dto && { slug: dto.slug, name: dto.name, description: dto.description ?? '', parent: dto.parent, children: dto.children };
 });
 
-export const PAGE_SIZE = 12;
-
-export async function getCategories(): Promise<Category[]> {
-  return categories;
+export interface ProductQuery {
+  category?: string;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+  inStock?: boolean;
 }
 
-export async function getCategory(slug: string): Promise<Category | null> {
-  return categories.find((c) => c.slug === slug) ?? null;
+/** The API's q limit; longer input is cut rather than turned into an error page. */
+export const Q_MAX_LENGTH = 100;
+
+export function productListPath({ category, q, page = 1, pageSize = PAGE_SIZE, inStock }: ProductQuery): string {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  const query = q?.trim().slice(0, Q_MAX_LENGTH);
+  if (query) params.set('q', query);
+  if (inStock) params.set('inStock', 'true');
+  if (page > 1) params.set('page', String(page));
+  params.set('pageSize', String(pageSize));
+  return `/catalog/products?${params}`;
 }
 
-export async function getProducts(opts: { category?: string; q?: string; page?: number }) {
-  const q = opts.q?.trim();
-  const filtered = products.filter(
-    (p) => (!opts.category || p.categorySlug === opts.category) && (!q || p.name.includes(q)),
-  );
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  // Not clamped: callers decide what an out-of-range page means (the pages answer 404).
-  const page = Math.max(opts.page ?? 1, 1);
-  return { items: filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), total: filtered.length, page, pageCount };
+/** Null when the API says the category doesn't exist. */
+export async function getProducts(query: ProductQuery): Promise<ProductPage | null> {
+  const dto = await apiGet<ProductListDto>(productListPath(query), revalidate.products);
+  return dto && toProductPage(dto);
 }
 
-export async function getProduct(slug: string): Promise<Product | null> {
-  return products.find((p) => p.slug === slug) ?? null;
+export const getProduct = cache(async (slug: string): Promise<ProductDetailDto | null> =>
+  apiGet<ProductDetailDto>(`/catalog/products/${encodeURIComponent(slug)}`, revalidate.products));
+
+/**
+ * The API's timestamps are UTC but may come without a zone designator (SQL Server datetime2); `new Date()` would
+ * read those as local time, so treat a missing designator as UTC.
+ */
+export function parseUtc(value: string | null): Date | null {
+  if (!value) return null;
+  const date = new Date(/(Z|[+-]\d{2}:?\d{2})$/i.test(value) ? value : `${value}Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export async function getSitemap(): Promise<SitemapDto> {
+  return (await apiGet<SitemapDto>('/catalog/sitemap', revalidate.sitemap)) ?? { categories: [], products: [] };
 }

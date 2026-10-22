@@ -1,7 +1,0 @@
-.rating { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-size-sm); }
-.stars { position: relative; display: inline-flex; --icon-size: 1rem; }
-.layer { display: inline-flex; white-space: nowrap; }
-.empty { color: var(--color-star-empty); }
-.full { position: absolute; inset-block-start: 0; inset-inline-start: 0; overflow: hidden; color: var(--color-star); }
-.value { font-weight: var(--font-weight-medium); }
-.count, .none { color: var(--color-text-muted); }

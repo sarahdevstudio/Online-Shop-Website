@@ -1,7 +1,6 @@
 const LOCALE = 'fa-IR';
 
 const integerFormat = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
-const decimalFormat = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 1, minimumFractionDigits: 0 });
 const percentFormat = new Intl.NumberFormat(LOCALE, { style: 'percent', maximumFractionDigits: 0 });
 
 /** Persian digits with Persian thousands separators: 1250000 -> ۱٬۲۵۰٬۰۰۰ */
@@ -9,9 +8,9 @@ export function formatNumber(value: number): string {
   return integerFormat.format(value);
 }
 
-/** One decimal at most, for ratings: 4.5 -> ۴٫۵ */
-export function formatDecimal(value: number): string {
-  return decimalFormat.format(value);
+/** Price in Toman with Persian digits and separators: 1250000 -> "۱٬۲۵۰٬۰۰۰ تومان" */
+export function formatToman(value: number): string {
+  return `${integerFormat.format(value)} تومان`;
 }
 
 /** 0.2 -> ۲۰٪ */

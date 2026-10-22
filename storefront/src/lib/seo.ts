@@ -81,19 +81,33 @@ export function breadcrumbJsonLd(items: readonly { label: string; href?: string 
   };
 }
 
+/** Prices are stored in Toman; schema.org needs an ISO 4217 code, and Toman has none: 1 Toman = 10 Rial (IRR). */
+export const IRR_PER_TOMAN = 10;
+
+export type Availability = 'InStock' | 'OutOfStock' | 'Discontinued';
+
+export interface OfferInput {
+  sku: string;
+  /** Toman, as everywhere else in the shop. Converted to IRR for the structured data. */
+  priceToman: number;
+  availability: Availability;
+  /** Product URL that preselects this variant. */
+  path: string;
+}
+
 interface ProductJsonLdInput {
   name: string;
   description: string;
   path: string;
-  image?: string | null;
+  images: readonly string[];
   brand?: string | null;
-  sku?: string;
-  price: number | null;
-  inStock: boolean;
-  rating?: number | null;
-  ratingCount?: number | null;
+  offers: readonly OfferInput[];
 }
 
+/**
+ * Product with one Offer per variant. No aggregateRating/review: there are no reviews yet, and invented ratings in
+ * structured data violate Google's guidelines.
+ */
 export function productJsonLd(p: ProductJsonLdInput) {
   return {
     '@context': 'https://schema.org',
@@ -101,22 +115,21 @@ export function productJsonLd(p: ProductJsonLdInput) {
     name: p.name,
     description: p.description,
     url: absoluteUrl(p.path),
-    ...(p.image ? { image: [p.image] } : {}),
-    ...(p.sku ? { sku: p.sku } : {}),
+    ...(p.images.length > 0 ? { image: p.images } : {}),
+    ...(p.offers.length === 1 ? { sku: p.offers[0].sku } : {}),
     ...(p.brand ? { brand: { '@type': 'Brand', name: p.brand } } : {}),
-    ...(p.price !== null
+    ...(p.offers.length > 0
       ? {
-          offers: {
+          offers: p.offers.map((offer) => ({
             '@type': 'Offer',
-            url: absoluteUrl(p.path),
+            sku: offer.sku,
+            url: absoluteUrl(offer.path),
             priceCurrency: site.currency,
-            price: p.price,
-            availability: p.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-          },
+            price: offer.priceToman * IRR_PER_TOMAN,
+            availability: `https://schema.org/${offer.availability}`,
+            itemCondition: 'https://schema.org/NewCondition',
+          })),
         }
-      : {}),
-    ...(p.rating != null && p.ratingCount
-      ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: p.rating, reviewCount: p.ratingCount } }
       : {}),
   };
 }
