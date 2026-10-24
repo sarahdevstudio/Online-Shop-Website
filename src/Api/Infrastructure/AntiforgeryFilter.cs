@@ -11,6 +11,14 @@ internal sealed class AntiforgeryFilter(IAntiforgery antiforgery) : IEndpointFil
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         var request = context.HttpContext.Request;
+
+        // Server-to-server storefront endpoints carry no ambient credentials and are guarded by the storefront key
+        // filter registered on the same group (see StoreEndpoints); every other unsafe request needs the token.
+        if (context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<StorefrontEndpointMetadata>() is not null)
+        {
+            return await next(context);
+        }
+
         if (HttpMethods.IsGet(request.Method) || HttpMethods.IsHead(request.Method)
             || HttpMethods.IsOptions(request.Method) || HttpMethods.IsTrace(request.Method))
         {

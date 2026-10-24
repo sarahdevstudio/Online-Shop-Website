@@ -1,4 +1,5 @@
 using Serilog;
+using Serilog.Events;
 using Shop.Api.Endpoints;
 using Shop.Api.Infrastructure;
 using Shop.Infrastructure;
@@ -22,9 +23,24 @@ using (var scope = app.Services.CreateScope())
     await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>().InitializeAsync(app.Lifetime.ApplicationStopping);
 }
 
+// First: replaces the connection's address with X-Forwarded-For, but only when the peer is a trusted proxy (the storefront).
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(options =>
+{
+    // This host's own logger (not the process-wide static one), so request logs go where this host's sinks are.
+    options.Logger = app.Services.GetRequiredService<Serilog.ILogger>();
+
+    // Order access tokens are in the path; they must never reach the logs.
+    options.GetMessageTemplateProperties = (httpContext, requestPath, elapsedMs, statusCode) =>
+    [
+        new LogEventProperty("RequestMethod", new ScalarValue(httpContext.Request.Method)),
+        new LogEventProperty("RequestPath", new ScalarValue(LogPaths.Mask(requestPath))),
+        new LogEventProperty("StatusCode", new ScalarValue(statusCode)),
+        new LogEventProperty("Elapsed", new ScalarValue(elapsedMs)),
+    ];
+});
 
 if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
 {
@@ -54,6 +70,8 @@ api.MapCustomerEndpoints();
 api.MapAdminEndpoints();
 api.MapCatalogEndpoints();
 api.MapCatalogAdminEndpoints();
+api.MapStoreEndpoints();
+api.MapOrderAdminEndpoints();
 
 await app.RunAsync();
 

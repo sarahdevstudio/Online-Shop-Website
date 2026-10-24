@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Shop.Domain.Catalog;
 using Shop.Domain.Customers;
+using Shop.Domain.Orders;
 using Shop.Infrastructure.Identity;
 
 namespace Shop.Infrastructure.Persistence;
@@ -19,6 +20,11 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     public DbSet<AttributeDefinition> Attributes => Set<AttributeDefinition>();
     public DbSet<AttributeOption> AttributeOptions => Set<AttributeOption>();
     public DbSet<ProductAttributeValue> ProductAttributeValues => Set<ProductAttributeValue>();
+    public DbSet<Cart> Carts => Set<Cart>();
+    public DbSet<CartItem> CartItems => Set<CartItem>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<OrderStatusLog> OrderStatusLogs => Set<OrderStatusLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -43,6 +49,8 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
         builder.Entity<IdentityUserLogin<Guid>>().ToTable("UserLogins");
         builder.Entity<IdentityRoleClaim<Guid>>().ToTable("RoleClaims");
         builder.Entity<IdentityUserToken<Guid>>().ToTable("UserTokens");
+
+        builder.HasSequence<int>("OrderNumbers").StartsAt(1001).IncrementsBy(1);
 
         builder.ApplyConfigurationsFromAssembly(typeof(ShopDbContext).Assembly);
     }

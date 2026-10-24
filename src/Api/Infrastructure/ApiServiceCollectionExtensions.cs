@@ -4,13 +4,44 @@ using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
+using System.Net;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+using Shop.Application.Orders;
 using Shop.Application.Accounts;
 using Shop.Application.Common;
 using Shop.Domain.Security;
 using Shop.Infrastructure.Persistence;
 
 namespace Shop.Api.Infrastructure;
+
+/// <summary>Settings that must be real before a production start.</summary>
+public static class StartupChecks
+{
+    /// <summary>Throws when the storefront key is missing/a placeholder or the checkout payment details are placeholders.</summary>
+    public static void RequireProductionSettings(IConfiguration configuration)
+    {
+        if (!StorefrontKeyRules.IsAcceptableForProduction(configuration[$"{StorefrontOptions.SectionName}:{nameof(StorefrontOptions.ApiKey)}"]))
+        {
+            throw new InvalidOperationException(
+                $"Storefront:ApiKey must be set to a random secret of at least {StorefrontKeyRules.MinLength} characters (not a placeholder).");
+        }
+
+        var problems = (configuration.GetSection(CheckoutOptions.SectionName).Get<CheckoutOptions>() ?? new CheckoutOptions()).ProductionProblems();
+        if (problems.Count > 0)
+        {
+            throw new InvalidOperationException("Invalid checkout configuration: " + string.Join(" ", problems));
+        }
+    }
+}
+
+internal static class StoreEndpointsPolicies
+{
+    public const string Cart = Endpoints.StoreEndpoints.CartPolicy;
+    public const string Order = Endpoints.StoreEndpoints.OrderPolicy;
+    public const string Lookup = Endpoints.StoreEndpoints.LookupPolicy;
+}
 
 public static class ApiServiceCollectionExtensions
 {
@@ -22,7 +53,38 @@ public static class ApiServiceCollectionExtensions
         IConfiguration configuration,
         IWebHostEnvironment environment)
     {
+        if (environment.IsProduction())
+        {
+            StartupChecks.RequireProductionSettings(configuration);
+        }
+
+
         services.AddHttpContextAccessor();
+        services.Configure<StorefrontOptions>(configuration.GetSection(StorefrontOptions.SectionName));
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            // Only X-Forwarded-For, one hop, and only from the configured storefront address(es); from anyone else the
+            // header is ignored, so a browser-supplied value can never choose its own rate-limit key.
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor;
+            options.ForwardLimit = 1;
+            var trusted = configuration.GetSection($"{StorefrontOptions.SectionName}:{nameof(StorefrontOptions.TrustedProxies)}").Get<string[]>() ?? [];
+            if (trusted.Length > 0)
+            {
+                options.KnownProxies.Clear();
+                options.KnownIPNetworks.Clear();
+                foreach (var entry in trusted)
+                {
+                    if (entry.Contains('/'))
+                    {
+                        options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(entry));
+                    }
+                    else
+                    {
+                        options.KnownProxies.Add(IPAddress.Parse(entry));
+                    }
+                }
+            }
+        });
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
 
         services.AddValidatorsFromAssemblyContaining<RegisterCustomerRequestValidator>();
@@ -90,6 +152,15 @@ public static class ApiServiceCollectionExtensions
                         Window = TimeSpan.FromSeconds(windowSeconds),
                         QueueLimit = 0,
                     }));
+
+            // Store limits are per client IP (the real one, via the trusted storefront); read lazily from options.
+            options.AddPolicy(StoreEndpointsPolicies.Cart, http => ForIp(http, 120, TimeSpan.FromMinutes(1)));
+            options.AddPolicy(StoreEndpointsPolicies.Lookup, http => ForIp(http, 30, TimeSpan.FromMinutes(1)));
+            options.AddPolicy(StoreEndpointsPolicies.Order, http =>
+            {
+                var checkout = http.RequestServices.GetRequiredService<IOptions<CheckoutOptions>>().Value;
+                return ForIp(http, checkout.OrderPermitLimit, TimeSpan.FromMinutes(checkout.OrderWindowMinutes));
+            });
         });
 
         var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -107,6 +178,11 @@ public static class ApiServiceCollectionExtensions
 
         return services;
     }
+
+    private static RateLimitPartition<string> ForIp(HttpContext http, int permits, TimeSpan window) =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            $"{http.GetEndpoint()?.DisplayName}|{ClientIp.From(http)}",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = permits, Window = window, QueueLimit = 0 });
 
     /// <summary>One policy per permission, named exactly like the permission ("Settings.Manage").</summary>
     private static AuthorizationBuilder AddPermissionPolicies(this AuthorizationBuilder builder)

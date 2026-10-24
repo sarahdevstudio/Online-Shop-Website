@@ -5,7 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Shop.Application.Accounts;
 using Shop.Application.Catalog;
+using Shop.Application.Orders;
 using Shop.Application.Payments;
+using Shop.Infrastructure.Orders;
 using Shop.Infrastructure.Accounts;
 using Shop.Infrastructure.Catalog;
 using Shop.Infrastructure.Identity;
@@ -51,6 +53,10 @@ public static class DependencyInjection
         services.AddScoped<ICatalogService, CatalogService>();
         services.AddScoped<ICatalogAdminService, CatalogAdminService>();
         services.AddScoped<IStockService, StockService>();
+        services.Configure<CheckoutOptions>(configuration.GetSection(CheckoutOptions.SectionName));
+        services.AddScoped<ICartService, CartService>();
+        services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IAdminOrderService, AdminOrderService>();
         services.Configure<MediaOptions>(configuration.GetSection(MediaOptions.SectionName));
         services.AddSingleton<IMediaStorage, LocalMediaStorage>();
 

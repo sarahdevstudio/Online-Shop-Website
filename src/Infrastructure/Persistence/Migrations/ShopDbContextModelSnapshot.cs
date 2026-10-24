@@ -22,6 +22,9 @@ namespace Shop.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.HasSequence<int>("OrderNumbers")
+                .StartsAt(1001L);
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.Property<int>("Id")
@@ -513,6 +516,305 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.ToTable("Customers", (string)null);
                 });
 
+            modelBuilder.Entity("Shop.Domain.Orders.Cart", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("LastActivityAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("binary(32)")
+                        .IsFixedLength();
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LastActivityAtUtc")
+                        .HasDatabaseName("IX_Carts_LastActivityAtUtc");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Carts_TokenHash");
+
+                    b.ToTable("Carts", (string)null);
+                });
+
+            modelBuilder.Entity("Shop.Domain.Orders.CartItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CartId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<long>("SeenPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VariantId")
+                        .HasDatabaseName("IX_CartItems_VariantId");
+
+                    b.HasIndex("CartId", "VariantId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_CartItems_CartId_VariantId");
+
+                    b.ToTable("CartItems", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_CartItems_Quantity", "[Quantity] > 0");
+
+                            t.HasCheckConstraint("CK_CartItems_SeenPrice", "[SeenPrice] >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("Shop.Domain.Orders.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccessToken")
+                        .IsRequired()
+                        .HasMaxLength(43)
+                        .IsUnicode(false)
+                        .HasColumnType("char(43)")
+                        .IsFixedLength();
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ClientIp")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("IdempotencyKey")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Mobile")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .IsUnicode(false)
+                        .HasColumnType("char(11)")
+                        .IsFixedLength();
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Number")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValueSql("NEXT VALUE FOR [OrderNumbers]");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaymentStatus")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("char(10)")
+                        .IsFixedLength();
+
+                    b.Property<string>("Province")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<long>("ShippingFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<long>("Subtotal")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Total")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TransferCardLast4")
+                        .HasMaxLength(4)
+                        .IsUnicode(false)
+                        .HasColumnType("char(4)")
+                        .IsFixedLength();
+
+                    b.Property<string>("TransferTime")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TransferTracking")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessToken")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Orders_AccessToken");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Orders_IdempotencyKey");
+
+                    b.HasIndex("Number")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Orders_Number");
+
+                    b.HasIndex("ClientIp", "Status")
+                        .HasDatabaseName("IX_Orders_ClientIp_Status");
+
+                    b.HasIndex("Mobile", "Status")
+                        .HasDatabaseName("IX_Orders_Mobile_Status");
+
+                    b.HasIndex("Status", "CreatedAtUtc")
+                        .HasDatabaseName("IX_Orders_Status_CreatedAtUtc");
+
+                    b.ToTable("Orders", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Orders_Amounts", "[Subtotal] >= 0 AND [ShippingFee] >= 0");
+
+                            t.HasCheckConstraint("CK_Orders_PaymentMethod", "[PaymentMethod] IN (0, 1)");
+
+                            t.HasCheckConstraint("CK_Orders_PaymentStatus", "[PaymentStatus] IN (0, 1)");
+
+                            t.HasCheckConstraint("CK_Orders_Status", "[Status] IN (0, 1, 2, 3, 4, 5)");
+
+                            t.HasCheckConstraint("CK_Orders_Total", "[Total] = [Subtotal] + [ShippingFee]");
+                        });
+                });
+
+            modelBuilder.Entity("Shop.Domain.Orders.OrderItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<long>("UnitPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("VariantLabel")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .HasDatabaseName("IX_OrderItems_OrderId");
+
+                    b.HasIndex("VariantId")
+                        .HasDatabaseName("IX_OrderItems_VariantId");
+
+                    b.ToTable("OrderItems", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_OrderItems_Quantity", "[Quantity] > 0");
+
+                            t.HasCheckConstraint("CK_OrderItems_UnitPrice", "[UnitPrice] > 0");
+                        });
+                });
+
+            modelBuilder.Entity("Shop.Domain.Orders.OrderStatusLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("AdminUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("FromStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ToStatus")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .HasDatabaseName("IX_OrderStatusLogs_OrderId");
+
+                    b.ToTable("OrderStatusLogs", (string)null);
+                });
+
             modelBuilder.Entity("Shop.Infrastructure.Identity.ApplicationRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -750,6 +1052,45 @@ namespace Shop.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Shop.Domain.Orders.CartItem", b =>
+                {
+                    b.HasOne("Shop.Domain.Orders.Cart", null)
+                        .WithMany("Items")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Shop.Domain.Catalog.ProductVariant", null)
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Shop.Domain.Orders.OrderItem", b =>
+                {
+                    b.HasOne("Shop.Domain.Orders.Order", null)
+                        .WithMany("Items")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Shop.Domain.Catalog.ProductVariant", null)
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Shop.Domain.Orders.OrderStatusLog", b =>
+                {
+                    b.HasOne("Shop.Domain.Orders.Order", null)
+                        .WithMany("StatusLog")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Shop.Domain.Catalog.AttributeDefinition", b =>
                 {
                     b.Navigation("Options");
@@ -762,6 +1103,18 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.Navigation("Images");
 
                     b.Navigation("Variants");
+                });
+
+            modelBuilder.Entity("Shop.Domain.Orders.Cart", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Shop.Domain.Orders.Order", b =>
+                {
+                    b.Navigation("Items");
+
+                    b.Navigation("StatusLog");
                 });
 #pragma warning restore 612, 618
         }

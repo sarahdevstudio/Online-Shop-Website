@@ -7,6 +7,13 @@ internal static class ResultExtensions
     public static IResult ToProblem(this Error error)
     {
         var extensions = new Dictionary<string, object?> { ["code"] = error.Code };
+        if (error.Extensions is not null)
+        {
+            foreach (var (key, value) in error.Extensions)
+            {
+                extensions[key] = value;
+            }
+        }
 
         return error.Type switch
         {

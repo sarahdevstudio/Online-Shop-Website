@@ -1,9 +1,12 @@
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Hosting;
+using Serilog.Core;
+using Serilog.Events;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Builder;
 using Shop.Infrastructure.Persistence;
 
 namespace Shop.IntegrationTests;
@@ -15,6 +18,7 @@ namespace Shop.IntegrationTests;
 public sealed class ApiFixture : IAsyncLifetime
 {
     public const string AdminEmail = "admin@shop.test";
+    public const string StorefrontKey = "test-storefront-key-0123456789abcdef-xyz";
 
     private const string DefaultConnection =
         "Server=(localdb)\\MSSQLLocalDB;Trusted_Connection=True;TrustServerCertificate=True";
@@ -24,6 +28,8 @@ public sealed class ApiFixture : IAsyncLifetime
     public string AdminPassword { get; } = TestData.NewPassword();
 
     public WebApplicationFactory<Program> Factory { get; private set; } = null!;
+
+    public CapturingLogSink LogSink { get; } = new();
 
     public string MediaRoot { get; } = Path.Combine(Path.GetTempPath(), $"shop-media-{Guid.NewGuid():N}");
 
@@ -46,8 +52,15 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("Seed__AdminEmail", AdminEmail);
         Environment.SetEnvironmentVariable("Seed__AdminPassword", AdminPassword);
         Environment.SetEnvironmentVariable("Media__RootPath", MediaRoot);
+        Environment.SetEnvironmentVariable("Storefront__ApiKey", StorefrontKey);
+        // Tests share one host and reuse the same pseudo-addresses, so the order rate limit is only exercised on its own host.
+        Environment.SetEnvironmentVariable("Checkout__OrderPermitLimit", "100000");
 
-        Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(host => host.UseEnvironment("Testing"));
+        Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(host => host.UseEnvironment("Testing").ConfigureServices(services =>
+        {
+            services.AddSingleton<IStartupFilter, TestPeerStartupFilter>();
+            services.AddSingleton<Serilog.Core.ILogEventSink>(LogSink);
+        }));
         using var warmup = Factory.CreateClient(); // starts the host: migrates and seeds
         return Task.CompletedTask;
     }
@@ -85,4 +98,36 @@ internal static class TestData
     public static string NewPassword() => "Pw-" + Convert.ToHexString(RandomNumberGenerator.GetBytes(12));
 
     public static string NewEmail() => $"user-{Guid.NewGuid():N}@example.com";
+}
+
+/// <summary>
+/// TestServer has no socket peer. A test sets one with the X-Test-Peer-Ip header, applied before the API's own
+/// middleware (so UseForwardedHeaders sees it exactly as it would see a real connection).
+/// </summary>
+internal sealed class TestPeerStartupFilter : IStartupFilter
+{
+    public const string Header = "X-Test-Peer-Ip";
+
+    public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+    {
+        app.Use(async (context, nextMiddleware) =>
+        {
+            if (System.Net.IPAddress.TryParse(context.Request.Headers[Header].ToString(), out var peer))
+            {
+                context.Connection.RemoteIpAddress = peer;
+            }
+
+            await nextMiddleware();
+        });
+        next(app);
+    };
+}
+
+public sealed class CapturingLogSink : ILogEventSink
+{
+    private readonly System.Collections.Concurrent.ConcurrentQueue<string> _lines = new();
+
+    public IReadOnlyCollection<string> Lines => _lines.ToArray();
+
+    public void Emit(LogEvent logEvent) => _lines.Enqueue(logEvent.RenderMessage() + " " + logEvent.Exception);
 }

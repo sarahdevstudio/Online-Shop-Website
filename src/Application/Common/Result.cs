@@ -13,7 +13,8 @@ public sealed record Error(
     ErrorType Type,
     string Code,
     string Message,
-    IReadOnlyDictionary<string, string[]>? ValidationErrors = null)
+    IReadOnlyDictionary<string, string[]>? ValidationErrors = null,
+    IReadOnlyDictionary<string, object?>? Extensions = null)
 {
     public static Error Validation(IReadOnlyDictionary<string, string[]> errors) =>
         new(ErrorType.Validation, "validation_failed", "One or more validation errors occurred.", errors);
@@ -22,6 +23,10 @@ public sealed record Error(
     public static Error Forbidden(string code, string message) => new(ErrorType.Forbidden, code, message);
     public static Error NotFound(string code, string message) => new(ErrorType.NotFound, code, message);
     public static Error Conflict(string code, string message) => new(ErrorType.Conflict, code, message);
+
+    /// <summary>A conflict that carries machine-readable details (e.g. which cart lines are short on stock).</summary>
+    public static Error Conflict(string code, string message, IReadOnlyDictionary<string, object?> extensions) =>
+        new(ErrorType.Conflict, code, message, null, extensions);
 }
 
 public class Result

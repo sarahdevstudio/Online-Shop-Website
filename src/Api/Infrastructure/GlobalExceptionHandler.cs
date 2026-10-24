@@ -29,7 +29,7 @@ internal sealed class GlobalExceptionHandler(IProblemDetailsService problemDetai
 
         if (status >= StatusCodes.Status500InternalServerError)
         {
-            logger.LogError(exception, "Unhandled exception for {Method} {Path}", httpContext.Request.Method, httpContext.Request.Path);
+            logger.LogError(exception, "Unhandled exception for {Method} {Path}", httpContext.Request.Method, LogPaths.Mask(httpContext.Request.Path));
         }
         else
         {
