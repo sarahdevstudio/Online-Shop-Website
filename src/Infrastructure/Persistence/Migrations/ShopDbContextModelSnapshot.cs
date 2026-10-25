@@ -516,6 +516,50 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.ToTable("Customers", (string)null);
                 });
 
+            modelBuilder.Entity("Shop.Domain.Inventory.StockAdjustment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("AdminUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Delta")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<int>("StockAfter")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VariantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VariantId", "AtUtc")
+                        .HasDatabaseName("IX_StockAdjustments_VariantId_AtUtc");
+
+                    b.ToTable("StockAdjustments", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StockAdjustments_StockAfter", "[StockAfter] >= 0");
+                        });
+                });
+
             modelBuilder.Entity("Shop.Domain.Orders.Cart", b =>
                 {
                     b.Property<int>("Id")
@@ -1179,6 +1223,15 @@ namespace Shop.Infrastructure.Persistence.Migrations
                         .WithOne()
                         .HasForeignKey("Shop.Domain.Customers.Customer", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Shop.Domain.Inventory.StockAdjustment", b =>
+                {
+                    b.HasOne("Shop.Domain.Catalog.ProductVariant", null)
+                        .WithMany()
+                        .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

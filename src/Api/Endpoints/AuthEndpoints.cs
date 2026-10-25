@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Antiforgery;
 using Shop.Api.Infrastructure;
 using Shop.Application.Accounts;
+using Shop.Application.Admin;
 using Shop.Application.Common;
 
 namespace Shop.Api.Endpoints;
@@ -38,6 +39,13 @@ internal static class AuthEndpoints
                 await accounts.LogoutAsync(ct);
                 return Results.NoContent();
             })
+            .RequireAuthorization();
+
+        // Revokes every other session and keeps this one signed in on a fresh cookie.
+        auth.MapPost("/change-password", async (ChangePasswordRequest request, ICurrentUser currentUser, IAccountService accounts, CancellationToken ct) =>
+            (await accounts.ChangePasswordAsync(currentUser.UserId!.Value, request, ct)).ToHttpResult(Results.NoContent))
+            .WithValidation<ChangePasswordRequest>()
+            .RequireRateLimiting(ApiServiceCollectionExtensions.AuthRateLimitPolicy)
             .RequireAuthorization();
 
         auth.MapGet("/me", async (ICurrentUser currentUser, IAccountService accounts, CancellationToken ct) =>

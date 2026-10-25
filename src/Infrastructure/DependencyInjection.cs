@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Shop.Application.Accounts;
+using Shop.Application.Admin;
 using Shop.Application.Catalog;
 using Shop.Application.Orders;
 using Shop.Application.Payments;
@@ -51,10 +52,13 @@ public static class DependencyInjection
             .AddSignInManager();
 
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<LoginThrottle>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<ICatalogService, CatalogService>();
         services.AddScoped<ICatalogAdminService, CatalogAdminService>();
         services.AddScoped<IStockService, StockService>();
+        services.AddScoped<IStockAdminService, StockAdminService>();
+        services.AddScoped<IDashboardService, DashboardService>();
         services.Configure<CheckoutOptions>(configuration.GetSection(CheckoutOptions.SectionName));
         services.Configure<StoreDefaultsOptions>(configuration.GetSection(StoreDefaultsOptions.SectionName));
         services.AddSingleton<StoreSettingsProvider>();

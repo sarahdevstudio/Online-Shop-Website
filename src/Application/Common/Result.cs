@@ -7,6 +7,7 @@ public enum ErrorType
     Forbidden,
     NotFound,
     Conflict,
+    TooManyRequests,
 }
 
 public sealed record Error(
@@ -23,6 +24,7 @@ public sealed record Error(
     public static Error Forbidden(string code, string message) => new(ErrorType.Forbidden, code, message);
     public static Error NotFound(string code, string message) => new(ErrorType.NotFound, code, message);
     public static Error Conflict(string code, string message) => new(ErrorType.Conflict, code, message);
+    public static Error TooManyRequests(string code, string message) => new(ErrorType.TooManyRequests, code, message);
 
     /// <summary>A conflict that carries machine-readable details (e.g. which cart lines are short on stock).</summary>
     public static Error Conflict(string code, string message, IReadOnlyDictionary<string, object?> extensions) =>

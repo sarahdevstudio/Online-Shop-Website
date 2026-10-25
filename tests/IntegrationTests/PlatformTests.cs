@@ -85,6 +85,7 @@ public sealed class PlatformTests(ApiFixture fixture) : ApiTestBase(fixture)
         public Task<Result<AccountDto>> RegisterCustomerAsync(RegisterCustomerRequest request, CancellationToken ct) => throw Boom();
         public Task<Result<AccountDto>> LoginAsync(LoginRequest request, CancellationToken ct) => throw Boom();
         public Task LogoutAsync(CancellationToken ct) => throw Boom();
+        public Task<Result> ChangePasswordAsync(Guid userId, Shop.Application.Admin.ChangePasswordRequest request, CancellationToken ct) => throw Boom();
         public Task<Result<AccountDto>> GetAccountAsync(Guid userId, CancellationToken ct) => throw Boom();
         public Task<Result<CustomerProfileDto>> GetCustomerProfileAsync(Guid userId, CancellationToken ct) => throw Boom();
 

@@ -4,12 +4,13 @@ using Shop.Application.Catalog;
 using Shop.Application.Common;
 using Shop.Domain.Catalog;
 using Shop.Domain.Common;
+using Shop.Domain.Inventory;
 using Shop.Infrastructure.Persistence;
 
 namespace Shop.Infrastructure.Catalog;
 
 internal sealed class CatalogAdminService(
-    ShopDbContext db, IMediaStorage media, IOptions<MediaOptions> mediaOptions, TimeProvider clock) : ICatalogAdminService
+    ShopDbContext db, IMediaStorage media, IOptions<MediaOptions> mediaOptions, ICurrentUser currentUser, TimeProvider clock) : ICatalogAdminService
 {
     public const int AdminPageSize = 50;
 
@@ -356,7 +357,14 @@ internal sealed class CatalogAdminService(
         // Compare against the version the admin read: a checkout that changed the stock meanwhile makes this a 409
         // (DbUpdateConcurrencyException → global handler) instead of silently overwriting the stock.
         db.Entry(variant).Property(v => v.RowVersion).OriginalValue = request.RowVersion;
+        var oldStock = variant.Stock;
         variant.Update(request.Sku, request.Price, request.CompareAtPrice, request.Stock, request.IsActive, request.SortOrder);
+        if (request.Stock != oldStock)
+        {
+            db.StockAdjustments.Add(StockAdjustment.Create(
+                variantId, currentUser.UserId, request.Stock - oldStock, request.Stock, null, StockAdjustment.EditSource, clock.GetUtcNow().UtcDateTime));
+        }
+
         await db.Products.Where(p => p.Id == variant.ProductId).ForEachAsync(p => p.Touch(clock.GetUtcNow().UtcDateTime), ct);
         return await SaveAsync(() => ToDto(variant), ("UX_ProductVariants_Sku", SkuTaken), ct);
     }

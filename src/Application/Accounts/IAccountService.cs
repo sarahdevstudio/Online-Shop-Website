@@ -9,7 +9,14 @@ public interface IAccountService
 
     Task<Result<AccountDto>> LoginAsync(LoginRequest request, CancellationToken ct);
 
+    /// <summary>Signs out and revokes every session of the user (the security stamp changes), not just this browser's cookie.</summary>
     Task LogoutAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Changes the password after checking the current one, revokes all other sessions and keeps the caller signed in on a
+    /// fresh cookie. Admins need at least 12 characters.
+    /// </summary>
+    Task<Result> ChangePasswordAsync(Guid userId, Admin.ChangePasswordRequest request, CancellationToken ct);
 
     Task<Result<AccountDto>> GetAccountAsync(Guid userId, CancellationToken ct);
 

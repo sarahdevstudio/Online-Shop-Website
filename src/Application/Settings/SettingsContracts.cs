@@ -42,7 +42,11 @@ public sealed record AdminStoreSettingsDto(
     StoreSettingsValues Settings, bool CardToCardOffered, DateTime UpdatedAtUtc, Guid? UpdatedByUserId, byte[] RowVersion);
 
 /// <summary>The full settings plus the row version read with them; sending it back makes a stale save fail with 409.</summary>
-public sealed record UpdateStoreSettingsRequest(StoreSettingsValues Settings, byte[] RowVersion);
+/// <summary>
+/// <see cref="CurrentPassword"/> is the admin's own password: required (step-up re-authentication) when the change touches
+/// the card number, holder or bank, or switches a payment method on or off.
+/// </summary>
+public sealed record UpdateStoreSettingsRequest(StoreSettingsValues Settings, byte[] RowVersion, string? CurrentPassword = null);
 
 public sealed record SettingsAuditEntryDto(
     int Id, DateTime AtUtc, Guid? AdminUserId, string? AdminEmail, string Field, string? OldValue, string? NewValue);

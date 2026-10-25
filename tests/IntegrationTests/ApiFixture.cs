@@ -50,6 +50,7 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("Database__MigrateOnStartup", "true");
         Environment.SetEnvironmentVariable("Auth__RequireSecureCookie", "false");
         Environment.SetEnvironmentVariable("RateLimiting__AuthPermitLimit", "100000");
+        Environment.SetEnvironmentVariable("Auth__AccountAttemptsPerMinute", "100000");
         Environment.SetEnvironmentVariable("Seed__AdminEmail", AdminEmail);
         Environment.SetEnvironmentVariable("Seed__AdminPassword", AdminPassword);
         Environment.SetEnvironmentVariable("Media__RootPath", MediaRoot);

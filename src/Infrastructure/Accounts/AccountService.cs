@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using Shop.Application.Accounts;
+using Shop.Application.Admin;
 using Shop.Application.Common;
 using Shop.Domain.Customers;
 using Shop.Domain.Security;
@@ -14,6 +15,8 @@ internal sealed class AccountService(
     ShopDbContext db,
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
+    ICurrentUser currentUser,
+    LoginThrottle throttle,
     TimeProvider clock) : IAccountService
 {
     private static readonly Error InvalidCredentials =
@@ -68,6 +71,14 @@ internal sealed class AccountService(
     public async Task<Result<AccountDto>> LoginAsync(LoginRequest request, CancellationToken ct)
     {
         var email = request.Email.Trim();
+
+        // Per-account attempt limit (on top of the per-IP limiter and the 15-minute lockout after 5 failures). It counts
+        // every attempt for any e-mail string, so it reveals nothing about whether the account exists.
+        if (!throttle.TryAcquire(email))
+        {
+            return Error.TooManyRequests("rate_limited", "Too many sign-in attempts. Try again in a minute.");
+        }
+
         var result = await signInManager.PasswordSignInAsync(email, request.Password, isPersistent: false, lockoutOnFailure: true);
         if (!result.Succeeded)
         {
@@ -79,7 +90,49 @@ internal sealed class AccountService(
         return user is null ? InvalidCredentials : await BuildAccountAsync(user, ct);
     }
 
-    public Task LogoutAsync(CancellationToken ct) => signInManager.SignOutAsync();
+    public async Task LogoutAsync(CancellationToken ct)
+    {
+        // A new security stamp makes every cookie issued to this user invalid on its next request (checked on each request),
+        // so a copied cookie dies with the logout instead of living until it expires.
+        if (currentUser.UserId is { } id && await userManager.FindByIdAsync(id.ToString()) is { } user)
+        {
+            await userManager.UpdateSecurityStampAsync(user);
+        }
+
+        await signInManager.SignOutAsync();
+    }
+
+    public async Task<Result> ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+        {
+            return Result.Failure(Error.NotFound("account_not_found", "Account was not found."));
+        }
+
+        if (await userManager.IsInRoleAsync(user, Roles.Admin) && AdminPasswordRules.Weakness(request.NewPassword, user.Email) is { } weakness)
+        {
+            return Result.Failure(Error.Validation(new Dictionary<string, string[]> { ["newPassword"] = [weakness] }));
+        }
+
+        if (await userManager.IsLockedOutAsync(user) || !await userManager.CheckPasswordAsync(user, request.CurrentPassword))
+        {
+            await userManager.AccessFailedAsync(user); // guessing the current password here counts towards the lockout
+            return Result.Failure(Error.Validation(new Dictionary<string, string[]> { ["currentPassword"] = ["The current password is incorrect."] }));
+        }
+
+        var changed = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        if (!changed.Succeeded)
+        {
+            return Result.Failure(Error.Validation(new Dictionary<string, string[]> { ["newPassword"] = changed.Errors.Select(e => e.Description).ToArray() }));
+        }
+
+        // ChangePassword rotated the security stamp, so every session (this one too) is now invalid; keep the caller
+        // signed in on a fresh cookie.
+        await userManager.ResetAccessFailedCountAsync(user);
+        await signInManager.RefreshSignInAsync(user);
+        return Result.Success();
+    }
 
     public async Task<Result<AccountDto>> GetAccountAsync(Guid userId, CancellationToken ct)
     {

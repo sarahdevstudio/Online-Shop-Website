@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Shop.Domain.Catalog;
 using Shop.Domain.Customers;
+using Shop.Domain.Inventory;
 using Shop.Domain.Orders;
 using Shop.Domain.Settings;
 using Shop.Infrastructure.Identity;
@@ -28,6 +29,7 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     public DbSet<OrderStatusLog> OrderStatusLogs => Set<OrderStatusLog>();
     public DbSet<StoreSetting> StoreSettings => Set<StoreSetting>();
     public DbSet<SettingsAuditLog> SettingsAuditLogs => Set<SettingsAuditLog>();
+    public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

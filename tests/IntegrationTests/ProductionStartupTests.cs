@@ -29,4 +29,18 @@ public class ProductionStartupTests
 
         Assert.Contains("Storefront:ApiKey", ex.Message);
     }
+
+    [Fact]
+    public void SeededAdminPassword_StopsAProductionStart()
+    {
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            StartupChecks.RequireProductionSettings(Config(("Storefront:ApiKey", GoodKey), ("Seed:AdminPassword", "anything-12345"))));
+
+        Assert.Contains("create-admin", ex.Message);
+        Assert.DoesNotContain("anything-12345", ex.Message);
+    }
+
+    [Fact]
+    public void WithoutASeededPassword_ProductionStarts() =>
+        StartupChecks.RequireProductionSettings(Config(("Storefront:ApiKey", GoodKey), ("Seed:AdminEmail", "owner@shop.test")));
 }

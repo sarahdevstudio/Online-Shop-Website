@@ -35,7 +35,10 @@ Nothing secret is committed. Provide values with environment variables (use `__`
 | Setting | Purpose |
 |---|---|
 | `ConnectionStrings__Default` | SQL Server connection (required outside Development) |
-| `Seed__AdminEmail`, `Seed__AdminPassword` | Optional first admin account, created at startup if missing |
+| `Seed__AdminEmail`, `Seed__AdminPassword` | Development/Testing only: an admin account created at startup if missing. **Production refuses to start with `Seed__AdminPassword` set**: use `create-admin` below |
+| `Auth__SessionHours` | Lifetime of the API sign-in cookie (default 8, sliding). The admin panel adds its own 60 min idle / 8 h absolute limits |
+| `Auth__AccountAttemptsPerMinute` | Sign-in attempts per account per minute before `429` (default 5); five wrong passwords also lock the account for 15 minutes |
+| `Storefront__ApiKey`, `Storefront__TrustedProxies__N` | Shared secret of the Next.js server (required, >= 32 random characters, in Production) and the addresses allowed to forward the client IP |
 | `Database__MigrateOnStartup` | `true` to migrate at startup (default `false` outside Development) |
 | `Auth__RequireSecureCookie` | Defaults to `true`; only `Development` turns it off |
 | `Cors__AllowedOrigins__0` | Allowed browser origins (none by default) |
@@ -47,6 +50,16 @@ Nothing secret is committed. Provide values with environment variables (use `__`
 dotnet user-secrets --project src/Api set "Seed:AdminEmail" "admin@example.com"
 dotnet user-secrets --project src/Api set "Seed:AdminPassword" "<choose a strong password>"
 ```
+
+### Creating the first admin
+
+The admin account is created from the command line, never through the web and never with the password on the command line:
+
+```bash
+dotnet Shop.Api.dll create-admin --email owner@example.com
+```
+
+The password is asked at a **hidden prompt** (twice). For scripted installs it can instead be provided in the `SHOP_ADMIN_PASSWORD` environment variable for that one command. A `--password` argument is refused on purpose (it would end up in shell history and process lists). At least 12 characters; repetitive, digits-only passwords and passwords containing the e-mail name are refused. The command applies the same startup work as the API (migrations when `Database__MigrateOnStartup` is on, roles, store settings), so run it with the production connection string (`ConnectionStrings__Default`). It refuses an e-mail that already exists; change a password later in the admin panel (Account > Change password).
 
 ## Storefront
 

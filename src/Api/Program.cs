@@ -5,6 +5,12 @@ using Shop.Api.Infrastructure;
 using Shop.Infrastructure;
 using Shop.Infrastructure.Persistence;
 
+// `dotnet Shop.Api.dll create-admin --email ...`: create an admin account and exit (no web server).
+if (args.Length > 0 && args[0] == "create-admin")
+{
+    return await Shop.Api.Commands.CreateAdminCommand.RunAsync(args[1..]);
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, services, logger) => logger
@@ -73,8 +79,10 @@ api.MapCatalogAdminEndpoints();
 api.MapStoreEndpoints();
 api.MapOrderAdminEndpoints();
 api.MapSettingsAdminEndpoints();
+api.MapAdminOperationsEndpoints();
 
 await app.RunAsync();
+return 0;
 
 // Exposed so integration tests can host the API with WebApplicationFactory<Program>.
 public partial class Program;

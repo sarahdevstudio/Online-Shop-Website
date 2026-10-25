@@ -25,6 +25,12 @@ public static class StartupChecks
     /// </summary>
     public static void RequireProductionSettings(IConfiguration configuration)
     {
+        if (!string.IsNullOrEmpty(configuration["Seed:AdminPassword"]))
+        {
+            throw new InvalidOperationException(
+                "Seed:AdminPassword must not be set in Production. Create the first admin with `dotnet Shop.Api.dll create-admin --email <e-mail>`.");
+        }
+
         if (!StorefrontKeyRules.IsAcceptableForProduction(configuration[$"{StorefrontOptions.SectionName}:{nameof(StorefrontOptions.ApiKey)}"]))
         {
             throw new InvalidOperationException(
@@ -107,7 +113,7 @@ public static class ApiServiceCollectionExtensions
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.Cookie.SecurePolicy = requireSecureCookie ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
-            options.ExpireTimeSpan = TimeSpan.FromDays(7);
+            options.ExpireTimeSpan = TimeSpan.FromHours(configuration.GetValue("Auth:SessionHours", 8));
             options.SlidingExpiration = true;
 
             // This is an API: answer 401/403 instead of redirecting to a login page.
@@ -122,6 +128,9 @@ public static class ApiServiceCollectionExtensions
                 return Task.CompletedTask;
             };
         });
+
+        // Check the security stamp on every request: logging out or changing the password kills every other session at once.
+        services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
 
         services.AddAuthorizationBuilder()
             .AddPolicy(CustomerPolicy, policy => policy.RequireRole(Roles.Customer))

@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shop.Application.Catalog;
 using Shop.Application.Common;
 using Shop.Application.Settings;
 using Shop.Domain.Settings;
+using Shop.Infrastructure.Identity;
 using Shop.Infrastructure.Persistence;
 
 namespace Shop.Infrastructure.Settings;
@@ -79,10 +81,14 @@ internal sealed class StoreInfoService(IStoreSettings settings) : IStoreInfoServ
     }
 }
 
-internal sealed class AdminSettingsService(ShopDbContext db, IStoreSettings settings, ICurrentUser currentUser, TimeProvider clock)
+internal sealed class AdminSettingsService(
+    ShopDbContext db, IStoreSettings settings, ICurrentUser currentUser, UserManager<ApplicationUser> users, TimeProvider clock)
     : IAdminSettingsService
 {
     private const int PageSize = 30;
+
+    /// <summary>Changing any of these needs the admin's current password (step-up re-authentication).</summary>
+    private static readonly string[] SensitiveFields = ["cardNumber", "cardHolderName", "bankName", "cardToCardEnabled", "cashOnDeliveryEnabled"];
 
     public async Task<AdminStoreSettingsDto> GetAsync(CancellationToken ct) =>
         ToDto(await db.StoreSettings.AsNoTracking().SingleAsync(ct));
@@ -106,6 +112,12 @@ internal sealed class AdminSettingsService(ShopDbContext db, IStoreSettings sett
             return ToDto(row);
         }
 
+        var sensitive = changes.Where(c => SensitiveFields.Contains(c.Field)).Select(c => c.Field).ToList();
+        if (sensitive.Count > 0 && await StepUpAsync(request.CurrentPassword, sensitive, now, ct) is { } denied)
+        {
+            return denied;
+        }
+
         row.Apply(values, currentUser.UserId, now);
         db.SettingsAuditLogs.AddRange(changes.Select(c => SettingsAuditLog.Create(currentUser.UserId, c.Field, c.Old, c.New, now)));
         try
@@ -119,6 +131,31 @@ internal sealed class AdminSettingsService(ShopDbContext db, IStoreSettings sett
 
         settings.Invalidate();
         return ToDto(row);
+    }
+
+    /// <summary>
+    /// Null when the password is right. A wrong or missing one is a 403, is logged (field names only, never values) and
+    /// counts as a failed sign-in, so guessing the password here leads to the same 15-minute lockout as the login page.
+    /// </summary>
+    private async Task<Error?> StepUpAsync(string? password, IReadOnlyList<string> fields, DateTime now, CancellationToken ct)
+    {
+        var user = currentUser.UserId is { } id ? await users.FindByIdAsync(id.ToString()) : null;
+        var ok = user is not null && !string.IsNullOrEmpty(password) && !await users.IsLockedOutAsync(user)
+            && await users.CheckPasswordAsync(user, password);
+        if (ok)
+        {
+            await users.ResetAccessFailedCountAsync(user!);
+            return null;
+        }
+
+        if (user is not null && !string.IsNullOrEmpty(password))
+        {
+            await users.AccessFailedAsync(user);
+        }
+
+        db.SettingsAuditLogs.Add(SettingsAuditLog.Create(currentUser.UserId, "reauthFailed", null, string.Join(",", fields), now));
+        await db.SaveChangesAsync(ct);
+        return Error.Forbidden("step_up_failed", "برای این تغییر، رمز عبور فعلی خود را درست وارد کنید.");
     }
 
     public async Task<PagedList<SettingsAuditEntryDto>> GetAuditAsync(int page, CancellationToken ct)

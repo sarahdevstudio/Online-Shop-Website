@@ -34,14 +34,14 @@ public sealed class SettingsTests(ApiFixture fixture) : StoreTestBase(fixture)
     private async Task<AdminSettingsBody> CurrentAsync(HttpClient admin) =>
         await GetOkAsync<AdminSettingsBody>(admin, "/api/v1/admin/settings");
 
-    private static Task<HttpResponseMessage> PutAsync(HttpClient admin, SettingsValuesBody values, byte[] rowVersion) =>
-        SendAsync(admin, HttpMethod.Put, "/api/v1/admin/settings", new { settings = values, rowVersion });
+    private Task<HttpResponseMessage> PutAsync(HttpClient admin, SettingsValuesBody values, byte[] rowVersion, string? password = null) =>
+        SendAsync(admin, HttpMethod.Put, "/api/v1/admin/settings", new { settings = values, rowVersion, currentPassword = password ?? Fixture.AdminPassword });
 
     /// <summary>Saves a change on top of the current settings and returns the response; always check the status in the test.</summary>
-    private async Task<HttpResponseMessage> ChangeAsync(HttpClient admin, Func<SettingsValuesBody, SettingsValuesBody> change)
+    private async Task<HttpResponseMessage> ChangeAsync(HttpClient admin, Func<SettingsValuesBody, SettingsValuesBody> change, string? password = null)
     {
         var current = await CurrentAsync(admin);
-        return await PutAsync(admin, change(current.Settings), current.RowVersion);
+        return await PutAsync(admin, change(current.Settings), current.RowVersion, password);
     }
 
     private async Task<AdminSettingsBody> ChangeOkAsync(HttpClient admin, Func<SettingsValuesBody, SettingsValuesBody> change)
