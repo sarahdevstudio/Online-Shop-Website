@@ -18,6 +18,7 @@ namespace Shop.IntegrationTests;
 public sealed class ApiFixture : IAsyncLifetime
 {
     public const string AdminEmail = "admin@shop.test";
+    public const string TestCard = "6037991234567893"; // passes the Luhn check
     public const string StorefrontKey = "test-storefront-key-0123456789abcdef-xyz";
 
     private const string DefaultConnection =
@@ -53,6 +54,10 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("Seed__AdminPassword", AdminPassword);
         Environment.SetEnvironmentVariable("Media__RootPath", MediaRoot);
         Environment.SetEnvironmentVariable("Storefront__ApiKey", StorefrontKey);
+        // First-start store settings: a valid card, so card-to-card is offered.
+        Environment.SetEnvironmentVariable("StoreDefaults__CardNumber", TestCard);
+        Environment.SetEnvironmentVariable("StoreDefaults__CardHolderName", "رضا احمدی");
+        Environment.SetEnvironmentVariable("StoreDefaults__BankName", "ملی");
         // Tests share one host and reuse the same pseudo-addresses, so the order rate limit is only exercised on its own host.
         Environment.SetEnvironmentVariable("Checkout__OrderPermitLimit", "100000");
 

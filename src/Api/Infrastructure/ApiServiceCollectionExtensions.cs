@@ -19,7 +19,10 @@ namespace Shop.Api.Infrastructure;
 /// <summary>Settings that must be real before a production start.</summary>
 public static class StartupChecks
 {
-    /// <summary>Throws when the storefront key is missing/a placeholder or the checkout payment details are placeholders.</summary>
+    /// <summary>
+    /// Throws when the storefront key is missing or a placeholder. Card details are not checked here: checkout simply does not
+    /// offer card-to-card until the store settings hold a valid card.
+    /// </summary>
     public static void RequireProductionSettings(IConfiguration configuration)
     {
         if (!StorefrontKeyRules.IsAcceptableForProduction(configuration[$"{StorefrontOptions.SectionName}:{nameof(StorefrontOptions.ApiKey)}"]))
@@ -28,11 +31,6 @@ public static class StartupChecks
                 $"Storefront:ApiKey must be set to a random secret of at least {StorefrontKeyRules.MinLength} characters (not a placeholder).");
         }
 
-        var problems = (configuration.GetSection(CheckoutOptions.SectionName).Get<CheckoutOptions>() ?? new CheckoutOptions()).ProductionProblems();
-        if (problems.Count > 0)
-        {
-            throw new InvalidOperationException("Invalid checkout configuration: " + string.Join(" ", problems));
-        }
     }
 }
 

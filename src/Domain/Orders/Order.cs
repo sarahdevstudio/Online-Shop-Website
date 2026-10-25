@@ -45,6 +45,12 @@ public sealed class Order
     public long ShippingFee { get; private set; }
     public long Total { get; private set; }
 
+    /// <summary>Card details shown to the customer, copied from the store settings when the order was placed (card-to-card only).</summary>
+    public string? PaymentCardNumber { get; private set; }
+
+    public string? PaymentCardHolder { get; private set; }
+    public string? PaymentBankName { get; private set; }
+
     public string? TransferTracking { get; private set; }
     public string? TransferTime { get; private set; }
     public string? TransferCardLast4 { get; private set; }
@@ -62,7 +68,7 @@ public sealed class Order
     public static Order Create(
         string accessToken, Guid idempotencyKey, PaymentMethod method,
         string fullName, string mobile, string province, string city, string address, string postalCode, string? note,
-        string clientIp, long subtotal, long shippingFee, IEnumerable<OrderItem> items, DateTime utcNow)
+        string clientIp, long subtotal, long shippingFee, CardSnapshot? card, IEnumerable<OrderItem> items, DateTime utcNow)
     {
         if (!Enum.IsDefined(method))
         {
@@ -72,6 +78,11 @@ public sealed class Order
         if (subtotal < 0 || shippingFee < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(subtotal));
+        }
+
+        if ((method == PaymentMethod.CardToCard) != (card is not null))
+        {
+            throw new ArgumentException("Card details are required for, and only for, card-to-card orders.", nameof(card));
         }
 
         var initial = method == PaymentMethod.CardToCard ? OrderStatus.AwaitingPayment : OrderStatus.Pending;
@@ -90,6 +101,9 @@ public sealed class Order
             PostalCode = postalCode,
             Note = string.IsNullOrWhiteSpace(note) ? null : note,
             ClientIp = clientIp,
+            PaymentCardNumber = card?.CardNumber,
+            PaymentCardHolder = card?.Holder,
+            PaymentBankName = card?.Bank,
             Subtotal = subtotal,
             ShippingFee = shippingFee,
             Total = subtotal + shippingFee,
@@ -177,6 +191,9 @@ public sealed class Order
         UpdatedAtUtc = utcNow;
     }
 }
+
+/// <summary>Card-to-card payment details frozen into the order, so later settings changes never alter an existing order.</summary>
+public sealed record CardSnapshot(string CardNumber, string Holder, string Bank);
 
 public sealed class OrderItem
 {

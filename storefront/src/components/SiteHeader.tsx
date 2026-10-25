@@ -17,12 +17,10 @@ interface SiteHeaderProps {
   brandName: string;
   navItems?: readonly NavItem[];
   cartCount?: number;
-  /** Signed-in customer's name; omit when signed out. */
-  accountLabel?: string | null;
 }
 
 /** The page must contain <main id="main" tabIndex={-1}> as the skip-link target. */
-export function SiteHeader({ brandName, navItems = [], cartCount = 0, accountLabel }: SiteHeaderProps) {
+export function SiteHeader({ brandName, navItems = [], cartCount = 0 }: SiteHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -91,10 +89,6 @@ export function SiteHeader({ brandName, navItems = [], cartCount = 0, accountLab
         </form>
 
         <div className={styles.actions}>
-          <Link className={styles.iconBtn} href="/account" aria-label={accountLabel ?? messages.account}>
-            <Icon name="user" />
-            {accountLabel && <span className={styles.accountName}>{accountLabel}</span>}
-          </Link>
           <Link className={styles.iconBtn} href="/cart" aria-label={cartLabel}>
             <Icon name="cart" />
             {cartCount > 0 && (

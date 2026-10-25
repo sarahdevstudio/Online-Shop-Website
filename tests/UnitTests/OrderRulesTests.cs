@@ -9,7 +9,9 @@ public class OrderRulesTests
 
     private static Order NewOrder(PaymentMethod method) => Order.Create(
         "t".PadRight(43, 'x'), Guid.NewGuid(), method, "علی", "09123456789", "تهران", "تهران", "خیابان ولیعصر پلاک ۱", "1234567890", null,
-        "10.0.0.1", 200_000, 50_000, [OrderItem.Create(1, "لامپ", "۹ وات", "SKU-1", 100_000, 2)], Now);
+        "10.0.0.1", 200_000, 50_000,
+        method == PaymentMethod.CardToCard ? new CardSnapshot("6037991234567893", "رضا احمدی", "ملی") : null,
+        [OrderItem.Create(1, "لامپ", "۹ وات", "SKU-1", 100_000, 2)], Now);
 
     // ---- shipping ----
 
@@ -169,8 +171,8 @@ public class OrderRulesTests
     [Fact]
     public void Order_RequiresLines_AndNonNegativeAmounts()
     {
-        Assert.Throws<ArgumentException>(() => Order.Create("t", Guid.NewGuid(), PaymentMethod.CardToCard, "a", "09123456789", "p", "c", "addr", "1234567890", null, "ip", 1, 0, [], Now));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Order.Create("t", Guid.NewGuid(), PaymentMethod.CardToCard, "a", "09123456789", "p", "c", "addr", "1234567890", null, "ip", -1, 0, [OrderItem.Create(1, "n", null, "s", 1, 1)], Now));
+        Assert.Throws<ArgumentException>(() => Order.Create("t", Guid.NewGuid(), PaymentMethod.CardToCard, "a", "09123456789", "p", "c", "addr", "1234567890", null, "ip", 1, 0, null, [], Now));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Order.Create("t", Guid.NewGuid(), PaymentMethod.CardToCard, "a", "09123456789", "p", "c", "addr", "1234567890", null, "ip", -1, 0, null, [OrderItem.Create(1, "n", null, "s", 1, 1)], Now));
     }
 
     // ---- storefront key ----
@@ -203,45 +205,6 @@ public class OrderRulesTests
     [InlineData("Zk3-Vq9_Lm2Xr7Tn5Hb8Wd4Yc1Pf6Sg0Ja", true)]
     public void StorefrontKey_ProductionRules(string? key, bool acceptable) =>
         Assert.Equal(acceptable, StorefrontKeyRules.IsAcceptableForProduction(key));
-
-    // ---- checkout options ----
-
-    [Fact]
-    public void CheckoutDefaults_AreSafeForDevelopment_ButNotForProduction()
-    {
-        var defaults = new CheckoutOptions();
-
-        Assert.Equal(10, defaults.MaxQuantityPerLine);
-        Assert.Equal(2, defaults.MaxUnpaidOrdersPerMobile);
-        Assert.Equal(2, defaults.MaxUnpaidOrdersPerIp);
-        Assert.Null(defaults.FreeShippingThreshold);
-        Assert.NotEmpty(defaults.ProductionProblems()); // placeholder card number and holder
-    }
-
-    [Fact]
-    public void Production_AcceptsRealCardDetails_AndRejectsDisabledOrPlaceholderSetups()
-    {
-        var real = new CheckoutOptions { CardToCard = { CardNumber = "6037-9912-3456-7890", HolderName = "رضا احمدی" } };
-        Assert.Empty(real.ProductionProblems());
-
-        var placeholderCard = new CheckoutOptions { CardToCard = { HolderName = "رضا احمدی" } };
-        Assert.Contains(placeholderCard.ProductionProblems(), p => p.Contains("CardNumber"));
-
-        var noMethods = new CheckoutOptions { CardToCard = { Enabled = false }, CashOnDelivery = { Enabled = false } };
-        Assert.NotEmpty(noMethods.ProductionProblems());
-
-        var codOnly = new CheckoutOptions { CardToCard = { Enabled = false } }; // placeholder card is irrelevant when disabled
-        Assert.Empty(codOnly.ProductionProblems());
-    }
-
-    [Fact]
-    public void PaymentMethods_CanBeSwitchedByConfiguration()
-    {
-        var options = new CheckoutOptions { CardToCard = { Enabled = false } };
-
-        Assert.False(options.IsEnabled(PaymentMethod.CardToCard));
-        Assert.True(options.IsEnabled(PaymentMethod.CashOnDelivery));
-    }
 
     private static void Reach(Order order, OrderStatus target)
     {

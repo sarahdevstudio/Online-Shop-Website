@@ -76,3 +76,11 @@ Transitions: `AwaitingPayment|Pending → Confirmed → Shipped → Delivered`; 
 - **Order number:** SQL sequence `OrderNumbers` (starts at 1001); a rolled-back placement can leave a gap.
 - **Admin:** permission `Orders.Manage` (granted to Admin at startup). Optimistic concurrency (`RowVersion`) on `Order`; cancel restores stock in the same transaction, so a double cancel restores once.
 - **Logs:** request logs use a masked path (`/orders/***`), and the unhandled-exception log masks it too. Tokens are never logged by application code.
+
+## Superseded by admin-editable settings (2026-10-25)
+
+The shipping fee, free-shipping threshold, payment-method switches, card details (number, holder, bank), per-line quantity limit and the store contact details are no longer `Checkout:*` configuration: they live in one database row (`StoreSettings`), seeded from `StoreDefaults` in `appsettings.json` only when missing and edited through `/api/v1/admin/settings` (`Settings.Manage`, CSRF, audit log with the card number masked to its last 4 digits). `Checkout:*` keeps only the abuse limits (unpaid-order caps, order rate limit, cart size). Consequences:
+
+- Card-to-card is offered only while it is switched on **and** the card number (16 digits, Luhn, not a placeholder) and holder are valid; otherwise cart, checkout and the public store info simply don't list it. The API no longer refuses to start with placeholder card details.
+- An order freezes the shipping fee (already) and, for card-to-card, the card number, holder and bank at placement; later setting changes never alter an existing order page.
+- Settings are cached in memory and the cache is invalidated by every admin update.

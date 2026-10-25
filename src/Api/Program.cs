@@ -72,6 +72,7 @@ api.MapCatalogEndpoints();
 api.MapCatalogAdminEndpoints();
 api.MapStoreEndpoints();
 api.MapOrderAdminEndpoints();
+api.MapSettingsAdminEndpoints();
 
 await app.RunAsync();
 

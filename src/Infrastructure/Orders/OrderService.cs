@@ -3,14 +3,16 @@ using Microsoft.Extensions.Options;
 using Shop.Application.Catalog;
 using Shop.Application.Common;
 using Shop.Application.Orders;
+using Shop.Application.Settings;
 using Shop.Domain.Common;
 using Shop.Domain.Orders;
+using Shop.Domain.Settings;
 using Shop.Infrastructure.Persistence;
 
 namespace Shop.Infrastructure.Orders;
 
 internal sealed class OrderService(
-    ShopDbContext db, IStockService stock, IOptions<CheckoutOptions> options, TimeProvider clock) : IOrderService
+    ShopDbContext db, IStockService stock, IStoreSettings settings, IOptions<CheckoutOptions> options, TimeProvider clock) : IOrderService
 {
     private const string UnknownIp = "unknown";
 
@@ -18,7 +20,10 @@ internal sealed class OrderService(
 
     public async Task<Result<PlacedOrderDto>> PlaceAsync(PlaceOrderRequest request, PlaceOrderContext context, CancellationToken ct)
     {
-        if (!Options.IsEnabled(request.PaymentMethod))
+        // One snapshot of the settings for this whole request: the price, the limits and the card details shown on the
+        // order all come from the same moment.
+        var store = await settings.GetAsync(ct);
+        if (!store.IsOffered(request.PaymentMethod))
         {
             return Error.Validation(new Dictionary<string, string[]> { ["paymentMethod"] = ["روش پرداخت انتخاب‌شده فعال نیست."] });
         }
@@ -32,7 +37,7 @@ internal sealed class OrderService(
 
         try
         {
-            return await PlaceCoreAsync(request, context, mobile, postalCode, ip, ct);
+            return await PlaceCoreAsync(request, context, store, mobile, postalCode, ip, ct);
         }
         catch (DbUpdateException ex) when (DbErrors.IsUniqueViolation(ex, "UX_Orders_IdempotencyKey"))
         {
@@ -46,7 +51,7 @@ internal sealed class OrderService(
     }
 
     private async Task<Result<PlacedOrderDto>> PlaceCoreAsync(
-        PlaceOrderRequest request, PlaceOrderContext context, string mobile, string postalCode, string ip, CancellationToken ct)
+        PlaceOrderRequest request, PlaceOrderContext context, StoreSettingsValues store, string mobile, string postalCode, string ip, CancellationToken ct)
     {
         await using var tx = await db.Database.BeginTransactionAsync(ct);
 
@@ -82,14 +87,14 @@ internal sealed class OrderService(
         var lines = cart.Items.OrderBy(i => i.VariantId).ToList();
         var infos = await VariantInfoLoader.LoadAsync(db, lines.Select(l => l.VariantId).ToList(), ct);
 
-        var shortages = Shortages(lines, infos);
+        var shortages = Shortages(lines, infos, store.MaxQuantityPerLine);
         if (shortages.Count > 0)
         {
             return StockError(shortages);
         }
 
         var subtotal = lines.Sum(l => infos[l.VariantId].Price * l.Quantity);
-        var shipping = OrderPricing.ShippingFee(subtotal, Options.ShippingFee, Options.FreeShippingThreshold);
+        var shipping = OrderPricing.ShippingFee(subtotal, store.ShippingFlatFee, store.FreeShippingThreshold);
         if (subtotal + shipping != request.ExpectedTotal)
         {
             return Error.Conflict(
@@ -105,7 +110,7 @@ internal sealed class OrderService(
                 // Someone bought it between the read and the update. Roll everything back and tell the customer what is short.
                 await tx.RollbackAsync(ct);
                 var current = await VariantInfoLoader.LoadAsync(db, lines.Select(l => l.VariantId).ToList(), ct);
-                var failed = Shortages(lines, current);
+                var failed = Shortages(lines, current, store.MaxQuantityPerLine);
                 if (failed.All(s => s.VariantId != line.VariantId))
                 {
                     var info = current[line.VariantId];
@@ -128,7 +133,9 @@ internal sealed class OrderService(
             PersianText.Normalize(request.Province), PersianText.Normalize(request.City),
             PersianText.NormalizeLetters(request.Address), postalCode,
             request.Note is null ? null : PersianText.NormalizeLetters(request.Note),
-            ip, subtotal, shipping, items, now);
+            ip, subtotal, shipping,
+            request.PaymentMethod == PaymentMethod.CardToCard ? new CardSnapshot(store.CardNumber, store.CardHolderName, store.BankName) : null,
+            items, now);
 
         db.Orders.Add(order);
         db.Carts.Remove(cart);
@@ -141,7 +148,7 @@ internal sealed class OrderService(
     public async Task<Result<OrderDto>> GetAsync(string accessToken, CancellationToken ct)
     {
         var order = await FindByTokenAsync(accessToken, track: false, ct);
-        return order is null ? Error.NotFound("order_not_found", "سفارش پیدا نشد.") : OrderMapper.ToDto(order, Options);
+        return order is null ? Error.NotFound("order_not_found", "سفارش پیدا نشد.") : OrderMapper.ToDto(order);
     }
 
     public async Task<Result<OrderDto>> SubmitTransferReferenceAsync(string accessToken, TransferReferenceRequest request, CancellationToken ct)
@@ -169,7 +176,7 @@ internal sealed class OrderService(
             return Error.Conflict("concurrent_update", "سفارش هم‌زمان تغییر کرد. صفحه را تازه کنید.");
         }
 
-        return OrderMapper.ToDto(order, Options);
+        return OrderMapper.ToDto(order);
     }
 
     private async Task<PlacedOrderDto?> ReplayAsync(Guid key, CancellationToken ct) =>
@@ -215,7 +222,7 @@ internal sealed class OrderService(
     }
 
     /// <summary>Lines that cannot be bought in the requested quantity right now.</summary>
-    private List<StockShortageDto> Shortages(IReadOnlyList<CartItem> lines, IReadOnlyDictionary<int, VariantInfo> infos)
+    private static List<StockShortageDto> Shortages(IReadOnlyList<CartItem> lines, IReadOnlyDictionary<int, VariantInfo> infos, int maxPerLine)
     {
         var result = new List<StockShortageDto>();
         foreach (var line in lines)
@@ -224,9 +231,9 @@ internal sealed class OrderService(
             {
                 result.Add(new StockShortageDto(line.VariantId, "؟", null, line.Quantity, 0));
             }
-            else if (line.Quantity > info.MaxQuantity(Options))
+            else if (line.Quantity > info.MaxQuantity(maxPerLine))
             {
-                result.Add(new StockShortageDto(line.VariantId, info.ProductName, info.Label, line.Quantity, info.MaxQuantity(Options)));
+                result.Add(new StockShortageDto(line.VariantId, info.ProductName, info.Label, line.Quantity, info.MaxQuantity(maxPerLine)));
             }
         }
 
@@ -254,15 +261,16 @@ internal sealed class OrderService(
 
 internal static class OrderMapper
 {
-    public static OrderDto ToDto(Order order, CheckoutOptions options) => new(
+    public static OrderDto ToDto(Order order) => new(
         order.Number, order.Status, order.PaymentStatus, order.PaymentMethod, order.CreatedAtUtc,
         order.FullName, order.Mobile, order.Province, order.City, order.Address, order.PostalCode, order.Note,
         order.Items.OrderBy(i => i.Id)
             .Select(i => new OrderLineDto(i.ProductName, i.VariantLabel, i.Sku, i.UnitPrice, i.Quantity, i.LineTotal))
             .ToList(),
         order.Subtotal, order.ShippingFee, order.Total,
-        order is { PaymentMethod: PaymentMethod.CardToCard, Status: OrderStatus.AwaitingPayment }
-            ? new PaymentInstructionsDto(options.CardToCard.CardNumber, options.CardToCard.HolderName, order.Total)
+        // The order's own snapshot, never the current settings: changing the card later must not alter existing orders.
+        order is { PaymentMethod: PaymentMethod.CardToCard, Status: OrderStatus.AwaitingPayment, PaymentCardNumber: not null }
+            ? new PaymentInstructionsDto(order.PaymentCardNumber, order.PaymentCardHolder ?? string.Empty, order.PaymentBankName ?? string.Empty, order.Total)
             : null,
         order.TransferTracking is null
             ? null

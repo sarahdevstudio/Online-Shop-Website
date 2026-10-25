@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Shop.Application.Catalog;
 using Shop.Application.Common;
 using Shop.Application.Orders;
@@ -10,7 +9,7 @@ using Shop.Infrastructure.Persistence;
 namespace Shop.Infrastructure.Orders;
 
 internal sealed class AdminOrderService(
-    ShopDbContext db, IStockService stock, ICurrentUser currentUser, IOptions<CheckoutOptions> options, TimeProvider clock)
+    ShopDbContext db, IStockService stock, ICurrentUser currentUser, TimeProvider clock)
     : IAdminOrderService
 {
     private const int PageSize = 20;
@@ -120,7 +119,7 @@ internal sealed class AdminOrderService(
 
     private AdminOrderDto ToDto(Order order) => new(
         order.Id,
-        OrderMapper.ToDto(order, options.Value),
+        OrderMapper.ToDto(order),
         order.ClientIp,
         order.StatusLog.OrderBy(l => l.AtUtc).ThenBy(l => l.Id)
             .Select(l => new OrderStatusLogDto(l.FromStatus, l.ToStatus, l.AdminUserId, l.AtUtc)).ToList());

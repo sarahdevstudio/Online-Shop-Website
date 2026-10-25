@@ -643,6 +643,19 @@ namespace Shop.Infrastructure.Persistence.Migrations
                         .HasColumnType("int")
                         .HasDefaultValueSql("NEXT VALUE FOR [OrderNumbers]");
 
+                    b.Property<string>("PaymentBankName")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PaymentCardHolder")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PaymentCardNumber")
+                        .HasMaxLength(16)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(16)");
+
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("int");
 
@@ -813,6 +826,123 @@ namespace Shop.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_OrderStatusLogs_OrderId");
 
                     b.ToTable("OrderStatusLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Shop.Domain.Settings.SettingsAuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("AdminUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Field")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NewValue")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("OldValue")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AtUtc")
+                        .HasDatabaseName("IX_SettingsAuditLogs_AtUtc");
+
+                    b.ToTable("SettingsAuditLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Shop.Domain.Settings.StoreSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("BankName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("CardHolderName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CardNumber")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(16)");
+
+                    b.Property<bool>("CardToCardEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("CashOnDeliveryEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<long?>("FreeShippingThreshold")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("InstagramHandle")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<int>("MaxQuantityPerLine")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<long>("ShippingFlatFee")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StoreAddress")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("StorePhone")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("WorkingHours")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StoreSettings", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StoreSettings_Amounts", "[ShippingFlatFee] >= 0 AND ([FreeShippingThreshold] IS NULL OR [FreeShippingThreshold] >= 0)");
+
+                            t.HasCheckConstraint("CK_StoreSettings_MaxQuantity", "[MaxQuantityPerLine] BETWEEN 1 AND 100");
+
+                            t.HasCheckConstraint("CK_StoreSettings_Singleton", "[Id] = 1");
+                        });
                 });
 
             modelBuilder.Entity("Shop.Infrastructure.Identity.ApplicationRole", b =>

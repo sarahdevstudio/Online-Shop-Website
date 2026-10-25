@@ -66,6 +66,9 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(x => x.PostalCode).IsRequired().HasMaxLength(10).IsUnicode(false).IsFixedLength();
         builder.Property(x => x.Note).HasMaxLength(Order.NoteMaxLength);
         builder.Property(x => x.ClientIp).IsRequired().HasMaxLength(Order.ClientIpMaxLength).IsUnicode(false);
+        builder.Property(x => x.PaymentCardNumber).HasMaxLength(16).IsUnicode(false);
+        builder.Property(x => x.PaymentCardHolder).HasMaxLength(Shop.Domain.Settings.StoreSettingsRules.HolderMaxLength);
+        builder.Property(x => x.PaymentBankName).HasMaxLength(Shop.Domain.Settings.StoreSettingsRules.BankMaxLength);
         builder.Property(x => x.TransferTracking).HasMaxLength(Order.TrackingMaxLength);
         builder.Property(x => x.TransferTime).HasMaxLength(Order.TransferTimeMaxLength);
         builder.Property(x => x.TransferCardLast4).HasMaxLength(4).IsUnicode(false).IsFixedLength();

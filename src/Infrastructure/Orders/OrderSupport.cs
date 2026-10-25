@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Shop.Application.Catalog;
-using Shop.Application.Orders;
 using Shop.Domain.Catalog;
 using Shop.Infrastructure.Persistence;
 
@@ -27,8 +26,8 @@ internal sealed record VariantInfo(
     int VariantId, string ProductName, string ProductSlug, string Sku, long Price, int Stock, bool Purchasable,
     string? Label, string? ImagePath)
 {
-    /// <summary>The most of this variant a customer may hold: the stock, capped by the configured per-line maximum.</summary>
-    public int MaxQuantity(CheckoutOptions options) => Purchasable ? Math.Min(Stock, options.MaxQuantityPerLine) : 0;
+    /// <summary>The most of this variant a customer may hold: the stock, capped by the per-line maximum from the store settings.</summary>
+    public int MaxQuantity(int maxPerLine) => Purchasable ? Math.Min(Stock, maxPerLine) : 0;
 }
 
 internal static class VariantInfoLoader

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Shop.Domain.Catalog;
 using Shop.Domain.Customers;
 using Shop.Domain.Orders;
+using Shop.Domain.Settings;
 using Shop.Infrastructure.Identity;
 
 namespace Shop.Infrastructure.Persistence;
@@ -25,6 +26,8 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<OrderStatusLog> OrderStatusLogs => Set<OrderStatusLog>();
+    public DbSet<StoreSetting> StoreSettings => Set<StoreSetting>();
+    public DbSet<SettingsAuditLog> SettingsAuditLogs => Set<SettingsAuditLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

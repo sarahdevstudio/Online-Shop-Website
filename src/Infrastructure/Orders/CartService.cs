@@ -3,13 +3,14 @@ using Microsoft.Extensions.Options;
 using Shop.Application.Catalog;
 using Shop.Application.Common;
 using Shop.Application.Orders;
+using Shop.Application.Settings;
 using Shop.Domain.Orders;
 using Shop.Infrastructure.Persistence;
 
 namespace Shop.Infrastructure.Orders;
 
 internal sealed class CartService(
-    ShopDbContext db, IMediaStorage media, IOptions<CheckoutOptions> options, TimeProvider clock) : ICartService
+    ShopDbContext db, IMediaStorage media, IStoreSettings settings, IOptions<CheckoutOptions> options, TimeProvider clock) : ICartService
 {
     private CheckoutOptions Options => options.Value;
 
@@ -80,7 +81,7 @@ internal sealed class CartService(
             return Error.Conflict("cart_full", "سبد خرید پر است.");
         }
 
-        var max = info.MaxQuantity(Options);
+        var max = info.MaxQuantity((await settings.GetAsync(ct)).MaxQuantityPerLine);
         var wanted = (line?.Quantity ?? 0) + request.Quantity;
         var quantity = Math.Min(wanted, max);
         if (line is null)
@@ -128,7 +129,7 @@ internal sealed class CartService(
                 return Error.Conflict("variant_unavailable", "این محصول در حال حاضر موجود نیست.");
             }
 
-            var max = info.MaxQuantity(Options);
+            var max = info.MaxQuantity((await settings.GetAsync(ct)).MaxQuantityPerLine);
             clamped = quantity > max;
             line.Set(Math.Min(quantity, max), info.Price);
         }
@@ -140,6 +141,7 @@ internal sealed class CartService(
 
     private async Task<CartDto> BuildAsync(Cart? cart, CancellationToken ct)
     {
+        var store = await settings.GetAsync(ct);
         var items = cart?.Items.OrderBy(i => i.Id).ToList() ?? [];
         var infos = await VariantInfoLoader.LoadAsync(db, items.Select(i => i.VariantId).ToList(), ct);
 
@@ -151,7 +153,7 @@ internal sealed class CartService(
                 continue;
             }
 
-            var max = info.MaxQuantity(Options);
+            var max = info.MaxQuantity(store.MaxQuantityPerLine);
             var notice = !info.Purchasable ? "unavailable"
                 : item.Quantity > max ? "quantity_exceeds"
                 : info.Price != item.SeenPrice ? "price_changed"
@@ -166,11 +168,11 @@ internal sealed class CartService(
         }
 
         var subtotal = lines.Sum(l => l.LineTotal);
-        var shipping = OrderPricing.ShippingFee(subtotal, Options.ShippingFee, Options.FreeShippingThreshold);
+        var shipping = OrderPricing.ShippingFee(subtotal, store.ShippingFlatFee, store.FreeShippingThreshold);
         return new CartDto(
             lines, lines.Sum(l => l.Quantity), subtotal, shipping, subtotal + shipping,
-            Options.FreeShippingThreshold,
+            store.FreeShippingThreshold,
             lines.Any(l => l.Notice is "unavailable" or "quantity_exceeds"),
-            new PaymentMethodsDto(Options.CardToCard.Enabled, Options.CashOnDelivery.Enabled));
+            new PaymentMethodsDto(store.CardToCardOffered, store.CashOnDeliveryEnabled));
     }
 }

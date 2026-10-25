@@ -60,7 +60,7 @@ export interface OrderDto {
   subtotal: number;
   shippingFee: number;
   total: number;
-  paymentInstructions: { cardNumber: string; holderName: string; amount: number } | null;
+  paymentInstructions: { cardNumber: string; holderName: string; bankName: string; amount: number } | null;
   transferReference: { tracking: string; time: string; cardLast4: string } | null;
 }
 

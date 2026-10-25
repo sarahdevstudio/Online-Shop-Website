@@ -17,12 +17,15 @@ interface SiteFooterProps {
   phone?: string;
   email?: string;
   address?: string;
+  hours?: string;
+  /** Instagram handle without the @. */
+  instagram?: string;
   copyright: string;
   /** Trust marks (e.g. e-Namad) supplied by the shop owner. */
   badges?: ReactNode;
 }
 
-export function SiteFooter({ brandName, about, groups = [], phone, email, address, copyright, badges }: SiteFooterProps) {
+export function SiteFooter({ brandName, about, groups = [], phone, email, address, hours, instagram, copyright, badges }: SiteFooterProps) {
   return (
     <footer className={styles.footer}>
       <div className={`ui-container ${styles.grid}`}>
@@ -44,6 +47,12 @@ export function SiteFooter({ brandName, about, groups = [], phone, email, addres
               <span>
                 <Icon name="map-pin" /> {address}
               </span>
+            )}
+            {hours && <span>{messages.workingHours}: {hours}</span>}
+            {instagram && (
+              <a href={`https://www.instagram.com/${instagram}/`} rel="noopener noreferrer nofollow" target="_blank">
+                {messages.instagram}: <bdi dir="ltr">@{instagram}</bdi>
+              </a>
             )}
           </address>
         </section>

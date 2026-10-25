@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Shop.Application.Settings;
 using Shop.Domain.Security;
+using Shop.Domain.Settings;
 using Shop.Infrastructure.Catalog;
 using Shop.Infrastructure.Identity;
 
@@ -37,6 +39,7 @@ public sealed class DatabaseInitializer(
     UserManager<ApplicationUser> userManager,
     IOptions<DatabaseOptions> databaseOptions,
     IOptions<SeedOptions> seedOptions,
+    IOptions<StoreDefaultsOptions> storeDefaults,
     CatalogSeeder catalogSeeder,
     IHostEnvironment environment,
     TimeProvider clock,
@@ -52,11 +55,37 @@ public sealed class DatabaseInitializer(
 
         await SyncRolesAndPermissionsAsync();
         await EnsureAdminAsync();
+        await EnsureStoreSettingsAsync(ct);
         await catalogSeeder.EnsureAttributesAsync(ct);
 
         if (CatalogSeeder.ShouldSeedSampleData(environment))
         {
             await catalogSeeder.SeedDevelopmentDataAsync(ct);
+        }
+    }
+
+    /// <summary>The first start writes <c>StoreDefaults</c> into the database; later starts never touch the row.</summary>
+    private async Task EnsureStoreSettingsAsync(CancellationToken ct)
+    {
+        if (await db.StoreSettings.AnyAsync(ct))
+        {
+            return;
+        }
+
+        db.StoreSettings.Add(StoreSetting.Create(storeDefaults.Value.ToValues(), clock.GetUtcNow().UtcDateTime));
+        try
+        {
+            await db.SaveChangesAsync(ct);
+            logger.LogInformation("Store settings created from StoreDefaults");
+        }
+        catch (DbUpdateException)
+        {
+            // Another instance may have seeded it first; anything else is a real failure.
+            db.ChangeTracker.Clear();
+            if (!await db.StoreSettings.AsNoTracking().AnyAsync(ct))
+            {
+                throw;
+            }
         }
     }
 

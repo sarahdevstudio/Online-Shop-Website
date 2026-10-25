@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { getCategoryTree } from '@/lib/catalog';
 import { messages } from '@/lib/messages';
 import { getCartCount } from '@/lib/store';
+import { getStoreInfo } from '@/lib/store-info';
 import { organizationJsonLd, site, websiteJsonLd } from '@/lib/seo';
 import './globals.css';
 
@@ -24,7 +25,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const categories = await getCategoryTree();
-  const cartCount = await getCartCount();
+  const [cartCount, info] = await Promise.all([getCartCount(), getStoreInfo()]);
   const navItems = categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` }));
 
   return (
@@ -40,6 +41,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           brandName={site.name}
           about={site.description}
           groups={[{ title: messages.categories, links: navItems }]}
+          phone={info?.storePhone || undefined}
+          address={info?.storeAddress || undefined}
+          hours={info?.workingHours || undefined}
+          instagram={info?.instagramHandle || undefined}
           copyright={`© ${site.name}`}
         />
       </body>

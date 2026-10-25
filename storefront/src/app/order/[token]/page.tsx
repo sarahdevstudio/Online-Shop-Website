@@ -52,6 +52,12 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
                   <dt>{messages.cardHolder}</dt>
                   <dd>{pay.holderName}</dd>
                 </div>
+                {pay.bankName && (
+                  <div>
+                    <dt>{messages.cardBank}</dt>
+                    <dd>{pay.bankName}</dd>
+                  </div>
+                )}
                 <div>
                   <dt>{messages.exactAmount}</dt>
                   <dd>{toman(pay.amount)}</dd>

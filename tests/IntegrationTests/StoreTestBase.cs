@@ -17,7 +17,7 @@ public sealed record PlacedBody(string AccessToken, int Number, bool Replayed);
 
 public sealed record OrderLineBody(string ProductName, string? VariantLabel, string Sku, long UnitPrice, int Quantity, long LineTotal);
 
-public sealed record PaymentInstructionsBody(string CardNumber, string HolderName, long Amount);
+public sealed record PaymentInstructionsBody(string CardNumber, string HolderName, string BankName, long Amount);
 
 public sealed record TransferReferenceBody(string Tracking, string Time, string CardLast4);
 
