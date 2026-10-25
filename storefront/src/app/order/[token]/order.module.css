@@ -1,0 +1,19 @@
+.layout { display: grid; gap: var(--space-6); }
+.card { display: grid; gap: var(--space-3); padding: var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.pay { background: var(--color-surface-muted); }
+.row { display: flex; justify-content: space-between; gap: var(--space-3); }
+.totalRow { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); padding-block-start: var(--space-3); border-block-start: 1px solid var(--color-border); }
+.card dl { display: grid; gap: var(--space-2); margin: 0; }
+.card dt { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.card dd { margin: 0; font-weight: var(--font-weight-medium); }
+.cardNumber { direction: ltr; text-align: start; font-size: var(--font-size-xl); letter-spacing: 0.05em; font-variant-numeric: tabular-nums; }
+.lines { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.form { display: grid; gap: var(--space-4); }
+.field { display: grid; gap: var(--space-1); }
+.label { font-weight: var(--font-weight-medium); }
+.error { color: var(--color-danger); font-size: var(--font-size-sm); }
+.ltr { direction: ltr; text-align: start; }
+
+@media (min-width: 1024px) {
+  .layout { grid-template-columns: 1fr 1fr; align-items: start; }
+}

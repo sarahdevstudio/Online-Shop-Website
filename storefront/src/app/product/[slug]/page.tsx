@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { addToCartAction } from '@/app/cart/actions';
 import { Alert } from '@/components/Alert';
 import { Badge } from '@/components/Badge';
 import { Breadcrumb } from '@/components/Breadcrumb';
@@ -103,10 +104,15 @@ export default async function ProductPage({ params, searchParams }: Props) {
                 {variant.inStock ? (
                   <>
                     <Badge variant="success">{messages.inStock}</Badge>
-                    {/* Cart arrives with M-7. */}
-                    <Button type="button" disabled>
-                      {messages.addToCart}
-                    </Button>
+                    {/* A plain form posting to a Server Action: adds the selected variant with no JavaScript needed. */}
+                    <form action={addToCartAction} className="ui-cluster">
+                      <input type="hidden" name="variantId" value={variant.id} />
+                      <label>
+                        <span className="ui-visually-hidden">{messages.quantity}</span>
+                        <input className="ui-control" style={{ inlineSize: '5rem' }} type="number" name="quantity" inputMode="numeric" min={1} defaultValue={1} />
+                      </label>
+                      <Button type="submit">{messages.addToCart}</Button>
+                    </form>
                   </>
                 ) : (
                   <Badge>{messages.outOfStock}</Badge>

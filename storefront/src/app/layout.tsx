@@ -5,6 +5,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCategoryTree } from '@/lib/catalog';
 import { messages } from '@/lib/messages';
+import { getCartCount } from '@/lib/store';
 import { organizationJsonLd, site, websiteJsonLd } from '@/lib/seo';
 import './globals.css';
 
@@ -23,6 +24,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const categories = await getCategoryTree();
+  const cartCount = await getCartCount();
   const navItems = categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` }));
 
   return (
@@ -30,7 +32,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body>
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
-        <SiteHeader brandName={site.name} navItems={navItems} />
+        <SiteHeader brandName={site.name} navItems={navItems} cartCount={cartCount} />
         <main id="main" tabIndex={-1}>
           {children}
         </main>
