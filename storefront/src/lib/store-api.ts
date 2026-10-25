@@ -28,7 +28,7 @@ function storefrontKey(): string {
 }
 
 /** The visitor's address from the trusted proxy only (see resolveClientIp); null when it can't be determined. */
-async function clientIp(): Promise<string | null> {
+export async function clientIpForApi(): Promise<string | null> {
   const hops = trustedProxyHops();
   const development = process.env.NODE_ENV === 'development';
   if (hops === 0 && process.env.NODE_ENV === 'production') {
@@ -43,7 +43,7 @@ export async function storeFetch<T>(method: string, path: string, request: Store
   const requestHeaders: Record<string, string> = { accept: 'application/json', 'x-storefront-key': storefrontKey() };
   if (request.cartToken) requestHeaders['x-cart-token'] = request.cartToken;
   if (request.idempotencyKey) requestHeaders['idempotency-key'] = request.idempotencyKey;
-  const ip = await clientIp();
+  const ip = await clientIpForApi();
   if (ip) requestHeaders['x-forwarded-for'] = ip; // one address, always overwritten: a browser value is never passed on
   if (request.body !== undefined) requestHeaders['content-type'] = 'application/json';
 

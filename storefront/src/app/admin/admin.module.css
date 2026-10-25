@@ -1,0 +1,51 @@
+.loginPage { max-inline-size: 26rem; margin: var(--space-12) auto; padding-inline: var(--gutter); display: grid; gap: var(--space-5); }
+.loginForm { display: grid; gap: var(--space-4); }
+.field { display: grid; gap: var(--space-1); }
+.fieldLabel { font-weight: var(--font-weight-medium); }
+.hint { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.error { color: var(--color-danger); font-size: var(--font-size-sm); }
+
+.shell { display: grid; min-block-size: 100vh; grid-template-rows: auto 1fr; }
+.topbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); padding: var(--space-3) var(--gutter); background: var(--color-surface-muted); border-block-end: 1px solid var(--color-border); }
+.brand { font-weight: var(--font-weight-bold); }
+.nav { display: flex; flex-wrap: wrap; gap: var(--space-1); list-style: none; margin: 0; padding: 0; flex: 1; }
+.nav a { display: inline-block; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); text-decoration: none; color: inherit; min-block-size: 2.25rem; }
+.nav a:hover, .nav a[aria-current='page'] { background: var(--color-surface-sunken); }
+.who { font-size: var(--font-size-sm); color: var(--color-text-muted); display: flex; gap: var(--space-3); align-items: center; }
+.content { padding: var(--space-6) var(--gutter); max-inline-size: 80rem; inline-size: 100%; margin-inline: auto; display: grid; gap: var(--space-6); align-content: start; }
+
+.cards { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.card { display: grid; gap: var(--space-1); padding: var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); text-decoration: none; color: inherit; }
+.card:hover { border-color: var(--color-border-control); }
+.cardNumber { font-size: var(--font-size-4xl); font-weight: var(--font-weight-bold); line-height: 1.1; }
+.panel { display: grid; gap: var(--space-4); padding: var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.panel h2 { margin: 0; }
+
+.tableWrap { overflow-x: auto; }
+.table { inline-size: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+.table th, .table td { padding: var(--space-2) var(--space-3); border-block-end: 1px solid var(--color-border); text-align: start; vertical-align: middle; }
+.table th { color: var(--color-text-muted); font-weight: var(--font-weight-medium); white-space: nowrap; }
+.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ltr { direction: ltr; text-align: start; }
+
+.filters { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: end; }
+.row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: end; }
+.grid2 { display: grid; gap: var(--space-4); }
+.pager { display: flex; gap: var(--space-3); align-items: center; }
+.badge { display: inline-block; padding: 0.1rem 0.6rem; border-radius: var(--radius-full); background: var(--color-surface-sunken); font-size: var(--font-size-xs); white-space: nowrap; }
+.flag { background: var(--color-warning-soft); color: var(--color-warning); }
+.ok { background: var(--color-success-soft); color: var(--color-success); }
+.muted { color: var(--color-text-muted); }
+.thumbs { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); list-style: none; margin: 0; padding: 0; }
+.thumb { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.thumb img { inline-size: 100%; block-size: 8rem; object-fit: cover; border-radius: var(--radius-sm); background: var(--color-surface-muted); }
+.variantCard { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+.checkRow { display: inline-flex; align-items: center; gap: var(--space-2); min-block-size: var(--control-height); }
+.dangerZone { border-color: var(--color-danger); }
+.dialog { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); max-inline-size: 32rem; }
+.dialog::backdrop { background: var(--color-overlay); }
+
+@media (min-width: 768px) {
+  .grid2 { grid-template-columns: 1fr 1fr; }
+  .wide { grid-column: 1 / -1; }
+}

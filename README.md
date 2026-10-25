@@ -71,6 +71,8 @@ npm test           # vitest
 npm run build      # does not need the API
 ```
 
+The admin panel is at `/admin` (sign in with an account made by `create-admin`, see above). It is never indexed, uses a sealed `admin_session` cookie, and in production needs `ADMIN_SESSION_SECRET` (>= 32 random bytes); see `storefront/.env.example` and `docs/08-admin-design.md`.
+
 Configuration (see `storefront/.env.example`; copy it to `.env.local` for development):
 
 | Setting | Purpose |

@@ -14,6 +14,17 @@ const nextConfig: NextConfig = {
         source: '/order/:path*',
         headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }, { key: 'Cache-Control', value: 'no-store' }, noIndex],
       },
+      // The admin panel: never indexed, cached, framed, or leaked through a Referer header.
+      {
+        source: '/admin/:path*',
+        headers: [
+          noIndex,
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+        ],
+      },
+      { source: '/admin', headers: [noIndex, { key: 'Cache-Control', value: 'no-store' }] },
       { source: '/cart', headers: [noIndex] },
       { source: '/checkout', headers: [noIndex] },
     ];

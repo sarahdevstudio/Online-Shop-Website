@@ -75,6 +75,14 @@ public static class CreateAdminCommand
 
         var builder = WebApplication.CreateBuilder([]);
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
+
+        // Only the account and database services are used here; the web API's own services (authentication, current user) are
+        // not registered, so the Development-time "validate everything on build" check would complain about them.
+        builder.Host.UseDefaultServiceProvider(options =>
+        {
+            options.ValidateOnBuild = false;
+            options.ValidateScopes = false;
+        });
         builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
         await using var app = builder.Build();
         await using var scope = app.Services.CreateAsyncScope();

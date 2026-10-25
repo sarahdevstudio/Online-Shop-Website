@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { addToCartAction } from '@/app/cart/actions';
+import { addToCartAction } from '@/app/(shop)/cart/actions';
 import { Alert } from '@/components/Alert';
 import { Badge } from '@/components/Badge';
 import { Breadcrumb } from '@/components/Breadcrumb';
