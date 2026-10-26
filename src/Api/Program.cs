@@ -80,6 +80,7 @@ api.MapStoreEndpoints();
 api.MapOrderAdminEndpoints();
 api.MapSettingsAdminEndpoints();
 api.MapAdminOperationsEndpoints();
+api.MapContentEndpoints();
 
 await app.RunAsync();
 return 0;

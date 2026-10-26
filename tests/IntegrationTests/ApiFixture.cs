@@ -56,6 +56,7 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("Media__RootPath", MediaRoot);
         Environment.SetEnvironmentVariable("Storefront__ApiKey", StorefrontKey);
         // First-start store settings: a valid card, so card-to-card is offered.
+        Environment.SetEnvironmentVariable("StoreDefaults__CardToCardEnabled", "true");
         Environment.SetEnvironmentVariable("StoreDefaults__CardNumber", TestCard);
         Environment.SetEnvironmentVariable("StoreDefaults__CardHolderName", "رضا احمدی");
         Environment.SetEnvironmentVariable("StoreDefaults__BankName", "ملی");

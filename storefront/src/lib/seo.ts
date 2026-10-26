@@ -138,3 +138,33 @@ export function productJsonLd(p: ProductJsonLdInput) {
       : {}),
   };
 }
+
+export interface ContactInfo {
+  phone: string;
+  address: string;
+  hours: string;
+  /** Instagram handle without the @. */
+  instagram: string;
+}
+
+/**
+ * Structured data for the contact page: a LocalBusiness only when a street address is set (it needs one to be valid),
+ * otherwise a plain Organization with a customer-service phone. Empty fields are left out, never invented.
+ */
+export function contactJsonLd(info: ContactInfo) {
+  const address = info.address.trim();
+  const phone = info.phone.trim();
+  const base = {
+    '@context': 'https://schema.org',
+    '@type': address ? 'LocalBusiness' : 'Organization',
+    name: site.name,
+    url: site.url,
+  };
+  return {
+    ...base,
+    ...(phone && address ? { telephone: phone } : {}),
+    ...(phone && !address ? { contactPoint: { '@type': 'ContactPoint', telephone: phone, contactType: 'customer service', availableLanguage: 'fa' } } : {}),
+    ...(address ? { address: { '@type': 'PostalAddress', streetAddress: address, addressCountry: 'IR' } } : {}),
+    ...(info.instagram ? { sameAs: [`https://www.instagram.com/${info.instagram}/`] } : {}),
+  };
+}

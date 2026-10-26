@@ -3,6 +3,7 @@ import { JsonLd } from '@/components/JsonLd';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { getCategoryTree } from '@/lib/catalog';
+import { getInfoLinks } from '@/lib/content';
 import { messages } from '@/lib/messages';
 import { organizationJsonLd, site, websiteJsonLd } from '@/lib/seo';
 import { getCartCount } from '@/lib/store';
@@ -11,7 +12,7 @@ import { getStoreInfo } from '@/lib/store-info';
 /** The public shop's header, footer and structured data around a page. The admin panel has its own shell. */
 export async function ShopChrome({ children }: { children: ReactNode }) {
   const categories = await getCategoryTree();
-  const [cartCount, info] = await Promise.all([getCartCount(), getStoreInfo()]);
+  const [cartCount, info, infoLinks] = await Promise.all([getCartCount(), getStoreInfo(), getInfoLinks()]);
   const navItems = categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` }));
 
   return (
@@ -25,7 +26,10 @@ export async function ShopChrome({ children }: { children: ReactNode }) {
       <SiteFooter
         brandName={site.name}
         about={site.description}
-        groups={[{ title: messages.categories, links: navItems }]}
+        groups={[
+          { title: messages.categories, links: navItems },
+          { title: messages.infoPages, links: infoLinks },
+        ]}
         phone={info?.storePhone || undefined}
         address={info?.storeAddress || undefined}
         hours={info?.workingHours || undefined}

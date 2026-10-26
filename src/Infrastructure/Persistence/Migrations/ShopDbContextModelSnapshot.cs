@@ -480,6 +480,84 @@ namespace Shop.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Shop.Domain.Content.ContentAuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("AdminUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("BodyChanged")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<bool>("TitleChanged")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug", "AtUtc")
+                        .HasDatabaseName("IX_ContentAuditLogs_Slug_AtUtc");
+
+                    b.ToTable("ContentAuditLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Shop.Domain.Content.ContentPage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ContentPages_Slug");
+
+                    b.ToTable("ContentPages", (string)null);
+                });
+
             modelBuilder.Entity("Shop.Domain.Customers.Customer", b =>
                 {
                     b.Property<Guid>("Id")

@@ -146,3 +146,28 @@ export interface SettingsAuditEntry {
   oldValue: string | null;
   newValue: string | null;
 }
+
+export interface AdminContentListItem {
+  slug: string;
+  title: string;
+  isDraft: boolean;
+  updatedAtUtc: string;
+  updatedByEmail: string | null;
+}
+
+export interface AdminContentPage {
+  slug: string;
+  title: string;
+  body: string;
+  isDraft: boolean;
+  updatedAtUtc: string;
+  updatedByEmail: string | null;
+  rowVersion: string;
+}
+
+export interface ContentAuditEntry {
+  atUtc: string;
+  adminEmail: string | null;
+  titleChanged: boolean;
+  bodyChanged: boolean;
+}

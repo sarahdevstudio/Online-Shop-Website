@@ -13,7 +13,9 @@ public sealed class StoreDefaultsOptions
 
     public long ShippingFlatFee { get; set; } = 50_000;
     public long? FreeShippingThreshold { get; set; }
-    public bool CardToCardEnabled { get; set; } = true;
+    // Off until the owner enters a valid card in the admin: the settings rules refuse an enabled method without one, so a
+    // fresh install must start with it off or no other setting could be saved.
+    public bool CardToCardEnabled { get; set; }
     public bool CashOnDeliveryEnabled { get; set; } = true;
     public string CardNumber { get; set; } = string.Empty;
     public string CardHolderName { get; set; } = string.Empty;

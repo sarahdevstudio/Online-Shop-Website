@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Shop.Domain.Catalog;
+using Shop.Domain.Content;
 using Shop.Domain.Customers;
 using Shop.Domain.Inventory;
 using Shop.Domain.Orders;
@@ -30,6 +31,8 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     public DbSet<StoreSetting> StoreSettings => Set<StoreSetting>();
     public DbSet<SettingsAuditLog> SettingsAuditLogs => Set<SettingsAuditLog>();
     public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
+    public DbSet<ContentPage> ContentPages => Set<ContentPage>();
+    public DbSet<ContentAuditLog> ContentAuditLogs => Set<ContentAuditLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

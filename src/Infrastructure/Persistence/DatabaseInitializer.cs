@@ -4,9 +4,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shop.Application.Settings;
+using Shop.Domain.Content;
 using Shop.Domain.Security;
 using Shop.Domain.Settings;
 using Shop.Infrastructure.Catalog;
+using Shop.Infrastructure.Content;
 using Shop.Infrastructure.Identity;
 
 namespace Shop.Infrastructure.Persistence;
@@ -56,6 +58,7 @@ public sealed class DatabaseInitializer(
         await SyncRolesAndPermissionsAsync();
         await EnsureAdminAsync();
         await EnsureStoreSettingsAsync(ct);
+        await EnsureContentPagesAsync(ct);
         await catalogSeeder.EnsureAttributesAsync(ct);
 
         if (CatalogSeeder.ShouldSeedSampleData(environment))
@@ -83,6 +86,34 @@ public sealed class DatabaseInitializer(
             // Another instance may have seeded it first; anything else is a real failure.
             db.ChangeTracker.Clear();
             if (!await db.StoreSettings.AsNoTracking().AnyAsync(ct))
+            {
+                throw;
+            }
+        }
+    }
+
+    /// <summary>Draft info pages: inserted only when missing, never edited afterwards.</summary>
+    private async Task EnsureContentPagesAsync(CancellationToken ct)
+    {
+        var existing = await db.ContentPages.Select(p => p.Slug).ToListAsync(ct);
+        var missing = ContentSeeds.All.Where(seed => !existing.Contains(seed.Slug)).ToList();
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        var now = clock.GetUtcNow().UtcDateTime;
+        db.ContentPages.AddRange(missing.Select(seed => ContentPage.Create(seed.Slug, seed.Title, seed.Body, now)));
+        try
+        {
+            await db.SaveChangesAsync(ct);
+            logger.LogInformation("Seeded {Count} draft content page(s)", missing.Count);
+        }
+        catch (DbUpdateException)
+        {
+            // Another instance seeded them first (unique slug); anything else is a real failure.
+            db.ChangeTracker.Clear();
+            if ((await db.ContentPages.CountAsync(ct)) < ContentSlugs.All.Count)
             {
                 throw;
             }
