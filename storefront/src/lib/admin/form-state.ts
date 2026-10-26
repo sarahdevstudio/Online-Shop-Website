@@ -1,5 +1,6 @@
 import type { AdminProblem } from './api';
 import { adminMessages } from './messages';
+import { persianOr } from '../persian-only';
 
 /** What an admin Server Action returns to its `useActionState` form. */
 export interface FormState {
@@ -30,7 +31,7 @@ export function camelKeys(errors: Record<string, string[]> | null): Record<strin
   for (const [key, list] of Object.entries(errors ?? {})) {
     if (list.length === 0) continue;
     const camel = key.replace(/(^|\.)([A-Z])/g, (_m, dot: string, letter: string) => dot + letter.toLowerCase());
-    result[camel] = list[0];
+    result[camel] = persianOr(list[0], adminMessages.invalidValue);
   }
   return result;
 }
@@ -50,7 +51,7 @@ export function problemState(problem: AdminProblem, submitted: Record<string, st
   if (problem.status === 403) return failState(problem.code === 'step_up_failed' ? adminMessages.stepUpFailed : adminMessages.forbidden, submitted);
   if (problem.status === 404) return failState(adminMessages.notFound, submitted);
   if (problem.status === 429) return failState(adminMessages.rateLimited, submitted);
-  return failState(problem.detail ?? adminMessages.failed, submitted);
+  return failState(persianOr(problem.detail, adminMessages.failed), submitted);
 }
 
 /** Text fields of a form as a plain record (never files), for `submitted`. */

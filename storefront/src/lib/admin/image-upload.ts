@@ -14,7 +14,7 @@ export function requestTooLarge(contentLength: number | null): boolean {
 export function uploadErrorMessage(status: number, errors: Record<string, string[]> | null): string {
   if (status === 413) return adminMessages.products.imageTooBig;
   const file = (errors?.file ?? errors?.File ?? []).join(' ');
-  if (status === 400 && /between 1 byte/i.test(file)) return adminMessages.products.imageTooBig;
-  if (status === 400 && /JPEG, PNG and WebP/i.test(file)) return adminMessages.products.imageBadType;
+  if (status === 400 && /بایت/.test(file)) return adminMessages.products.imageTooBig;
+  if (status === 400 && /JPEG/.test(file)) return adminMessages.products.imageBadType;
   return adminMessages.products.imageFailed;
 }

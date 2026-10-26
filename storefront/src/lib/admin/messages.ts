@@ -30,6 +30,7 @@ export const adminMessages = {
   conflictYourValues: 'مقادیری که شما وارد کرده بودید:',
   fixErrors: 'لطفاً خطاهای فرم را اصلاح کنید.',
   failed: 'انجام نشد. دوباره تلاش کنید.',
+  invalidValue: 'مقدار واردشده معتبر نیست.',
   forbidden: 'دسترسی این کار را ندارید.',
   notFound: 'مورد پیدا نشد.',
   rateLimited: 'تعداد درخواست‌ها زیاد است. کمی بعد دوباره تلاش کنید.',

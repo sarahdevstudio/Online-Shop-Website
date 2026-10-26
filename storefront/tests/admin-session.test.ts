@@ -126,15 +126,15 @@ describe('image upload limits', () => {
 
   it('turns API rejections into clear Persian messages', () => {
     expect(uploadErrorMessage(413, null)).toContain('۵ مگابایت');
-    expect(uploadErrorMessage(400, { file: ['Image must be between 1 byte and 5242880 bytes.'] })).toContain('۵ مگابایت');
-    expect(uploadErrorMessage(400, { file: ['Only JPEG, PNG and WebP images are accepted.'] })).toContain('JPEG');
+    expect(uploadErrorMessage(400, { file: ['حجم تصویر باید بین ۱ بایت و 5242880 بایت باشد.'] })).toContain('۵ مگابایت');
+    expect(uploadErrorMessage(400, { file: ['فقط تصویرهای JPEG، PNG و WebP پذیرفته می‌شوند.'] })).toContain('JPEG');
     expect(uploadErrorMessage(500, null)).toContain('بارگذاری تصویر انجام نشد');
   });
 });
 
 describe('form state mapping', () => {
   it('camel-cases API validation keys', () => {
-    expect(camelKeys({ FullName: ['a'], 'Variants[0].Sku': ['b'], empty: [] })).toEqual({ fullName: 'a', 'variants[0].sku': 'b' });
+    expect(camelKeys({ FullName: ['الف'], 'Variants[0].Sku': ['ب'], empty: [] })).toEqual({ fullName: 'الف', 'variants[0].sku': 'ب' });
   });
 
   it('treats a 409 without a business code as "data changed", and keeps what was typed', () => {
@@ -150,11 +150,11 @@ describe('form state mapping', () => {
 
   it('maps step-up failures, validation and business conflicts', () => {
     expect(problemState({ status: 403, code: 'step_up_failed', detail: null, errors: null }).message).toContain('رمز عبور فعلی');
-    const invalid = problemState({ status: 400, code: 'validation_failed', detail: null, errors: { CardNumber: ['bad'] } });
-    expect(invalid.errors).toEqual({ cardNumber: 'bad' });
-    const taken = problemState({ status: 409, code: 'sku_taken', detail: 'This SKU is already in use.', errors: null });
+    const invalid = problemState({ status: 400, code: 'validation_failed', detail: null, errors: { CardNumber: ['شماره کارت معتبر نیست.'] } });
+    expect(invalid.errors).toEqual({ cardNumber: 'شماره کارت معتبر نیست.' });
+    const taken = problemState({ status: 409, code: 'sku_taken', detail: 'این کد کالا قبلاً استفاده شده است.', errors: null });
     expect(taken.conflict).toBe(false);
-    expect(taken.message).toBe('This SKU is already in use.');
+    expect(taken.message).toBe('این کد کالا قبلاً استفاده شده است.');
   });
 });
 
