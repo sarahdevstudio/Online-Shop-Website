@@ -124,5 +124,5 @@ internal sealed class AdminOrderService(
         order.StatusLog.OrderBy(l => l.AtUtc).ThenBy(l => l.Id)
             .Select(l => new OrderStatusLogDto(l.FromStatus, l.ToStatus, l.AdminUserId, l.AtUtc)).ToList());
 
-    private static Error NotFound() => Error.NotFound("order_not_found", "Order not found.");
+    private static Error NotFound() => Error.NotFound("order_not_found", "سفارش پیدا نشد.");
 }

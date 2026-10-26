@@ -18,7 +18,7 @@ internal static class OrderAdminEndpoints
         {
             if (!TryParse<OrderStatus>(status, out var statusFilter) || !TryParse<PaymentStatus>(paymentStatus, out var paymentFilter))
             {
-                return Results.ValidationProblem(new Dictionary<string, string[]> { ["filter"] = ["Unknown status or paymentStatus."] });
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["filter"] = ["وضعیت یا وضعیت پرداخت نامعتبر است."] });
             }
 
             return Results.Ok(await service.ListAsync(statusFilter, paymentFilter, q, page ?? 1, ct));

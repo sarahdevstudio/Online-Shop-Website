@@ -18,7 +18,7 @@ public sealed record Error(
     IReadOnlyDictionary<string, object?>? Extensions = null)
 {
     public static Error Validation(IReadOnlyDictionary<string, string[]> errors) =>
-        new(ErrorType.Validation, "validation_failed", "One or more validation errors occurred.", errors);
+        new(ErrorType.Validation, "validation_failed", "یک یا چند مقدار نامعتبر است.", errors);
 
     public static Error Unauthorized(string code, string message) => new(ErrorType.Unauthorized, code, message);
     public static Error Forbidden(string code, string message) => new(ErrorType.Forbidden, code, message);

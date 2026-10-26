@@ -16,7 +16,7 @@ internal sealed class ContentService(ShopDbContext db) : IContentService
     {
         var page = await db.ContentPages.AsNoTracking().Where(p => p.Slug == slug)
             .Select(p => new ContentPageDto(p.Slug, p.Title, p.Body, p.UpdatedAtUtc)).SingleOrDefaultAsync(ct);
-        return page is null ? Error.NotFound("page_not_found", "Page not found.") : page;
+        return page is null ? Error.NotFound("page_not_found", "صفحه پیدا نشد.") : page;
     }
 }
 
@@ -124,5 +124,5 @@ internal sealed class AdminContentService(ShopDbContext db, ICurrentUser current
                 row.UpdatedAtUtc, row.Username, row.RowVersion);
     }
 
-    private static Error NotFound() => Error.NotFound("page_not_found", "Page not found.");
+    private static Error NotFound() => Error.NotFound("page_not_found", "صفحه پیدا نشد.");
 }
