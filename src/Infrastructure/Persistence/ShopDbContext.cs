@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Shop.Domain.Blog;
 using Shop.Domain.Catalog;
 using Shop.Domain.Content;
 using Shop.Domain.Customers;
@@ -33,6 +34,8 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
     public DbSet<ContentPage> ContentPages => Set<ContentPage>();
     public DbSet<ContentAuditLog> ContentAuditLogs => Set<ContentAuditLog>();
+    public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
+    public DbSet<BlogAuditLog> BlogAuditLogs => Set<BlogAuditLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
