@@ -11,16 +11,16 @@ internal sealed class ValidationFilter<T> : IEndpointFilter where T : class
         if (request is null)
         {
             return Results.Problem(
-                "A request body is required.",
+                PersianProblemText.RequestBodyRequired,
                 statusCode: StatusCodes.Status400BadRequest,
-                title: "Bad request");
+                title: PersianProblemText.BadRequest);
         }
 
         var validator = context.HttpContext.RequestServices.GetRequiredService<IValidator<T>>();
         var result = await validator.ValidateAsync(request, context.HttpContext.RequestAborted);
         if (!result.IsValid)
         {
-            return Results.ValidationProblem(result.ToDictionary());
+            return Results.ValidationProblem(result.ToDictionary(), title: PersianProblemText.Validation);
         }
 
         return await next(context);

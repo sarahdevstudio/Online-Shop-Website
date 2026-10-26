@@ -44,6 +44,22 @@ public sealed class PlatformTests(ApiFixture fixture) : ApiTestBase(fixture)
     }
 
     [Fact]
+    public async Task ErrorResponses_AreInPersian_NeverEnglish()
+    {
+        var client = NewClient();
+
+        var unknownRoute = await client.GetAsync("/api/v1/does-not-exist");
+        var noBody = await PostAsync(client, "/api/v1/auth/login", new { username = "", password = "" });
+
+        foreach (var response in new[] { unknownRoute, noBody })
+        {
+            using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            var title = document.RootElement.GetProperty("title").GetString();
+            Assert.True(title is { Length: > 0 } && title.Any(c => c is >= '\u0600' and <= '\u06FF') && !title.Any(char.IsAsciiLetter), $"title was '{title}'");
+        }
+    }
+
+    [Fact]
     public async Task UnexpectedException_ReturnsGenericProblem_WithoutLeakingDetails()
     {
         const string secret = "SECRET-INTERNAL-DETAIL";

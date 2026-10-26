@@ -21,12 +21,12 @@ internal static class ResultExtensions
                 error.ValidationErrors ?? new Dictionary<string, string[]>(),
                 title: error.Message,
                 extensions: extensions),
-            ErrorType.Unauthorized => Results.Problem(error.Message, statusCode: StatusCodes.Status401Unauthorized, title: "Unauthorized", extensions: extensions),
-            ErrorType.Forbidden => Results.Problem(error.Message, statusCode: StatusCodes.Status403Forbidden, title: "Forbidden", extensions: extensions),
-            ErrorType.NotFound => Results.Problem(error.Message, statusCode: StatusCodes.Status404NotFound, title: "Not found", extensions: extensions),
-            ErrorType.Conflict => Results.Problem(error.Message, statusCode: StatusCodes.Status409Conflict, title: "Conflict", extensions: extensions),
-            ErrorType.TooManyRequests => Results.Problem(error.Message, statusCode: StatusCodes.Status429TooManyRequests, title: "Too many requests", extensions: extensions),
-            _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError, title: "An unexpected error occurred."),
+            ErrorType.Unauthorized => Results.Problem(error.Message, statusCode: StatusCodes.Status401Unauthorized, title: PersianProblemText.Unauthorized, extensions: extensions),
+            ErrorType.Forbidden => Results.Problem(error.Message, statusCode: StatusCodes.Status403Forbidden, title: PersianProblemText.Forbidden, extensions: extensions),
+            ErrorType.NotFound => Results.Problem(error.Message, statusCode: StatusCodes.Status404NotFound, title: PersianProblemText.NotFound, extensions: extensions),
+            ErrorType.Conflict => Results.Problem(error.Message, statusCode: StatusCodes.Status409Conflict, title: PersianProblemText.Conflict, extensions: extensions),
+            ErrorType.TooManyRequests => Results.Problem(error.Message, statusCode: StatusCodes.Status429TooManyRequests, title: PersianProblemText.TooManyRequests, extensions: extensions),
+            _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError, title: PersianProblemText.Unexpected),
         };
     }
 

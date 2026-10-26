@@ -37,9 +37,9 @@ internal sealed class StorefrontKeyFilter(IOptions<StorefrontOptions> options) :
         if (!StorefrontKeyRules.Matches(options.Value.ApiKey, supplied))
         {
             return ValueTask.FromResult<object?>(Results.Problem(
-                "A valid storefront key is required.",
+                PersianProblemText.StorefrontKeyRequired,
                 statusCode: StatusCodes.Status401Unauthorized,
-                title: "Unauthorized",
+                title: PersianProblemText.Unauthorized,
                 extensions: new Dictionary<string, object?> { ["code"] = "storefront_key_invalid" }));
         }
 

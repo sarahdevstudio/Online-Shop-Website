@@ -107,7 +107,15 @@ public static class ApiServiceCollectionExtensions
 
         services.AddProblemDetails(options =>
             options.CustomizeProblemDetails = context =>
-                context.ProblemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier);
+            {
+                context.ProblemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
+                // Responses the framework builds itself (unknown route, 405, ...) carry English titles; replace them.
+                if (PersianProblemText.ForStatus(context.ProblemDetails.Status) is { } title
+                    && !PersianProblemText.HasPersian(context.ProblemDetails.Title))
+                {
+                    context.ProblemDetails.Title = title;
+                }
+            });
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
         services.AddOpenApi();

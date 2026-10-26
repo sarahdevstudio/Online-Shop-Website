@@ -32,9 +32,9 @@ internal sealed class AntiforgeryFilter(IAntiforgery antiforgery) : IEndpointFil
         catch (AntiforgeryValidationException)
         {
             return Results.Problem(
-                "The antiforgery token is missing or invalid.",
+                PersianProblemText.AntiforgeryInvalid,
                 statusCode: StatusCodes.Status400BadRequest,
-                title: "Bad request",
+                title: PersianProblemText.BadRequest,
                 extensions: new Dictionary<string, object?> { ["code"] = "antiforgery_invalid" });
         }
 
