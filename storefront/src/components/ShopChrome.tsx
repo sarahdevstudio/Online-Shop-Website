@@ -13,7 +13,8 @@ import { getStoreInfo } from '@/lib/store-info';
 export async function ShopChrome({ children }: { children: ReactNode }) {
   const categories = await getCategoryTree();
   const [cartCount, info, infoLinks] = await Promise.all([getCartCount(), getStoreInfo(), getInfoLinks()]);
-  const navItems = categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` }));
+  const categoryItems = categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` }));
+  const navItems = [...categoryItems, { label: messages.blog, href: '/blog' }];
 
   return (
     <>
@@ -27,8 +28,8 @@ export async function ShopChrome({ children }: { children: ReactNode }) {
         brandName={site.name}
         about={site.description}
         groups={[
-          { title: messages.categories, links: navItems },
-          { title: messages.infoPages, links: infoLinks },
+          { title: messages.categories, links: categoryItems },
+          { title: messages.infoPages, links: [...infoLinks, { label: messages.blog, href: '/blog' }] },
         ]}
         phone={info?.storePhone || undefined}
         address={info?.storeAddress || undefined}
