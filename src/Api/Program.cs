@@ -88,6 +88,7 @@ api.MapOrderAdminEndpoints();
 api.MapSettingsAdminEndpoints();
 api.MapAdminOperationsEndpoints();
 api.MapContentEndpoints();
+api.MapBlogEndpoints();
 
 await app.RunAsync();
 return 0;
