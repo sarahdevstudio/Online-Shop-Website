@@ -8,15 +8,15 @@ public sealed record ContentPageDto(string Slug, string Title, string Body, Date
 /// <summary>Public: slug + title + last change (footer links, sitemap).</summary>
 public sealed record ContentPageSummaryDto(string Slug, string Title, DateTime UpdatedAtUtc);
 
-public sealed record AdminContentPageListItemDto(string Slug, string Title, bool IsDraft, DateTime UpdatedAtUtc, string? UpdatedByEmail);
+public sealed record AdminContentPageListItemDto(string Slug, string Title, bool IsDraft, DateTime UpdatedAtUtc, string? UpdatedByUsername);
 
 public sealed record AdminContentPageDto(
-    string Slug, string Title, string Body, bool IsDraft, DateTime UpdatedAtUtc, string? UpdatedByEmail, byte[] RowVersion);
+    string Slug, string Title, string Body, bool IsDraft, DateTime UpdatedAtUtc, string? UpdatedByUsername, byte[] RowVersion);
 
 /// <summary><see cref="RowVersion"/> is the version the editor loaded: a stale save is a 409.</summary>
 public sealed record UpdateContentPageRequest(string Title, string Body, byte[] RowVersion);
 
-public sealed record ContentAuditEntryDto(DateTime AtUtc, Guid? AdminUserId, string? AdminEmail, bool TitleChanged, bool BodyChanged);
+public sealed record ContentAuditEntryDto(DateTime AtUtc, Guid? AdminUserId, string? AdminUsername, bool TitleChanged, bool BodyChanged);
 
 public interface IContentService
 {

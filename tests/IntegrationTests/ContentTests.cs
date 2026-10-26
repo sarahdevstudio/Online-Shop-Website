@@ -13,11 +13,11 @@ public sealed record PageBody(string Slug, string Title, string Body, DateTime U
 
 public sealed record PageSummaryBody(string Slug, string Title, DateTime UpdatedAtUtc);
 
-public sealed record AdminPageBody(string Slug, string Title, string Body, bool IsDraft, string? UpdatedByEmail, byte[] RowVersion);
+public sealed record AdminPageBody(string Slug, string Title, string Body, bool IsDraft, string? UpdatedByUsername, byte[] RowVersion);
 
-public sealed record AdminPageListBody(string Slug, string Title, bool IsDraft, string? UpdatedByEmail);
+public sealed record AdminPageListBody(string Slug, string Title, bool IsDraft, string? UpdatedByUsername);
 
-public sealed record ContentAuditBody(Guid? AdminUserId, string? AdminEmail, bool TitleChanged, bool BodyChanged);
+public sealed record ContentAuditBody(Guid? AdminUserId, string? AdminUsername, bool TitleChanged, bool BodyChanged);
 
 public sealed class ContentTests(ApiFixture fixture) : CatalogTestBase(fixture)
 {
@@ -171,7 +171,7 @@ public sealed class ContentTests(ApiFixture fixture) : CatalogTestBase(fixture)
 
             Assert.Equal("تماس با ما (نهایی)", saved.Title);
             Assert.False(saved.IsDraft); // the marker is gone
-            Assert.Equal(ApiFixture.AdminEmail, saved.UpdatedByEmail);
+            Assert.Equal(ApiFixture.AdminEmail, saved.UpdatedByUsername);
             Assert.NotEqual(original.RowVersion, saved.RowVersion);
             var publicPage = await GetOkAsync<PageBody>(NewClient(), "/api/v1/catalog/pages/contact");
             Assert.Equal("تماس با ما (نهایی)", publicPage.Title);
@@ -179,7 +179,7 @@ public sealed class ContentTests(ApiFixture fixture) : CatalogTestBase(fixture)
 
             var audit = await GetOkAsync<ContentAuditBody[]>(admin, "/api/v1/admin/content-pages/contact/audit");
             Assert.True(audit[0].TitleChanged && audit[0].BodyChanged);
-            Assert.Equal(ApiFixture.AdminEmail, audit[0].AdminEmail);
+            Assert.Equal(ApiFixture.AdminEmail, audit[0].AdminUsername);
 
             // saving the old version again is a 409 and changes nothing
             var stale = await PutAsync(admin, "contact", "x2", "y2", original.RowVersion);

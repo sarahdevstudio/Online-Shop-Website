@@ -51,7 +51,7 @@ public sealed record AdminStoreSettingsDto(
 public sealed record UpdateStoreSettingsRequest(StoreSettingsValues Settings, byte[] RowVersion, string? CurrentPassword = null);
 
 public sealed record SettingsAuditEntryDto(
-    int Id, DateTime AtUtc, Guid? AdminUserId, string? AdminEmail, string Field, string? OldValue, string? NewValue);
+    int Id, DateTime AtUtc, Guid? AdminUserId, string? AdminUsername, string Field, string? OldValue, string? NewValue);
 
 /// <summary>Only what customers may see. No card details: those appear on the customer's own order page.</summary>
 public sealed record StoreInfoDto(

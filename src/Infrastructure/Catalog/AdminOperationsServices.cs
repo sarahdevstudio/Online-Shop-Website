@@ -72,7 +72,7 @@ internal sealed class StockAdminService(ShopDbContext db, ICurrentUser currentUs
                 join u in db.Users.AsNoTracking() on a.AdminUserId equals u.Id into users
                 from u in users.DefaultIfEmpty()
                 orderby a.AtUtc descending, a.Id descending
-                select new StockAdjustmentDto(a.Id, a.AtUtc, a.AdminUserId, u.Email, a.Delta, a.StockAfter, a.Reason, a.Source))
+                select new StockAdjustmentDto(a.Id, a.AtUtc, a.AdminUserId, u.UserName, a.Delta, a.StockAfter, a.Reason, a.Source))
             .Take(30)
             .ToListAsync(ct);
         return rows;

@@ -167,7 +167,7 @@ internal sealed class AdminSettingsService(
                 join u in db.Users.AsNoTracking() on a.AdminUserId equals u.Id into users
                 from u in users.DefaultIfEmpty()
                 orderby a.AtUtc descending, a.Id descending
-                select new SettingsAuditEntryDto(a.Id, a.AtUtc, a.AdminUserId, u.Email, a.Field, a.OldValue, a.NewValue))
+                select new SettingsAuditEntryDto(a.Id, a.AtUtc, a.AdminUserId, u.UserName, a.Field, a.OldValue, a.NewValue))
             .Skip((page - 1) * PageSize).Take(PageSize)
             .ToListAsync(ct);
         return new PagedList<SettingsAuditEntryDto>(items, page, PageSize, total);

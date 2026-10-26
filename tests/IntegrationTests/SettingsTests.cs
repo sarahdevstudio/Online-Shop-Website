@@ -16,7 +16,7 @@ public sealed record SettingsValuesBody(
 
 public sealed record AdminSettingsBody(SettingsValuesBody Settings, bool CardToCardOffered, byte[] RowVersion);
 
-public sealed record AuditEntryBody(int Id, Guid? AdminUserId, string? AdminEmail, string Field, string? OldValue, string? NewValue);
+public sealed record AuditEntryBody(int Id, Guid? AdminUserId, string? AdminUsername, string Field, string? OldValue, string? NewValue);
 
 public sealed record AuditPageBody(AuditEntryBody[] Items, int Total);
 
@@ -287,7 +287,7 @@ public sealed class SettingsTests(ApiFixture fixture) : StoreTestBase(fixture)
             var phoneEntry = entries.First(e => e.Field == "storePhone" && e.NewValue == phone);
             Assert.Equal("50000", fee.OldValue);
             Assert.Equal("", phoneEntry.OldValue);
-            Assert.Equal(ApiFixture.AdminEmail, fee.AdminEmail);
+            Assert.Equal(ApiFixture.AdminEmail, fee.AdminUsername);
             Assert.NotNull(fee.AdminUserId);
         }
         finally

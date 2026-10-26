@@ -17,7 +17,7 @@ public sealed record StockAdjustRequest(int Delta, string? Reason);
 public sealed record StockAdjustResultDto(int VariantId, int Stock, byte[] RowVersion);
 
 public sealed record StockAdjustmentDto(
-    int Id, DateTime AtUtc, Guid? AdminUserId, string? AdminEmail, int Delta, int StockAfter, string? Reason, string Source);
+    int Id, DateTime AtUtc, Guid? AdminUserId, string? AdminUsername, int Delta, int StockAfter, string? Reason, string Source);
 
 public interface IStockAdminService
 {

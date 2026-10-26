@@ -29,10 +29,10 @@ internal sealed class AdminContentService(ShopDbContext db, ICurrentUser current
                 join u in db.Users.AsNoTracking() on p.UpdatedByUserId equals u.Id into users
                 from u in users.DefaultIfEmpty()
                 orderby p.Id
-                select new { p.Slug, p.Title, p.Body, p.UpdatedAtUtc, Email = u.Email })
+                select new { p.Slug, p.Title, p.Body, p.UpdatedAtUtc, Username = u.UserName })
             .ToListAsync(ct);
         return rows.Select(r => new AdminContentPageListItemDto(
-            r.Slug, r.Title, r.Body.Contains(ContentPage.DraftMarker, StringComparison.Ordinal), r.UpdatedAtUtc, r.Email)).ToList();
+            r.Slug, r.Title, r.Body.Contains(ContentPage.DraftMarker, StringComparison.Ordinal), r.UpdatedAtUtc, r.Username)).ToList();
     }
 
     public async Task<Result<AdminContentPageDto>> GetAsync(string slug, CancellationToken ct)
@@ -102,7 +102,7 @@ internal sealed class AdminContentService(ShopDbContext db, ICurrentUser current
                 join u in db.Users.AsNoTracking() on a.AdminUserId equals u.Id into users
                 from u in users.DefaultIfEmpty()
                 orderby a.AtUtc descending, a.Id descending
-                select new ContentAuditEntryDto(a.AtUtc, a.AdminUserId, u.Email, a.TitleChanged, a.BodyChanged))
+                select new ContentAuditEntryDto(a.AtUtc, a.AdminUserId, u.UserName, a.TitleChanged, a.BodyChanged))
             .Take(30)
             .ToListAsync(ct);
         return rows;
@@ -115,13 +115,13 @@ internal sealed class AdminContentService(ShopDbContext db, ICurrentUser current
                 where p.Slug == slug
                 join u in db.Users.AsNoTracking() on p.UpdatedByUserId equals u.Id into users
                 from u in users.DefaultIfEmpty()
-                select new { p.Slug, p.Title, p.Body, p.UpdatedAtUtc, p.RowVersion, Email = u.Email })
+                select new { p.Slug, p.Title, p.Body, p.UpdatedAtUtc, p.RowVersion, Username = u.UserName })
             .SingleOrDefaultAsync(ct);
         return row is null
             ? null
             : new AdminContentPageDto(
                 row.Slug, row.Title, row.Body, row.Body.Contains(ContentPage.DraftMarker, StringComparison.Ordinal),
-                row.UpdatedAtUtc, row.Email, row.RowVersion);
+                row.UpdatedAtUtc, row.Username, row.RowVersion);
     }
 
     private static Error NotFound() => Error.NotFound("page_not_found", "Page not found.");

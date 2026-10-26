@@ -16,7 +16,7 @@ public sealed record DashboardBody(int NewOrders, int TransferReferenceWaiting, 
 
 public sealed record StockResultBody(int VariantId, int Stock, byte[] RowVersion);
 
-public sealed record StockHistoryBody(int Id, Guid? AdminUserId, string? AdminEmail, int Delta, int StockAfter, string? Reason, string Source);
+public sealed record StockHistoryBody(int Id, Guid? AdminUserId, string? AdminUsername, int Delta, int StockAfter, string? Reason, string Source);
 
 public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
 {
@@ -276,7 +276,7 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
             await PutSettingsAsync(admin, current.Settings with { CardNumber = secretCard, BankName = "ملت" }, current.RowVersion, "wrong-password-xx"), 403, "step_up_failed");
 
         var audit = await GetOkAsync<AuditPageBody>(admin, "/api/v1/admin/settings/audit?page=1");
-        var entry = audit.Items.First(e => e.Field == "reauthFailed" && e.AdminEmail == email);
+        var entry = audit.Items.First(e => e.Field == "reauthFailed" && e.AdminUsername == email);
         Assert.Contains("cardNumber", entry.NewValue);
         Assert.Contains("bankName", entry.NewValue);
         Assert.DoesNotContain(secretCard, entry.NewValue);
@@ -363,7 +363,7 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
         Assert.Equal(2, history.Length); // the rejected attempts left no trace
         Assert.Equal(new[] { -12, 7 }, history.Select(h => h.Delta).ToArray()); // newest first
         Assert.Equal(new[] { 0, 12 }, history.Select(h => h.StockAfter).ToArray());
-        Assert.All(history, h => Assert.Equal(ApiFixture.AdminEmail, h.AdminEmail));
+        Assert.All(history, h => Assert.Equal(ApiFixture.AdminEmail, h.AdminUsername));
         Assert.Equal("ورود کالا", history[1].Reason);
         Assert.All(history, h => Assert.Equal("adjust", h.Source));
     }
