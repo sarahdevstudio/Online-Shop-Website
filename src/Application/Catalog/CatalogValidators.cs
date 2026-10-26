@@ -9,11 +9,11 @@ internal static class CatalogRules
     /// <summary>Length is checked after normalization, so a name of only spaces/ZWNJ is empty.</summary>
     public static IRuleBuilderOptions<T, string?> PersianName<T>(this IRuleBuilder<T, string?> rule, int maxLength) =>
         rule.Must(v => PersianText.Normalize(v).Length is var n && n > 0 && n <= maxLength)
-            .WithMessage($"Required, at most {maxLength} characters.");
+            .WithMessage($"این مقدار لازم است و حداکثر {maxLength} نویسه می‌تواند باشد.");
 
     public static IRuleBuilderOptions<T, string?> ValidSlug<T>(this IRuleBuilder<T, string?> rule) =>
         rule.Must(Slug.IsValid)
-            .WithMessage($"Lower-case English letters and digits separated by single hyphens, at most {Slug.MaxLength} characters.");
+            .WithMessage($"فقط حروف کوچک انگلیسی و عدد، با خط تیره بین بخش‌ها، حداکثر {Slug.MaxLength} نویسه.");
 }
 
 public sealed class CategoryRequestValidator : AbstractValidator<CategoryRequest>
@@ -50,10 +50,10 @@ public sealed class VariantFieldsValidator : AbstractValidator<IVariantFields>
     public VariantFieldsValidator()
     {
         RuleFor(x => x.Sku).Must(ProductVariant.IsValidSku)
-            .WithMessage($"Letters, digits, '.', '_' or '-', at most {ProductVariant.SkuMaxLength} characters.");
+            .WithMessage($"فقط حروف انگلیسی، عدد و . _ - ، حداکثر {ProductVariant.SkuMaxLength} نویسه.");
         RuleFor(x => x.Price).InclusiveBetween(1, ProductVariant.MaxPrice);
         RuleFor(x => x.CompareAtPrice).Must((x, c) => c is null || (c > x.Price && c <= ProductVariant.MaxPrice))
-            .WithMessage("Must be higher than the price.");
+            .WithMessage("باید از قیمت فروش بیشتر باشد.");
         RuleFor(x => x.Stock).InclusiveBetween(0, ProductVariant.MaxStock);
     }
 }
@@ -93,7 +93,7 @@ public sealed class ProductAttributesRequestValidator : AbstractValidator<Produc
         RuleForEach(x => x.Values).ChildRules(value =>
         {
             value.RuleFor(v => v).Must(v => (v.OptionId is null) != (v.Text is null))
-                .WithMessage("Exactly one of optionId or text is required.");
+                .WithMessage("دقیقاً یکی از گزینه یا متن باید پر شود.");
             value.RuleFor(v => v.Text).PersianName(ProductAttributeValue.TextMaxLength).When(v => v.Text is not null);
         });
     }
@@ -103,6 +103,6 @@ public sealed class ImageOrderRequestValidator : AbstractValidator<ImageOrderReq
 {
     public ImageOrderRequestValidator()
     {
-        RuleFor(x => x.ImageIds).NotNull().Must(ids => ids.Distinct().Count() == ids.Count).WithMessage("Ids must be unique.");
+        RuleFor(x => x.ImageIds).NotNull().Must(ids => ids.Distinct().Count() == ids.Count).WithMessage("شناسه‌ها نباید تکراری باشند.");
     }
 }

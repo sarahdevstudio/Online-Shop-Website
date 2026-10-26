@@ -29,7 +29,7 @@ public static class ProductListQueryParser
                 case "q":
                     if (single is { Length: > ProductListQuery.QMaxLength })
                     {
-                        errors["q"] = [$"At most {ProductListQuery.QMaxLength} characters."];
+                        errors["q"] = [$"حداکثر {ProductListQuery.QMaxLength} نویسه."];
                     }
 
                     result = result with { Q = single };
@@ -54,7 +54,7 @@ public static class ProductListQueryParser
                     }
                     else
                     {
-                        errors["inStock"] = ["Must be true or false."];
+                        errors["inStock"] = ["مقدار باید «بله» یا «خیر» باشد."];
                     }
 
                     break;
@@ -68,7 +68,7 @@ public static class ProductListQueryParser
                     };
                     if (sort is null)
                     {
-                        errors["sort"] = ["Must be newest, price-asc or price-desc."];
+                        errors["sort"] = ["ترتیب نمایش نامعتبر است."];
                     }
                     else
                     {
@@ -97,7 +97,7 @@ public static class ProductListQueryParser
 
         if (result is { MinPrice: { } min, MaxPrice: { } max } && min > max)
         {
-            errors["minPrice"] = ["Must not be greater than maxPrice."];
+            errors["minPrice"] = ["حداقل قیمت نباید از حداکثر قیمت بیشتر باشد."];
         }
 
         return errors.Count > 0

@@ -10,8 +10,8 @@ namespace Shop.Infrastructure.Catalog;
 
 internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : ICatalogService
 {
-    private static readonly Error CategoryNotFound = Error.NotFound("category_not_found", "Category was not found.");
-    private static readonly Error ProductNotFound = Error.NotFound("product_not_found", "Product was not found.");
+    private static readonly Error CategoryNotFound = Error.NotFound("category_not_found", "دسته پیدا نشد.");
+    private static readonly Error ProductNotFound = Error.NotFound("product_not_found", "محصول پیدا نشد.");
 
     /// <summary>Displayed price of a product: its cheapest active variant.</summary>
     private static readonly Expression<Func<Product, long?>> MinPrice =

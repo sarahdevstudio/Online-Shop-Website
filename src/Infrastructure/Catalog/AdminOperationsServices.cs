@@ -17,7 +17,7 @@ internal sealed class StockAdminService(ShopDbContext db, ICurrentUser currentUs
     {
         if (request.Delta == 0 || Math.Abs((long)request.Delta) > MaxDelta)
         {
-            return Error.Validation(new Dictionary<string, string[]> { ["delta"] = [$"The change must be a non-zero whole number up to {MaxDelta}."] });
+            return Error.Validation(new Dictionary<string, string[]> { ["delta"] = [$"تغییر موجودی باید عددی صحیح، غیرصفر و حداکثر {MaxDelta} باشد."] });
         }
 
         await using var tx = await db.Database.BeginTransactionAsync(ct);
@@ -44,8 +44,8 @@ internal sealed class StockAdminService(ShopDbContext db, ICurrentUser currentUs
             {
                 await reader.CloseAsync();
                 return await db.ProductVariants.AnyAsync(v => v.Id == variantId, ct)
-                    ? Error.Conflict("stock_out_of_range", "The stock can't go below zero (or above the maximum).")
-                    : Error.NotFound("variant_not_found", "Variant was not found.");
+                    ? Error.Conflict("stock_out_of_range", "موجودی نمی‌تواند کمتر از صفر (یا بیشتر از حد مجاز) شود.")
+                    : Error.NotFound("variant_not_found", "تنوع محصول پیدا نشد.");
             }
 
             stockAfter = reader.GetInt32(0);
@@ -63,7 +63,7 @@ internal sealed class StockAdminService(ShopDbContext db, ICurrentUser currentUs
     {
         if (!await db.ProductVariants.AnyAsync(v => v.Id == variantId, ct))
         {
-            return Error.NotFound("variant_not_found", "Variant was not found.");
+            return Error.NotFound("variant_not_found", "تنوع محصول پیدا نشد.");
         }
 
         var rows = await (
