@@ -147,7 +147,7 @@ public sealed class ContentTests(ApiFixture fixture) : CatalogTestBase(fixture)
         }
 
         var catalogOnly = NewClient();
-        Assert.Equal(HttpStatusCode.OK, (await PostAsync(catalogOnly, "/api/v1/auth/login", new { email, password })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await PostAsync(catalogOnly, "/api/v1/auth/login", new { username = email, password })).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await catalogOnly.GetAsync("/api/v1/admin/content-pages")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await PutAsync(catalogOnly, "about", "x", "y", page.RowVersion)).StatusCode);
 

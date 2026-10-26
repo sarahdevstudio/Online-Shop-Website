@@ -102,7 +102,7 @@ public sealed class SettingsTests(ApiFixture fixture) : StoreTestBase(fixture)
         }
 
         var client = NewClient();
-        Assert.Equal(HttpStatusCode.OK, (await PostAsync(client, "/api/v1/auth/login", new { email, password })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await PostAsync(client, "/api/v1/auth/login", new { username = email, password })).StatusCode);
 
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/v1/admin/products")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/v1/admin/settings")).StatusCode);

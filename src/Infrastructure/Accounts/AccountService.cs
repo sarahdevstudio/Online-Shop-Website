@@ -20,7 +20,7 @@ internal sealed class AccountService(
     TimeProvider clock) : IAccountService
 {
     private static readonly Error InvalidCredentials =
-        Error.Unauthorized("invalid_credentials", "Email or password is incorrect.");
+        Error.Unauthorized("invalid_credentials", "Username or password is incorrect.");
 
     private static readonly Error EmailTaken =
         Error.Conflict("email_taken", "An account with this email already exists.");
@@ -65,28 +65,28 @@ internal sealed class AccountService(
         }
 
         await signInManager.SignInAsync(user, isPersistent: false);
-        return new AccountDto(user.Id, email, request.FullName.Trim(), [Roles.Customer]);
+        return new AccountDto(user.Id, email, email, request.FullName.Trim(), [Roles.Customer]);
     }
 
     public async Task<Result<AccountDto>> LoginAsync(LoginRequest request, CancellationToken ct)
     {
-        var email = request.Email.Trim();
+        var username = request.Username.Trim();
 
         // Per-account attempt limit (on top of the per-IP limiter and the 15-minute lockout after 5 failures). It counts
-        // every attempt for any e-mail string, so it reveals nothing about whether the account exists.
-        if (!throttle.TryAcquire(email))
+        // every attempt for any username string, so it reveals nothing about whether the account exists.
+        if (!throttle.TryAcquire(username))
         {
             return Error.TooManyRequests("rate_limited", "Too many sign-in attempts. Try again in a minute.");
         }
 
-        var result = await signInManager.PasswordSignInAsync(email, request.Password, isPersistent: false, lockoutOnFailure: true);
+        var result = await signInManager.PasswordSignInAsync(username, request.Password, isPersistent: false, lockoutOnFailure: true);
         if (!result.Succeeded)
         {
             // Wrong password, unknown user and lockout all look the same to the caller.
             return InvalidCredentials;
         }
 
-        var user = await userManager.FindByNameAsync(email);
+        var user = await userManager.FindByNameAsync(username);
         return user is null ? InvalidCredentials : await BuildAccountAsync(user, ct);
     }
 
@@ -162,9 +162,9 @@ internal sealed class AccountService(
             .AsNoTracking()
             .Where(c => c.UserId == user.Id)
             .Select(c => c.FullName)
-            .SingleOrDefaultAsync(ct) ?? user.Email!;
+            .SingleOrDefaultAsync(ct) ?? user.UserName!;
 
-        return new AccountDto(user.Id, user.Email!, displayName, roles.ToArray());
+        return new AccountDto(user.Id, user.UserName!, user.Email, displayName, roles.ToArray());
     }
 
     private static Result<AccountDto> MapCreateFailure(IdentityResult result)

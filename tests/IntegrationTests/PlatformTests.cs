@@ -51,7 +51,7 @@ public sealed class PlatformTests(ApiFixture fixture) : ApiTestBase(fixture)
             host.ConfigureTestServices(services => services.AddScoped<IAccountService>(_ => new ExplodingAccountService(secret))));
         var client = factory.CreateClient();
 
-        var response = await PostAsync(client, "/api/v1/auth/login", new { email = TestData.NewEmail(), password = TestData.NewPassword() });
+        var response = await PostAsync(client, "/api/v1/auth/login", new { username = TestData.NewEmail(), password = TestData.NewPassword() });
 
         await AssertProblemAsync(response, 500);
         var body = await response.Content.ReadAsStringAsync();
@@ -72,7 +72,7 @@ public sealed class PlatformTests(ApiFixture fixture) : ApiTestBase(fixture)
         var statuses = new List<HttpStatusCode>();
         for (var i = 0; i < 6; i++)
         {
-            var response = await PostAsync(client, "/api/v1/auth/login", new { email = TestData.NewEmail(), password = TestData.NewPassword() });
+            var response = await PostAsync(client, "/api/v1/auth/login", new { username = TestData.NewEmail(), password = TestData.NewPassword() });
             statuses.Add(response.StatusCode);
         }
 

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Shop.IntegrationTests;
 
-public sealed record AccountBody(Guid Id, string Email, string DisplayName, string[] Roles);
+public sealed record AccountBody(Guid Id, string Username, string? Email, string DisplayName, string[] Roles);
 
 public sealed record ProfileBody(Guid CustomerId, string Email, string FullName, string? Phone);
 
@@ -71,7 +71,7 @@ public abstract class ApiTestBase(ApiFixture fixture)
     protected async Task<HttpClient> LoginAdminAsync()
     {
         var client = NewClient();
-        var response = await PostAsync(client, "/api/v1/auth/login", new { email = ApiFixture.AdminEmail, password = Fixture.AdminPassword });
+        var response = await PostAsync(client, "/api/v1/auth/login", new { username = ApiFixture.AdminEmail, password = Fixture.AdminPassword });
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         return client;
     }

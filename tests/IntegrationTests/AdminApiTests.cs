@@ -50,7 +50,7 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
     private async Task<(HttpClient Client, string Cookie)> LoginWithCookieAsync(string email, string password)
     {
         var client = NewClient();
-        var response = await PostAsync(client, "/api/v1/auth/login", new { email, password });
+        var response = await PostAsync(client, "/api/v1/auth/login", new { username = email, password });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return (client, AuthCookie(response));
     }
@@ -95,8 +95,8 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
         Assert.Equal(HttpStatusCode.Unauthorized, await MeWithCopiedCookieAsync(otherCookie)); // the other device is out
         Assert.Equal(HttpStatusCode.Unauthorized, await MeWithCopiedCookieAsync(callerCookie)); // and the old cookie value too
         Assert.Equal(HttpStatusCode.OK, (await caller.GetAsync("/api/v1/auth/me")).StatusCode); // the caller got a fresh cookie
-        Assert.Equal(HttpStatusCode.Unauthorized, (await PostAsync(NewClient(), "/api/v1/auth/login", new { email, password })).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await PostAsync(NewClient(), "/api/v1/auth/login", new { email, password = newPassword })).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await PostAsync(NewClient(), "/api/v1/auth/login", new { username = email, password })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await PostAsync(NewClient(), "/api/v1/auth/login", new { username = email, password = newPassword })).StatusCode);
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
         }
 
         // locked out: even the right password is refused, with the same generic answer as any failed login
-        var login = await PostAsync(NewClient(), "/api/v1/auth/login", new { email, password });
+        var login = await PostAsync(NewClient(), "/api/v1/auth/login", new { username = email, password });
         await AssertProblemAsync(login, 401, "invalid_credentials");
     }
 
@@ -149,8 +149,8 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
     public async Task FailedLogins_AreIndistinguishable_AndFiveFailuresLockTheAccount()
     {
         var (email, password) = await NewAdminUserAsync();
-        var unknown = await PostAsync(NewClient(), "/api/v1/auth/login", new { email = TestData.NewEmail(), password = "whatever-123456" });
-        var wrong = await PostAsync(NewClient(), "/api/v1/auth/login", new { email, password = "wrong-password-1" });
+        var unknown = await PostAsync(NewClient(), "/api/v1/auth/login", new { username = TestData.NewEmail(), password = "whatever-123456" });
+        var wrong = await PostAsync(NewClient(), "/api/v1/auth/login", new { username = email, password = "wrong-password-1" });
         var unknownBody = await AssertProblemAsync(unknown, 401, "invalid_credentials");
         var wrongBody = await AssertProblemAsync(wrong, 401, "invalid_credentials");
         Assert.Equal(unknownBody.Detail, wrongBody.Detail);
@@ -158,11 +158,11 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
 
         for (var i = 0; i < 4; i++)
         {
-            await PostAsync(NewClient(), "/api/v1/auth/login", new { email, password = "wrong-password-" + i });
+            await PostAsync(NewClient(), "/api/v1/auth/login", new { username = email, password = "wrong-password-" + i });
         }
 
         // five failures in total: now locked for 15 minutes, and the answer is still the same generic one
-        var locked = await PostAsync(NewClient(), "/api/v1/auth/login", new { email, password });
+        var locked = await PostAsync(NewClient(), "/api/v1/auth/login", new { username = email, password });
         var lockedBody = await AssertProblemAsync(locked, 401, "invalid_credentials");
         Assert.Equal(unknownBody.Detail, lockedBody.Detail);
     }
@@ -177,12 +177,12 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
         var codes = new List<HttpStatusCode>();
         for (var i = 0; i < 5; i++)
         {
-            codes.Add((await PostAsync(client, "/api/v1/auth/login", new { email, password = "wrong-password-1" })).StatusCode);
+            codes.Add((await PostAsync(client, "/api/v1/auth/login", new { username = email, password = "wrong-password-1" })).StatusCode);
         }
 
         Assert.Equal([HttpStatusCode.Unauthorized, HttpStatusCode.Unauthorized, HttpStatusCode.Unauthorized, HttpStatusCode.TooManyRequests, HttpStatusCode.TooManyRequests], codes);
         // another account is unaffected
-        Assert.Equal(HttpStatusCode.Unauthorized, (await PostAsync(client, "/api/v1/auth/login", new { email = TestData.NewEmail(), password = "x-wrong-password" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await PostAsync(client, "/api/v1/auth/login", new { username = TestData.NewEmail(), password = "x-wrong-password" })).StatusCode);
     }
 
     [Fact]
@@ -300,7 +300,7 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
 
         // locked: the correct password is refused too, and so is signing in
         await AssertProblemAsync(await PutSettingsAsync(admin, change, current.RowVersion, password), 403, "step_up_failed");
-        await AssertProblemAsync(await PostAsync(NewClient(), "/api/v1/auth/login", new { email, password }), 401, "invalid_credentials");
+        await AssertProblemAsync(await PostAsync(NewClient(), "/api/v1/auth/login", new { username = email, password }), 401, "invalid_credentials");
     }
 
     // ---- dashboard ----

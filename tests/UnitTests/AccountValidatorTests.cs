@@ -58,7 +58,7 @@ public class AccountValidatorTests
     {
         var result = _login.Validate(new LoginRequest("", ""));
 
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(LoginRequest.Email));
+        Assert.Contains(result.Errors, e => e.PropertyName == nameof(LoginRequest.Username));
         Assert.Contains(result.Errors, e => e.PropertyName == nameof(LoginRequest.Password));
     }
 }

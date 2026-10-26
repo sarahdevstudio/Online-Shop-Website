@@ -306,7 +306,7 @@ public sealed class CatalogAdminTests(ApiFixture fixture) : CatalogTestBase(fixt
         using var factory = Fixture.Factory.WithWebHostBuilder(host => host.ConfigureTestServices(services =>
             services.PostConfigure<MediaOptions>(o => o.MaxImageBytes = 100)));
         var admin = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, HandleCookies = true });
-        var login = await PostAsync(admin, "/api/v1/auth/login", new { email = ApiFixture.AdminEmail, password = Fixture.AdminPassword });
+        var login = await PostAsync(admin, "/api/v1/auth/login", new { username = ApiFixture.AdminEmail, password = Fixture.AdminPassword });
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
         var productId = await NewProductIdAsync(admin);
         var image = new byte[101];

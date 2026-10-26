@@ -93,7 +93,7 @@ public sealed class AuthenticationTests(ApiFixture fixture) : ApiTestBase(fixtur
         var (_, email, password) = await RegisterCustomerAsync();
         var client = NewClient();
 
-        var response = await PostAsync(client, "/api/v1/auth/login", new { email, password });
+        var response = await PostAsync(client, "/api/v1/auth/login", new { username = email, password });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(email, (await ReadAsync<AccountBody>(response)).Email);
@@ -105,7 +105,7 @@ public sealed class AuthenticationTests(ApiFixture fixture) : ApiTestBase(fixtur
     {
         var (_, email, password) = await RegisterCustomerAsync();
 
-        var response = await PostAsync(NewClient(), "/api/v1/auth/login", new { email = email.ToUpperInvariant(), password });
+        var response = await PostAsync(NewClient(), "/api/v1/auth/login", new { username = email.ToUpperInvariant(), password });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -115,8 +115,8 @@ public sealed class AuthenticationTests(ApiFixture fixture) : ApiTestBase(fixtur
     {
         var (_, email, _) = await RegisterCustomerAsync();
 
-        var wrongPassword = await PostAsync(NewClient(), "/api/v1/auth/login", new { email, password = TestData.NewPassword() });
-        var unknownUser = await PostAsync(NewClient(), "/api/v1/auth/login", new { email = TestData.NewEmail(), password = TestData.NewPassword() });
+        var wrongPassword = await PostAsync(NewClient(), "/api/v1/auth/login", new { username = email, password = TestData.NewPassword() });
+        var unknownUser = await PostAsync(NewClient(), "/api/v1/auth/login", new { username = TestData.NewEmail(), password = TestData.NewPassword() });
 
         await AssertProblemAsync(wrongPassword, 401, "invalid_credentials");
         await AssertProblemAsync(unknownUser, 401, "invalid_credentials");
@@ -131,10 +131,10 @@ public sealed class AuthenticationTests(ApiFixture fixture) : ApiTestBase(fixtur
 
         for (var i = 0; i < 5; i++)
         {
-            await PostAsync(NewClient(), "/api/v1/auth/login", new { email, password = TestData.NewPassword() });
+            await PostAsync(NewClient(), "/api/v1/auth/login", new { username = email, password = TestData.NewPassword() });
         }
 
-        var response = await PostAsync(NewClient(), "/api/v1/auth/login", new { email, password });
+        var response = await PostAsync(NewClient(), "/api/v1/auth/login", new { username = email, password });
 
         await AssertProblemAsync(response, 401, "invalid_credentials");
     }
@@ -177,7 +177,7 @@ public sealed class AuthenticationTests(ApiFixture fixture) : ApiTestBase(fixtur
         var client = NewClient();
 
         var response = await client.PostAsJsonAsync("/api/v1/auth/login",
-            new { email = TestData.NewEmail(), password = TestData.NewPassword() }, Json);
+            new { username = TestData.NewEmail(), password = TestData.NewPassword() }, Json);
 
         await AssertProblemAsync(response, 400, "antiforgery_invalid");
     }
@@ -190,7 +190,7 @@ public sealed class AuthenticationTests(ApiFixture fixture) : ApiTestBase(fixtur
         var client = NewClient();
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/auth/login")
         {
-            Content = JsonContent.Create(new { email = TestData.NewEmail(), password = TestData.NewPassword() }, options: Json),
+            Content = JsonContent.Create(new { username = TestData.NewEmail(), password = TestData.NewPassword() }, options: Json),
         };
         request.Headers.Add("X-XSRF-TOKEN", foreignToken!.Token);
 
