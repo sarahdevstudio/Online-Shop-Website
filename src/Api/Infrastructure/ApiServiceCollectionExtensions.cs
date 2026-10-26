@@ -100,6 +100,7 @@ public static class ApiServiceCollectionExtensions
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
 
         services.AddValidatorsFromAssemblyContaining<RegisterCustomerRequestValidator>();
+        PersianValidation.Configure(); // built-in validator messages and property names in Persian
 
         // Enums travel as camelCase strings ("published"), never as numbers.
         services.ConfigureHttpJsonOptions(options =>
