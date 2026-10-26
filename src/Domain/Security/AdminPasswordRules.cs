@@ -6,33 +6,33 @@ public static class AdminPasswordRules
     public const int MinLength = 12;
     public const int MaxLength = 128;
 
-    /// <summary>Null when acceptable, otherwise a short English reason (shown on the console / in the API error).</summary>
+    /// <summary>Null when acceptable, otherwise a short Persian reason (shown on the console / in the API error).</summary>
     public static string? Weakness(string? password, string? username)
     {
         if (string.IsNullOrEmpty(password) || password.Length < MinLength)
         {
-            return $"The password must be at least {MinLength} characters long.";
+            return $"رمز عبور باید حداقل {MinLength} نویسه باشد.";
         }
 
         if (password.Length > MaxLength)
         {
-            return $"The password must be at most {MaxLength} characters long.";
+            return $"رمز عبور باید حداکثر {MaxLength} نویسه باشد.";
         }
 
         if (password.Distinct().Count() < 6)
         {
-            return "The password is too repetitive (use at least 6 different characters).";
+            return "رمز عبور بیش از حد تکراری است (دست‌کم ۶ نویسهٔ متفاوت به کار ببرید).";
         }
 
         var local = (username ?? string.Empty).Split('@')[0];
         if (local.Length >= 3 && password.Contains(local, StringComparison.OrdinalIgnoreCase))
         {
-            return "The password must not contain the username.";
+            return "رمز عبور نباید شامل نام کاربری باشد.";
         }
 
         if (password.All(char.IsAsciiDigit))
         {
-            return "The password must not be digits only.";
+            return "رمز عبور نباید فقط عدد باشد.";
         }
 
         return null;

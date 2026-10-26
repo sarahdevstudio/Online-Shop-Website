@@ -20,10 +20,10 @@ internal sealed class AccountService(
     TimeProvider clock) : IAccountService
 {
     private static readonly Error InvalidCredentials =
-        Error.Unauthorized("invalid_credentials", "Username or password is incorrect.");
+        Error.Unauthorized("invalid_credentials", "نام کاربری یا رمز عبور درست نیست.");
 
     private static readonly Error EmailTaken =
-        Error.Conflict("email_taken", "An account with this email already exists.");
+        Error.Conflict("email_taken", "حسابی با این ایمیل از قبل وجود دارد.");
 
     public async Task<Result<AccountDto>> RegisterCustomerAsync(RegisterCustomerRequest request, CancellationToken ct)
     {
@@ -76,7 +76,7 @@ internal sealed class AccountService(
         // every attempt for any username string, so it reveals nothing about whether the account exists.
         if (!throttle.TryAcquire(username))
         {
-            return Error.TooManyRequests("rate_limited", "Too many sign-in attempts. Try again in a minute.");
+            return Error.TooManyRequests("rate_limited", "تعداد تلاش‌های ورود زیاد است. یک دقیقه بعد دوباره امتحان کنید.");
         }
 
         var result = await signInManager.PasswordSignInAsync(username, request.Password, isPersistent: false, lockoutOnFailure: true);
@@ -107,7 +107,7 @@ internal sealed class AccountService(
         var user = await userManager.FindByIdAsync(userId.ToString());
         if (user is null)
         {
-            return Result.Failure(Error.NotFound("account_not_found", "Account was not found."));
+            return Result.Failure(Error.NotFound("account_not_found", "حساب کاربری پیدا نشد."));
         }
 
         if (await userManager.IsInRoleAsync(user, Roles.Admin) && AdminPasswordRules.Weakness(request.NewPassword, user.UserName) is { } weakness)
@@ -118,7 +118,7 @@ internal sealed class AccountService(
         if (await userManager.IsLockedOutAsync(user) || !await userManager.CheckPasswordAsync(user, request.CurrentPassword))
         {
             await userManager.AccessFailedAsync(user); // guessing the current password here counts towards the lockout
-            return Result.Failure(Error.Validation(new Dictionary<string, string[]> { ["currentPassword"] = ["The current password is incorrect."] }));
+            return Result.Failure(Error.Validation(new Dictionary<string, string[]> { ["currentPassword"] = ["رمز عبور فعلی درست نیست."] }));
         }
 
         var changed = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
@@ -138,7 +138,7 @@ internal sealed class AccountService(
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
         return user is null
-            ? Error.NotFound("account_not_found", "Account was not found.")
+            ? Error.NotFound("account_not_found", "حساب کاربری پیدا نشد.")
             : await BuildAccountAsync(user, ct);
     }
 
@@ -151,7 +151,7 @@ internal sealed class AccountService(
             .SingleOrDefaultAsync(ct);
 
         return profile is null
-            ? Error.NotFound("customer_not_found", "Customer profile was not found.")
+            ? Error.NotFound("customer_not_found", "پروفایل مشتری پیدا نشد.")
             : profile;
     }
 

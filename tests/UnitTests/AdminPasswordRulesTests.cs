@@ -17,7 +17,7 @@ public class AdminPasswordRulesTests
     [InlineData("short")]
     [InlineData("elevenchars")] // 11 characters
     public void ShorterThanTwelve_IsRefused(string? password) =>
-        Assert.Contains("at least 12", AdminPasswordRules.Weakness(password, "owner@shop.test"));
+        Assert.Contains("حداقل 12", AdminPasswordRules.Weakness(password, "owner@shop.test"));
 
     [Theory]
     [InlineData("aaaaaaaaaaaaaaaa", "repetitive")]
@@ -31,11 +31,11 @@ public class AdminPasswordRulesTests
     [Fact]
     public void PasswordContainingTheEmailName_IsRefused()
     {
-        Assert.Contains("username", AdminPasswordRules.Weakness("xx-MyShopOwner-99!", "myshopowner@shop.test"));
+        Assert.Contains("نام کاربری", AdminPasswordRules.Weakness("xx-MyShopOwner-99!", "myshopowner@shop.test"));
         Assert.Null(AdminPasswordRules.Weakness("xx-MyShopOwner-99!", "other@shop.test"));
     }
 
     [Fact]
     public void TooLong_IsRefused() =>
-        Assert.Contains("at most", AdminPasswordRules.Weakness(new string('a', 10) + "B1!" + new string('c', 130), "a@b.test"));
+        Assert.Contains("حداکثر", AdminPasswordRules.Weakness(new string('a', 10) + "B1!" + new string('c', 130), "a@b.test"));
 }
