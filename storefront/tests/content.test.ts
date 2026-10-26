@@ -54,6 +54,7 @@ describe('sitemap', () => {
     apiGet.mockImplementation(async (path: string) => {
       if (path === '/catalog/sitemap') return { categories: [{ slug: 'lamps', updatedAtUtc: '2026-10-20T08:00:00' }], products: [] };
       if (path === '/catalog/pages') return INFO_SLUGS.map((slug) => ({ slug, title: slug, updatedAtUtc: '2026-10-26T10:30:00' }));
+      if (path === '/catalog/blog/sitemap') return [];
       return null;
     });
 
@@ -69,11 +70,27 @@ describe('sitemap', () => {
   });
 
   it('ignores a page slug the storefront has no route for', async () => {
-    apiGet.mockImplementation(async (path: string) =>
-      path === '/catalog/pages' ? [{ slug: 'evil', title: 'x', updatedAtUtc: '2026-10-26T10:30:00' }] : { categories: [], products: [] },
-    );
+    apiGet.mockImplementation(async (path: string) => {
+      if (path === '/catalog/pages') return [{ slug: 'evil', title: 'x', updatedAtUtc: '2026-10-26T10:30:00' }];
+      if (path === '/catalog/blog/sitemap') return [];
+      return { categories: [], products: [] };
+    });
 
     expect((await sitemap()).some((e) => e.url.endsWith('/evil'))).toBe(false);
+  });
+
+  it('lists the blog index and every published post with its last change', async () => {
+    apiGet.mockImplementation(async (path: string) => {
+      if (path === '/catalog/blog/sitemap') return [{ slug: 'led-guide', updatedAtUtc: '2026-10-26T11:00:00' }];
+      if (path === '/catalog/pages') return [];
+      return { categories: [], products: [] };
+    });
+
+    const entries = await sitemap();
+
+    expect(entries.some((e) => e.url.endsWith('/blog'))).toBe(true);
+    const post = entries.find((e) => e.url.endsWith('/blog/led-guide'));
+    expect((post?.lastModified as Date).toISOString()).toBe('2026-10-26T11:00:00.000Z');
   });
 });
 
