@@ -31,8 +31,11 @@ using (var scope = app.Services.CreateScope())
 
 // First: replaces the connection's address with X-Forwarded-For, but only when the peer is a trusted proxy (the storefront).
 app.UseForwardedHeaders();
-app.UseExceptionHandler();
-app.UseStatusCodePages();
+// Non-production deployments tell crawlers to stay away on every response (SITE_ENV).
+app.UseNoIndexOutsideProduction();
+
+// Request logging is OUTSIDE the exception handler on purpose: it then logs the status the client really gets (a stale
+// row version is a 409, not a 500) while the handler still logs real failures itself.
 app.UseSerilogRequestLogging(options =>
 {
     // This host's own logger (not the process-wide static one), so request logs go where this host's sinks are.
@@ -47,6 +50,9 @@ app.UseSerilogRequestLogging(options =>
         new LogEventProperty("Elapsed", new ScalarValue(elapsedMs)),
     ];
 });
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
 {
@@ -66,6 +72,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
     app.MapOpenApi();
 }
 
+app.MapRobotsTxt();
 app.MapHealthChecks("/health/live", new() { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new() { Predicate = check => check.Tags.Contains("ready") });
 

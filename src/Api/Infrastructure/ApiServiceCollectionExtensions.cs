@@ -20,7 +20,7 @@ namespace Shop.Api.Infrastructure;
 public static class StartupChecks
 {
     /// <summary>
-    /// Throws when the storefront key is missing or a placeholder. Card details are not checked here: checkout simply does not
+    /// Throws when AllowedHosts is "*"/empty, a seeded admin password is set, or the storefront key is missing or a placeholder. Card details are not checked here: checkout simply does not
     /// offer card-to-card until the store settings hold a valid card.
     /// </summary>
     public static void RequireProductionSettings(IConfiguration configuration)
@@ -29,6 +29,14 @@ public static class StartupChecks
         {
             throw new InvalidOperationException(
                 "Seed:AdminPassword must not be set in Production. Create the first admin with `dotnet Shop.Api.dll create-admin --email <e-mail>`.");
+        }
+
+        // The Host header is only accepted for the real domain(s): "*" (any host) is not allowed in production.
+        var hosts = (configuration["AllowedHosts"] ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (hosts.Length == 0 || hosts.Contains("*"))
+        {
+            throw new InvalidOperationException(
+                "AllowedHosts must list the real host name(s), for example AllowedHosts=shop.example.ir (a bare * is not allowed in Production).");
         }
 
         if (!StorefrontKeyRules.IsAcceptableForProduction(configuration[$"{StorefrontOptions.SectionName}:{nameof(StorefrontOptions.ApiKey)}"]))

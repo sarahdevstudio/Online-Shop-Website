@@ -7,4 +7,10 @@ export async function register() {
   if (process.env.NEXT_PHASE === 'phase-production-build') return;
   const { readSessionConfig } = await import('./lib/admin/session');
   readSessionConfig(); // throws with the reason
+
+  const { siteEnv } = await import('./lib/site-env');
+  if (siteEnv() !== 'production') {
+    // Not an error, but easy to miss: this deployment tells search engines to stay away.
+    console.warn(`SITE_ENV is "${process.env.SITE_ENV ?? ''}", not "production": every response is noindex and robots.txt disallows everything.`);
+  }
 }

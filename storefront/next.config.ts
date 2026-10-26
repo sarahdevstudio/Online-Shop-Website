@@ -1,4 +1,8 @@
 import type { NextConfig } from 'next';
+import { requireProductionEnv } from './src/lib/site-env';
+
+// SITE_ENV=production must have NEXT_PUBLIC_SITE_URL and API_BASE_URL: `next build` and `next start` both stop here otherwise.
+requireProductionEnv();
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,

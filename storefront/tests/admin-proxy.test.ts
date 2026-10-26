@@ -57,10 +57,13 @@ describe('admin proxy', () => {
     expect(response.headers.get('x-robots-tag')).toContain('noindex');
   });
 
-  it('covers /admin and everything below it except the streaming upload route', () => {
-    expect(config.matcher).toContain('/admin');
-    const pattern = new RegExp(`^${config.matcher[1]}$`);
-    expect(pattern.test('/admin/orders/5')).toBe(true);
-    expect(pattern.test('/admin/api/products/5/images')).toBe(false);
+  it('covers every page and route handler except static files and the streaming upload route', () => {
+    const pattern = new RegExp(`^${config.matcher[0]}$`);
+    for (const path of ['/', '/admin', '/admin/orders/5', '/order/abc', '/cart', '/robots.txt', '/sitemap.xml', '/media/a.jpg', '/api/anything']) {
+      expect(pattern.test(path), path).toBe(true);
+    }
+    for (const path of ['/_next/static/chunks/a.js', '/_next/image', '/admin/api/products/5/images']) {
+      expect(pattern.test(path), path).toBe(false);
+    }
   });
 });

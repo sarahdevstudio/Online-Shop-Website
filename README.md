@@ -30,6 +30,8 @@ OpenAPI document: `/openapi/v1.json` (Development/Testing only). Health: `/healt
 
 ### Configuration and secrets
 
+Production deployment (every variable, first-deploy steps, backups, reverse proxy, health checks, smoke checklist): **`docs/09-deployment.md`**.
+
 Nothing secret is committed. Provide values with environment variables (use `__` for `:`) or user-secrets:
 
 | Setting | Purpose |
@@ -40,6 +42,8 @@ Nothing secret is committed. Provide values with environment variables (use `__`
 | `Auth__AccountAttemptsPerMinute` | Sign-in attempts per account per minute before `429` (default 5); five wrong passwords also lock the account for 15 minutes |
 | `Storefront__ApiKey`, `Storefront__TrustedProxies__N` | Shared secret of the Next.js server (required, >= 32 random characters, in Production) and the addresses allowed to forward the client IP |
 | `Database__MigrateOnStartup` | `true` to migrate at startup (default `false` outside Development) |
+| `AllowedHosts` | Real host name(s), `;`-separated. A bare `*` stops a Production start |
+| `SITE_ENV` | `production` \| `staging` \| `development`: anything but `production` sends `X-Robots-Tag: noindex, nofollow` on every response |
 | `Auth__RequireSecureCookie` | Defaults to `true`; only `Development` turns it off |
 | `Cors__AllowedOrigins__0` | Allowed browser origins (none by default) |
 | `RateLimiting__AuthPermitLimit`, `RateLimiting__WindowSeconds` | Login/register throttle |

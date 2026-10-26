@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import robots from '../src/app/robots';
 import { CART_COOKIE, CART_MAX_AGE_SECONDS, cartCookieOptions } from '../src/lib/cart-cookie';
 import { cartErrorKey, parseQuantity, parseVariantId } from '../src/lib/cart-input';
@@ -115,7 +115,10 @@ describe('form input parsing', () => {
 });
 
 describe('indexing rules', () => {
-  it('robots.txt disallows the cart, checkout and order pages', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('robots.txt (production) disallows the cart, checkout and order pages', () => {
+    vi.stubEnv('SITE_ENV', 'production');
     const rules = robots().rules;
     const disallow = ([] as string[]).concat(...(Array.isArray(rules) ? rules : [rules]).map((r) => r.disallow ?? []));
     expect(disallow).toEqual(expect.arrayContaining(['/cart', '/checkout', '/order']));

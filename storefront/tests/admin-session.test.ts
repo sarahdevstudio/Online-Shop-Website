@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import robots from '../src/app/robots';
 import { requestTooLarge, uploadErrorMessage, MAX_IMAGE_BYTES } from '../src/lib/admin/image-upload';
 import { LoginLimiter } from '../src/lib/admin/login-limiter';
@@ -159,7 +159,10 @@ describe('form state mapping', () => {
 });
 
 describe('admin is never indexed', () => {
-  it('robots.txt disallows /admin', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('robots.txt (production) disallows /admin', () => {
+    vi.stubEnv('SITE_ENV', 'production');
     const rules = robots().rules;
     const disallow = ([] as string[]).concat(...(Array.isArray(rules) ? rules : [rules]).map((r) => r.disallow ?? []));
     expect(disallow).toContain('/admin');

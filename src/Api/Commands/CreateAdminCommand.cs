@@ -73,6 +73,13 @@ public static class CreateAdminCommand
             }
         }
 
+        // Refuse a weak password before touching the database.
+        if (Shop.Domain.Security.AdminPasswordRules.Weakness(password, email) is { } weakness)
+        {
+            Console.Error.WriteLine(weakness);
+            return 2;
+        }
+
         var builder = WebApplication.CreateBuilder([]);
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
