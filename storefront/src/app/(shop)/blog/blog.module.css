@@ -1,0 +1,10 @@
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); max-inline-size: 48rem; }
+.card { padding: var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); display: grid; gap: var(--space-2); }
+.card h2 { margin: 0; }
+.card a { color: inherit; text-decoration: none; }
+.card a:hover, .card a:focus-visible { color: var(--color-primary); text-decoration: underline; }
+.date { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.excerpt { margin: 0; }
+.more { color: var(--color-primary); font-weight: var(--font-weight-medium); }
+.body { max-inline-size: 48rem; }
+.body a { color: var(--color-primary); text-decoration: underline; }
