@@ -6,7 +6,9 @@ using Microsoft.Extensions.Hosting;
 using Shop.Application.Accounts;
 using Shop.Application.Admin;
 using Shop.Application.Catalog;
+using Shop.Application.Blog;
 using Shop.Application.Content;
+using Shop.Infrastructure.Blog;
 using Shop.Infrastructure.Content;
 using Shop.Application.Orders;
 using Shop.Application.Payments;
@@ -63,6 +65,8 @@ public static class DependencyInjection
         services.AddScoped<IStockAdminService, StockAdminService>();
         services.AddScoped<IContentService, ContentService>();
         services.AddScoped<IAdminContentService, AdminContentService>();
+        services.AddScoped<IBlogService, BlogService>();
+        services.AddScoped<IAdminBlogService, AdminBlogService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.Configure<CheckoutOptions>(configuration.GetSection(CheckoutOptions.SectionName));
         services.Configure<StoreDefaultsOptions>(configuration.GetSection(StoreDefaultsOptions.SectionName));
