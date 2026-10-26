@@ -7,7 +7,7 @@ using Shop.Infrastructure.Persistence;
 namespace Shop.Api.Commands;
 
 /// <summary>
-/// <c>dotnet Shop.Api.dll create-admin --email &lt;e-mail&gt;</c>: creates the first (or another) admin account.
+/// <c>dotnet Shop.Api.dll create-admin --username &lt;username&gt; [--email &lt;e-mail&gt;]</c>: creates the first (or another) admin account.
 /// The password is NEVER a command-line argument (it would land in shell history and process listings): it comes from the
 /// <c>SHOP_ADMIN_PASSWORD</c> environment variable or a hidden interactive prompt that asks twice.
 /// </summary>
@@ -16,13 +16,14 @@ public static class CreateAdminCommand
     public const string PasswordVariable = "SHOP_ADMIN_PASSWORD";
 
     public const string Usage =
-        "Usage: create-admin --email <e-mail>\n" +
+        "Usage: create-admin --username <username> [--email <e-mail>]\n" +
         $"The password is read from the {PasswordVariable} environment variable, or typed at a hidden prompt. " +
         "It is never accepted as an argument. At least 12 characters.";
 
-    /// <summary>Parses the arguments; returns an error text instead of the e-mail when they are not acceptable.</summary>
-    public static (string? Email, string? Error) ParseArguments(IReadOnlyList<string> args)
+    /// <summary>Parses the arguments; returns an error text instead of the username when they are not acceptable.</summary>
+    public static (string? Username, string? Email, string? Error) ParseArguments(IReadOnlyList<string> args)
     {
+        string? username = null;
         string? email = null;
         for (var i = 0; i < args.Count; i++)
         {
@@ -30,26 +31,36 @@ public static class CreateAdminCommand
             var name = arg.Split('=')[0].ToLowerInvariant();
             if (name is "--password" or "-p" or "--pass" or "--pwd" or "--secret")
             {
-                return (null, $"Passwords are never accepted as command-line arguments. Use {PasswordVariable} or the hidden prompt.");
+                return (null, null, $"Passwords are never accepted as command-line arguments. Use {PasswordVariable} or the hidden prompt.");
             }
 
-            if (name == "--email")
+            if (name is "--username" or "--email")
             {
-                email = arg.Contains('=') ? arg[(arg.IndexOf('=') + 1)..] : i + 1 < args.Count ? args[++i] : null;
+                var value = arg.Contains('=') ? arg[(arg.IndexOf('=') + 1)..] : i + 1 < args.Count ? args[++i] : null;
+                if (name == "--username")
+                {
+                    username = value;
+                }
+                else
+                {
+                    email = value;
+                }
             }
             else
             {
-                return (null, $"Unknown argument '{arg}'.");
+                return (null, null, $"Unknown argument '{arg}'.");
             }
         }
 
-        return string.IsNullOrWhiteSpace(email) ? (null, "--email is required.") : (email.Trim(), null);
+        return string.IsNullOrWhiteSpace(username)
+            ? (null, null, "--username is required.")
+            : (username.Trim(), string.IsNullOrWhiteSpace(email) ? null : email.Trim(), null);
     }
 
     public static async Task<int> RunAsync(string[] args)
     {
-        var (email, error) = ParseArguments(args);
-        if (email is null)
+        var (username, email, error) = ParseArguments(args);
+        if (username is null)
         {
             Console.Error.WriteLine(error);
             Console.Error.WriteLine(Usage);
@@ -74,7 +85,7 @@ public static class CreateAdminCommand
         }
 
         // Refuse a weak password before touching the database.
-        if (Shop.Domain.Security.AdminPasswordRules.Weakness(password, email) is { } weakness)
+        if (Shop.Domain.Security.AdminPasswordRules.Weakness(password, username) is { } weakness)
         {
             Console.Error.WriteLine(weakness);
             return 2;
@@ -98,7 +109,7 @@ public static class CreateAdminCommand
         await scope.ServiceProvider.GetRequiredService<DatabaseInitializer>().InitializeAsync(CancellationToken.None);
 
         var result = await AdminAccounts.CreateAdminAsync(
-            scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(), email, password, TimeProvider.System);
+            scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(), username, password, TimeProvider.System, email);
         if (!result.IsSuccess)
         {
             var details = result.Error!.ValidationErrors is { } errors ? string.Join(" ", errors.SelectMany(e => e.Value)) : result.Error.Message;
@@ -106,7 +117,7 @@ public static class CreateAdminCommand
             return 1;
         }
 
-        Console.WriteLine($"Admin account created for {email}.");
+        Console.WriteLine($"Admin account '{username}' created.");
         return 0;
     }
 

@@ -7,7 +7,7 @@ public static class AdminPasswordRules
     public const int MaxLength = 128;
 
     /// <summary>Null when acceptable, otherwise a short English reason (shown on the console / in the API error).</summary>
-    public static string? Weakness(string? password, string? email)
+    public static string? Weakness(string? password, string? username)
     {
         if (string.IsNullOrEmpty(password) || password.Length < MinLength)
         {
@@ -24,10 +24,10 @@ public static class AdminPasswordRules
             return "The password is too repetitive (use at least 6 different characters).";
         }
 
-        var local = (email ?? string.Empty).Split('@')[0];
+        var local = (username ?? string.Empty).Split('@')[0];
         if (local.Length >= 3 && password.Contains(local, StringComparison.OrdinalIgnoreCase))
         {
-            return "The password must not contain the e-mail name.";
+            return "The password must not contain the username.";
         }
 
         if (password.All(char.IsAsciiDigit))

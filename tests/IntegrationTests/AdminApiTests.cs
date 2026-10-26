@@ -451,7 +451,7 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
         Assert.Contains("Admin", me.Roles);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/v1/admin/settings")).StatusCode);
 
-        Assert.Equal("email_taken", (await AdminAccounts.CreateAdminAsync(users, email, password, TimeProvider.System)).Error!.Code);
+        Assert.Equal("username_taken", (await AdminAccounts.CreateAdminAsync(users, email, password, TimeProvider.System)).Error!.Code);
         foreach (var weak in new[] { "short-pw-1", "Abcdefghij1", "aaaaaaaaaaaaaaaaaa", "111111111111111", "" })
         {
             var result = await AdminAccounts.CreateAdminAsync(users, TestData.NewEmail(), weak, TimeProvider.System);
@@ -462,26 +462,42 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
         var containsName = await AdminAccounts.CreateAdminAsync(users, other, "x" + other.Split('@')[0] + "9Z!", TimeProvider.System);
         Assert.False(containsName.IsSuccess, "a password containing the e-mail name should be refused");
 
-        Assert.False((await AdminAccounts.CreateAdminAsync(users, "not-an-email", password, TimeProvider.System)).IsSuccess);
-        Assert.Null(await users.FindByEmailAsync("not-an-email"));
+        foreach (var badName in new[] { "ab", "has space", "bad/name", new string('a', 65) })
+        {
+            Assert.False((await AdminAccounts.CreateAdminAsync(users, badName, password, TimeProvider.System)).IsSuccess, $"'{badName}' should be refused");
+            Assert.Null(await users.FindByNameAsync(badName));
+        }
+
+        Assert.False((await AdminAccounts.CreateAdminAsync(users, "valid.name", password, TimeProvider.System, "no-at-sign")).IsSuccess);
+
+        // A plain username with no e-mail at all can sign in.
+        var plain = "owner" + Guid.NewGuid().ToString("N")[..8];
+        Assert.True((await AdminAccounts.CreateAdminAsync(users, plain, password, TimeProvider.System)).IsSuccess);
+        var (plainClient, _) = await LoginWithCookieAsync(plain, password);
+        var plainMe = await GetOkAsync<AccountBody>(plainClient, "/api/v1/auth/me");
+        Assert.Equal(plain, plainMe.Username);
+        Assert.Null(plainMe.Email);
     }
 
     [Theory]
-    [InlineData("--email a@b.test", "a@b.test", null)]
-    [InlineData("--email=a@b.test", "a@b.test", null)]
-    [InlineData("--password hunter2hunter2", null, "never accepted")]
-    [InlineData("--email a@b.test --password hunter2hunter2", null, "never accepted")]
-    [InlineData("--email a@b.test -p hunter2hunter2", null, "never accepted")]
-    [InlineData("--password=hunter2hunter2 --email a@b.test", null, "never accepted")]
-    [InlineData("", null, "--email is required")]
-    [InlineData("--email", null, "--email is required")]
-    [InlineData("--email a@b.test --force", null, "Unknown argument")]
-    public void CreateAdmin_Arguments_NeverAcceptAPassword(string arguments, string? expectedEmail, string? expectedError)
+    [InlineData("--username owner", "owner", null, null)]
+    [InlineData("--username=owner", "owner", null, null)]
+    [InlineData("--username owner --email a@b.test", "owner", "a@b.test", null)]
+    [InlineData("--password hunter2hunter2", null, null, "never accepted")]
+    [InlineData("--username owner --password hunter2hunter2", null, null, "never accepted")]
+    [InlineData("--username owner -p hunter2hunter2", null, null, "never accepted")]
+    [InlineData("--password=hunter2hunter2 --username owner", null, null, "never accepted")]
+    [InlineData("", null, null, "--username is required")]
+    [InlineData("--username", null, null, "--username is required")]
+    [InlineData("--email a@b.test", null, null, "--username is required")]
+    [InlineData("--username owner --force", null, null, "Unknown argument")]
+    public void CreateAdmin_Arguments_NeverAcceptAPassword(string arguments, string? expectedUsername, string? expectedEmail, string? expectedError)
     {
         var args = arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-        var (email, error) = CreateAdminCommand.ParseArguments(args);
+        var (username, email, error) = CreateAdminCommand.ParseArguments(args);
 
+        Assert.Equal(expectedUsername, username);
         Assert.Equal(expectedEmail, email);
         if (expectedError is null)
         {

@@ -110,7 +110,7 @@ internal sealed class AccountService(
             return Result.Failure(Error.NotFound("account_not_found", "Account was not found."));
         }
 
-        if (await userManager.IsInRoleAsync(user, Roles.Admin) && AdminPasswordRules.Weakness(request.NewPassword, user.Email) is { } weakness)
+        if (await userManager.IsInRoleAsync(user, Roles.Admin) && AdminPasswordRules.Weakness(request.NewPassword, user.UserName) is { } weakness)
         {
             return Result.Failure(Error.Validation(new Dictionary<string, string[]> { ["newPassword"] = [weakness] }));
         }

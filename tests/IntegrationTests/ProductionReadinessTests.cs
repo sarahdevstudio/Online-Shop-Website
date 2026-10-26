@@ -182,15 +182,15 @@ public sealed class ProductionReadinessTests(ApiFixture fixture) : CatalogTestBa
                 ("Seed__AdminPassword", null),
                 (CreateAdminCommand.PasswordVariable, password)))
             {
-                Assert.Equal(0, await CreateAdminCommand.RunAsync(["--email", email]));
-                Assert.Equal(1, await CreateAdminCommand.RunAsync(["--email", email])); // already exists: refused, exit 1
-                Assert.Equal(2, await CreateAdminCommand.RunAsync(["--email", TestData.NewEmail(), "--password", password])); // never an argument
+                Assert.Equal(0, await CreateAdminCommand.RunAsync(["--username", email]));
+                Assert.Equal(1, await CreateAdminCommand.RunAsync(["--username", email])); // already exists: refused, exit 1
+                Assert.Equal(2, await CreateAdminCommand.RunAsync(["--username", TestData.NewEmail(), "--password", password])); // never an argument
             }
 
             await using var db = new ShopDbContext(options);
             var roles = await (
                     from u in db.Users
-                    where u.Email == email
+                    where u.UserName == email
                     join ur in db.UserRoles on u.Id equals ur.UserId
                     join r in db.Roles on ur.RoleId equals r.Id
                     select r.Name)
@@ -222,7 +222,7 @@ public sealed class ProductionReadinessTests(ApiFixture fixture) : CatalogTestBa
                 ("Seed__AdminPassword", null),
                 (CreateAdminCommand.PasswordVariable, "short-pw-1")))
             {
-                Assert.Equal(2, await CreateAdminCommand.RunAsync(["--email", TestData.NewEmail()]));
+                Assert.Equal(2, await CreateAdminCommand.RunAsync(["--username", TestData.NewEmail()]));
             }
         }
         finally

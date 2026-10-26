@@ -39,7 +39,7 @@ public static class DependencyInjection
 
         services.AddIdentityCore<ApplicationUser>(options =>
             {
-                options.User.RequireUniqueEmail = true;
+                options.User.RequireUniqueEmail = false; // admins sign in by username and may have no e-mail; customers' username IS their e-mail (unique)
                 options.Password.RequiredLength = PasswordRules.MinLength;
                 options.Password.RequireDigit = false;
                 options.Password.RequireLowercase = false;

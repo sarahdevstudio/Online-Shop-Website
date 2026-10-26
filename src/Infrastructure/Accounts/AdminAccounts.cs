@@ -8,30 +8,48 @@ namespace Shop.Infrastructure.Accounts;
 /// <summary>Creating admin accounts outside the web API (the <c>create-admin</c> command and tests).</summary>
 public static class AdminAccounts
 {
-    public static async Task<Result> CreateAdminAsync(UserManager<ApplicationUser> users, string email, string password, TimeProvider clock)
+    public const int UsernameMinLength = 3;
+    public const int UsernameMaxLength = 64;
+
+    /// <summary>Letters, digits and <c>. _ - @</c>: what Identity accepts by default, and safe to show and type.</summary>
+    public static bool IsValidUsername(string? username) =>
+        username is { Length: >= UsernameMinLength and <= UsernameMaxLength } && username.All(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '-' or '@');
+
+    /// <summary>Admins sign in with the username; the e-mail is optional contact information.</summary>
+    public static async Task<Result> CreateAdminAsync(
+        UserManager<ApplicationUser> users, string username, string password, TimeProvider clock, string? email = null)
     {
-        email = email.Trim();
-        if (email.Length is 0 or > 256 || !email.Contains('@') || email.Contains(' '))
+        username = username.Trim();
+        email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
+        if (!IsValidUsername(username))
+        {
+            return Result.Failure(Error.Validation(new Dictionary<string, string[]>
+            {
+                ["username"] = [$"The username must be {UsernameMinLength}-{UsernameMaxLength} characters: letters, digits and . _ - @ only."],
+            }));
+        }
+
+        if (email is not null && (email.Length > 256 || !email.Contains('@') || email.Contains(' ')))
         {
             return Result.Failure(Error.Validation(new Dictionary<string, string[]> { ["email"] = ["Enter a valid e-mail address."] }));
         }
 
-        if (AdminPasswordRules.Weakness(password, email) is { } weakness)
+        if (AdminPasswordRules.Weakness(password, username) is { } weakness)
         {
             return Result.Failure(Error.Validation(new Dictionary<string, string[]> { ["password"] = [weakness] }));
         }
 
-        if (await users.FindByEmailAsync(email) is not null)
+        if (await users.FindByNameAsync(username) is not null)
         {
-            return Result.Failure(Error.Conflict("email_taken", "An account with this e-mail already exists."));
+            return Result.Failure(Error.Conflict("username_taken", "An account with this username already exists."));
         }
 
         var user = new ApplicationUser
         {
             Id = Guid.NewGuid(),
-            UserName = email,
+            UserName = username,
             Email = email,
-            EmailConfirmed = true,
+            EmailConfirmed = email is not null,
             CreatedAtUtc = clock.GetUtcNow().UtcDateTime,
         };
         var created = await users.CreateAsync(user, password);

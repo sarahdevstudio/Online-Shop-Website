@@ -26,6 +26,9 @@ public sealed class SeedOptions
     public const string SectionName = "Seed";
 
     /// <summary>Optional first admin. Supply via environment variables or user-secrets, never committed config.</summary>
+    public string? AdminUsername { get; set; }
+
+    /// <summary>Optional contact e-mail; also the username when <see cref="AdminUsername"/> is not set.</summary>
     public string? AdminEmail { get; set; }
     public string? AdminPassword { get; set; }
     public string AdminFullName { get; set; } = "Administrator";
@@ -155,23 +158,24 @@ public sealed class DatabaseInitializer(
     private async Task EnsureAdminAsync()
     {
         var seed = seedOptions.Value;
-        if (string.IsNullOrWhiteSpace(seed.AdminEmail) || string.IsNullOrEmpty(seed.AdminPassword))
+        var username = (string.IsNullOrWhiteSpace(seed.AdminUsername) ? seed.AdminEmail : seed.AdminUsername)?.Trim();
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(seed.AdminPassword))
         {
             return;
         }
 
-        var email = seed.AdminEmail.Trim();
-        if (await userManager.FindByEmailAsync(email) is not null)
+        if (await userManager.FindByNameAsync(username) is not null)
         {
             return;
         }
 
+        var email = string.IsNullOrWhiteSpace(seed.AdminEmail) ? null : seed.AdminEmail.Trim();
         var admin = new ApplicationUser
         {
             Id = Guid.NewGuid(),
-            UserName = email,
+            UserName = username,
             Email = email,
-            EmailConfirmed = true,
+            EmailConfirmed = email is not null,
             CreatedAtUtc = clock.GetUtcNow().UtcDateTime,
         };
 

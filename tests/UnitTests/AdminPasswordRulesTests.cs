@@ -31,7 +31,7 @@ public class AdminPasswordRulesTests
     [Fact]
     public void PasswordContainingTheEmailName_IsRefused()
     {
-        Assert.Contains("e-mail", AdminPasswordRules.Weakness("xx-MyShopOwner-99!", "myshopowner@shop.test"));
+        Assert.Contains("username", AdminPasswordRules.Weakness("xx-MyShopOwner-99!", "myshopowner@shop.test"));
         Assert.Null(AdminPasswordRules.Weakness("xx-MyShopOwner-99!", "other@shop.test"));
     }
 
