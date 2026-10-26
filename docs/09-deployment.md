@@ -27,7 +27,7 @@ Environment variables (use `__` for `:` in .NET keys). "Secret" = keep out of so
 | `Storefront__TrustedProxies__0` (`__1`…) | yes (if Next.js is not on the same machine) | `10.0.0.12` or `10.0.0.0/24` | no | Addresses (or CIDR networks) allowed to tell the API the visitor's IP via `X-Forwarded-For`. Default = loopback only. Must be the address the API **sees** the storefront connect from. |
 | `SITE_ENV` | recommended | `production` | no | `production` \| `staging` \| `development`. Anything but `production` makes **every API response** carry `X-Robots-Tag: noindex, nofollow`. Unset = derived from `ASPNETCORE_ENVIRONMENT` (Production → production). The API's `/robots.txt` always disallows everything. |
 | `Database__MigrateOnStartup` | first deploy | `true` | no | Applies EF migrations at start. Default `false` outside Development. Turn on for the first start / upgrades, then off (or keep on; it is idempotent). |
-| `Seed__AdminEmail` / `Seed__AdminPassword` | **never in Production** | – | yes | Development/testing only. **A set `Seed__AdminPassword` stops a Production start**; use `create-admin` (below). |
+| `Seed__AdminUsername` / `Seed__AdminPassword` | **never in Production** | – | yes | Development/testing only. **A set `Seed__AdminPassword` stops a Production start**; use `create-admin` (below). |
 | `Auth__RequireSecureCookie` | no | `true` (default) | no | Keep `true` (the cookie is only sent over HTTPS). |
 | `Auth__SessionHours` | no | `8` (default) | no | Lifetime of the API sign-in cookie. |
 | `Auth__AccountAttemptsPerMinute` | no | `5` (default) | no | Sign-in attempts per account per minute; 5 wrong passwords also lock the account for 15 minutes. |
@@ -64,7 +64,7 @@ The storefront and the API must agree on one thing: `STOREFRONT_API_KEY` = `Stor
 3. **API environment** from section 1 (`ASPNETCORE_ENVIRONMENT=Production`, connection string, `AllowedHosts`, `Storefront__ApiKey`, `Storefront__TrustedProxies__0`, `Media__RootPath`, `Database__MigrateOnStartup=true`). Create the media folder and give the service account write access.
 4. **First admin** (before or after the first start; both apply the migrations when `Database__MigrateOnStartup=true`):
    ```bash
-   dotnet /srv/shop/api/Shop.Api.dll create-admin --email owner@example.ir
+   dotnet /srv/shop/api/Shop.Api.dll create-admin --username owner [--email owner@example.ir]
    ```
    The password is typed at a hidden prompt (twice), or comes from `SHOP_ADMIN_PASSWORD`; never as an argument. At least 12 characters. The command also creates the roles, the store-settings row and the five draft info pages.
 5. **Start the API**, then the storefront (`npm run start`, or your process manager). Check `GET /health/ready` on the API.
