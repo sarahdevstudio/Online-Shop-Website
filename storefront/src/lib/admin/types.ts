@@ -171,3 +171,25 @@ export interface ContentAuditEntry {
   titleChanged: boolean;
   bodyChanged: boolean;
 }
+
+export interface AdminBlogListItem {
+  id: number;
+  slug: string;
+  title: string;
+  isPublished: boolean;
+  publishedAtUtc: string | null;
+  updatedAtUtc: string;
+  updatedByUsername: string | null;
+}
+
+export interface AdminBlogPost extends AdminBlogListItem {
+  excerpt: string;
+  body: string;
+  rowVersion: string;
+}
+
+export interface BlogAuditEntry {
+  atUtc: string;
+  action: string;
+  adminUsername: string | null;
+}
