@@ -5,6 +5,7 @@ import { cartErrorKey, parseQuantity, parseVariantId } from '../src/lib/cart-inp
 import { isIdempotencyKey, mapApiErrors, readCheckoutValues } from '../src/lib/checkout-form';
 import { resolveClientIp, trustedProxyHops } from '../src/lib/client-ip';
 import { maskTokens } from '../src/lib/log';
+import { messages } from '../src/lib/messages';
 import nextConfig from '../next.config';
 
 const TOKEN = 'AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-abcde'; // 43 characters
@@ -103,7 +104,7 @@ describe('form input parsing', () => {
     expect(values.fullName).toBe('علی');
     expect(values.mobile).toBe('۰۹۱۲۳۴۵۶۷۸۹'); // shown again exactly as typed
     expect(values.address).toBe('');
-    expect(mapApiErrors({ FullName: ['a', 'b'], PostalCode: ['x'], Empty: [] })).toEqual({ fullName: 'a', postalCode: 'x' });
+    expect(mapApiErrors({ FullName: ['الف', 'ب'], PostalCode: ['x'], Empty: [] })).toEqual({ fullName: 'الف', postalCode: messages.invalidValue }); // English text never shows
     expect(mapApiErrors(null)).toEqual({});
   });
 

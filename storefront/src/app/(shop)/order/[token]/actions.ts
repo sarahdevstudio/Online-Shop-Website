@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { mapApiErrors } from '@/lib/checkout-form';
 import { messages } from '@/lib/messages';
 import { storeFetch } from '@/lib/store-api';
 import type { OrderDto } from '@/lib/store-types';
@@ -23,11 +24,7 @@ export async function submitTransferReferenceAction(_previous: TransferState, fo
   const { problem } = result;
   if (problem.code === 'not_awaiting_payment') return { ...INITIAL_TRANSFER_STATE, values, error: messages.transferNotAllowed };
   if (problem.status === 400 && problem.errors) {
-    const errors: Record<string, string> = {};
-    for (const [key, list] of Object.entries(problem.errors)) {
-      if (list.length > 0) errors[key.charAt(0).toLowerCase() + key.slice(1)] = list[0];
-    }
-    return { saved: false, error: messages.checkoutFixErrors, errors, values };
+    return { saved: false, error: messages.checkoutFixErrors, errors: mapApiErrors(problem.errors), values };
   }
   if (problem.status === 429) return { ...INITIAL_TRANSFER_STATE, values, error: messages.cartErrors.rate_limited };
   return { ...INITIAL_TRANSFER_STATE, values, error: messages.transferFailed };

@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { CART_COOKIE } from '@/lib/cart-cookie';
 import { isIdempotencyKey, mapApiErrors, readCheckoutValues, type CheckoutState } from '@/lib/checkout-form';
 import { messages } from '@/lib/messages';
+import { persianOr } from '@/lib/persian-only';
 import { storeFetch } from '@/lib/store-api';
 import type { PlacedOrderDto } from '@/lib/store-types';
 
@@ -58,7 +59,7 @@ export async function placeOrderAction(_previous: CheckoutState, formData: FormD
       redirect(`/cart?error=stock_insufficient&short=${ids}`);
     }
     case 'unpaid_limit':
-      return fail(problem.detail ?? messages.checkoutFailed);
+      return fail(persianOr(problem.detail, messages.checkoutFailed));
     default:
       if (problem.status === 400 && problem.errors) return fail(messages.checkoutFixErrors, mapApiErrors(problem.errors));
       if (problem.status === 429) return fail(messages.cartErrors.rate_limited);

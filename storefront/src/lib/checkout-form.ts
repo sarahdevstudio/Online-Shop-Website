@@ -1,3 +1,6 @@
+import { messages } from './messages';
+import { persianOr } from './persian-only';
+
 export const CHECKOUT_TEXT_FIELDS = ['fullName', 'mobile', 'province', 'city', 'address', 'postalCode', 'note'] as const;
 
 export type CheckoutField = (typeof CHECKOUT_TEXT_FIELDS)[number];
@@ -44,8 +47,8 @@ export function readCheckoutValues(formData: FormData): CheckoutValues {
 /** API validation keys are PascalCase property names ("FullName"); the form uses camelCase. First message per field. */
 export function mapApiErrors(errors: Record<string, string[]> | null): Record<string, string> {
   const result: Record<string, string> = {};
-  for (const [key, messages] of Object.entries(errors ?? {})) {
-    if (messages.length > 0) result[key.charAt(0).toLowerCase() + key.slice(1)] = messages[0];
+  for (const [key, list] of Object.entries(errors ?? {})) {
+    if (list.length > 0) result[key.charAt(0).toLowerCase() + key.slice(1)] = persianOr(list[0], messages.invalidValue);
   }
   return result;
 }

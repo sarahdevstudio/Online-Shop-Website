@@ -118,6 +118,7 @@ export const messages = {
   placingOrder: 'در حال ثبت سفارش…',
   checkoutFixErrors: 'لطفاً خطاهای فرم را اصلاح کنید.',
   checkoutFailed: 'ثبت سفارش انجام نشد. دوباره تلاش کنید.',
+  invalidValue: 'مقدار واردشده معتبر نیست.',
   orderNumber: 'شماره سفارش',
   orderPlacedTitle: 'سفارش شما ثبت شد',
   orderPlacedText: 'این صفحه را نگه دارید؛ با همین نشانی می‌توانید وضعیت سفارش را ببینید.',
