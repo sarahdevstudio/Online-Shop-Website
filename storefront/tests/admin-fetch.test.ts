@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ADMIN_COOKIE, readSessionConfig, sealSession, type AdminSession } from '../src/lib/admin/session';
 
 const cfg = readSessionConfig();
-const session: AdminSession = { v: 1, auth: 'AUTH-VALUE', email: 'owner@shop.test', iat: Date.now() - 1000, seen: Date.now() - 1000 };
+const session: AdminSession = { v: 1, auth: 'AUTH-VALUE', username: 'owner', iat: Date.now() - 1000, seen: Date.now() - 1000 };
 
 const jar = { value: undefined as string | undefined };
 vi.mock('next/headers', () => ({

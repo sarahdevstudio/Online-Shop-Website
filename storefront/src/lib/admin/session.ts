@@ -11,7 +11,7 @@ export interface AdminSession {
   v: 1;
   /** The API's `shop_auth` cookie value. Never sent to the browser in clear text. */
   auth: string;
-  email: string;
+  username: string;
   /** Login time (ms since epoch): the absolute limit counts from here. */
   iat: number;
   /** Last activity (ms): the idle limit counts from here. */
@@ -52,7 +52,7 @@ export function unsealSession(token: string | undefined, secret: string): AdminS
       value.v !== 1 ||
       typeof value.auth !== 'string' ||
       value.auth.length === 0 ||
-      typeof value.email !== 'string' ||
+      typeof value.username !== 'string' ||
       !Number.isFinite(value.iat) ||
       !Number.isFinite(value.seen)
     ) {

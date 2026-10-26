@@ -2,11 +2,11 @@
 export const adminMessages = {
   title: 'پنل مدیریت',
   loginTitle: 'ورود مدیر',
-  email: 'ایمیل',
+  username: 'نام کاربری',
   password: 'رمز عبور',
   login: 'ورود',
-  // One text for every failure (wrong password, unknown e-mail, locked, throttled, not an admin): nothing to learn from it.
-  loginFailed: 'ورود انجام نشد. ایمیل یا رمز عبور درست نیست، یا تعداد تلاش‌ها زیاد بوده است؛ کمی بعد دوباره امتحان کنید.',
+  // One text for every failure (wrong password, unknown username, locked, throttled, not an admin): nothing to learn from it.
+  loginFailed: 'ورود انجام نشد. نام کاربری یا رمز عبور درست نیست، یا تعداد تلاش‌ها زیاد بوده است؛ کمی بعد دوباره امتحان کنید.',
   logout: 'خروج',
   nav: {
     dashboard: 'داشبورد',

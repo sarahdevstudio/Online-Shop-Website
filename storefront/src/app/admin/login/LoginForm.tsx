@@ -15,8 +15,8 @@ export function LoginForm() {
     <form action={action} className={styles.loginForm}>
       {state.error && <Alert variant="danger">{state.error}</Alert>}
       <label className={styles.field}>
-        <span>{adminMessages.email}</span>
-        <input className="ui-control" name="email" type="email" autoComplete="username" dir="ltr" required />
+        <span>{adminMessages.username}</span>
+        <input className="ui-control" name="username" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} dir="ltr" maxLength={256} required />
       </label>
       <label className={styles.field}>
         <span>{adminMessages.password}</span>

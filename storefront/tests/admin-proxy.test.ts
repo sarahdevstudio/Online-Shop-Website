@@ -5,7 +5,7 @@ import { ADMIN_COOKIE, readSessionConfig, sealSession, unsealSession, type Admin
 
 const cfg = readSessionConfig(); // development secret in tests
 const now = Date.now();
-const fresh: AdminSession = { v: 1, auth: 'api-cookie', email: 'owner@shop.test', iat: now - 60_000, seen: now - 60_000 };
+const fresh: AdminSession = { v: 1, auth: 'api-cookie', username: 'owner', iat: now - 60_000, seen: now - 60_000 };
 
 function request(path: string, cookie?: string) {
   return new NextRequest(`http://localhost:3000${path}`, { headers: cookie ? { cookie: `${ADMIN_COOKIE}=${cookie}` } : {} });

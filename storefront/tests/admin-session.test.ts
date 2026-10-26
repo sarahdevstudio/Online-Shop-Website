@@ -17,7 +17,7 @@ import nextConfig from '../next.config';
 
 const SECRET = 'k7Qx9mZp2VbN4tLw8RsY1uHd6GfJ3cAe-0123';
 const NOW = 1_800_000_000_000;
-const session: AdminSession = { v: 1, auth: 'api-cookie-value', email: 'owner@shop.test', iat: NOW, seen: NOW };
+const session: AdminSession = { v: 1, auth: 'api-cookie-value', username: 'owner', iat: NOW, seen: NOW };
 const LIMITS = { idleMs: 60 * 60_000, absoluteMs: 8 * 3_600_000 };
 
 describe('sealed admin session', () => {

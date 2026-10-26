@@ -1,5 +1,5 @@
 /**
- * Sign-in attempts per key (IP + e-mail) in a sliding window, in memory (one Next.js instance). On top of this, the API
+ * Sign-in attempts per key (IP + username) in a sliding window, in memory (one Next.js instance). On top of this, the API
  * limits per IP and per account and locks an account for 15 minutes after 5 wrong passwords.
  */
 export class LoginLimiter {

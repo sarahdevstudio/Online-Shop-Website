@@ -15,7 +15,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         <strong className={styles.brand}>{adminMessages.title}</strong>
         <Nav />
         <div className={styles.who}>
-          <bdi dir="ltr">{session.email}</bdi>
+          <bdi dir="ltr">{session.username}</bdi>
           <form action={logoutAction}>
             <SubmitButton variant="secondary" size="sm">
               {adminMessages.logout}

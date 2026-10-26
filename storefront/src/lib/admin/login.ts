@@ -6,10 +6,10 @@ const TIMEOUT_MS = 15_000;
 
 /**
  * Signs in against the API on the server. Returns the API's auth cookie value, or null for EVERY kind of failure (wrong
- * password, unknown e-mail, locked account, throttled, correct password but not an admin), so the caller can show one text.
+ * password, unknown username, locked account, throttled, correct password but not an admin), so the caller can show one text.
  * An API that is down throws (that is not a credentials problem).
  */
-export async function apiAdminLogin(email: string, password: string): Promise<{ auth: string; email: string } | null> {
+export async function apiAdminLogin(username: string, password: string): Promise<{ auth: string; username: string } | null> {
   const ip = await clientIpForApi();
   const forwarded: Record<string, string> = ip ? { 'x-forwarded-for': ip } : {};
 
@@ -25,7 +25,7 @@ export async function apiAdminLogin(email: string, password: string): Promise<{ 
         cookie: `shop_csrf=${csrf.cookie}`,
         [csrf.headerName.toLowerCase()]: csrf.token,
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username, password }),
       cache: 'no-store',
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
@@ -38,13 +38,13 @@ export async function apiAdminLogin(email: string, password: string): Promise<{ 
   const auth = cookieValue(login.headers.getSetCookie(), 'shop_auth');
   if (!auth) return null;
 
-  const account = (await login.json().catch(() => null)) as { email?: string; roles?: string[] } | null;
+  const account = (await login.json().catch(() => null)) as { username?: string; roles?: string[] } | null;
   if (!account?.roles?.includes('Admin')) {
     // A customer account: not allowed here. End that session again (this also revokes its other sessions).
     await endSession(auth, forwarded);
     return null;
   }
-  return { auth, email: account.email ?? email };
+  return { auth, username: account.username ?? username };
 }
 
 async function endSession(auth: string, forwarded: Record<string, string>) {

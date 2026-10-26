@@ -7,7 +7,7 @@ export default async function AccountPage() {
   return (
     <>
       <h1 className="ui-heading-2">{adminMessages.nav.account}</h1>
-      <p dir="ltr">{session.email}</p>
+      <p dir="ltr">{session.username}</p>
       <ChangePasswordForm />
     </>
   );

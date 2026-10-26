@@ -11,22 +11,22 @@ export interface LoginState {
   error: string | null;
 }
 
-// Per IP (any e-mail) as well as per IP + e-mail; the API adds its own per-IP and per-account limits and the lockout.
+// Per IP (any username) as well as per IP + username; the API adds its own per-IP and per-account limits and the lockout.
 const ipLimiter = new LoginLimiter(15, 60_000);
 
 export async function loginAction(_previous: LoginState, formData: FormData): Promise<LoginState> {
-  const email = String(formData.get('email') ?? '').trim();
+  const username = String(formData.get('username') ?? '').trim();
   const password = String(formData.get('password') ?? '');
   const failed: LoginState = { error: adminMessages.loginFailed };
-  if (!email || !password || email.length > 256 || password.length > 128) return failed;
+  if (!username || !password || username.length > 256 || password.length > 128) return failed;
 
   const ip = (await clientIpForApi()) ?? 'unknown';
-  if (!ipLimiter.tryAcquire(ip) || !loginLimiter.tryAcquire(`${ip}|${email.toLowerCase()}`)) return failed;
+  if (!ipLimiter.tryAcquire(ip) || !loginLimiter.tryAcquire(`${ip}|${username.toLowerCase()}`)) return failed;
 
-  const account = await apiAdminLogin(email, password);
+  const account = await apiAdminLogin(username, password);
   if (!account) return failed;
 
   const now = Date.now();
-  await writeSessionCookie({ v: 1, auth: account.auth, email: account.email, iat: now, seen: now });
+  await writeSessionCookie({ v: 1, auth: account.auth, username: account.username, iat: now, seen: now });
   redirect('/admin');
 }
