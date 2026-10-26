@@ -50,6 +50,7 @@ public static class DependencyInjection
                 options.Lockout.AllowedForNewUsers = true;
             })
             .AddRoles<ApplicationRole>()
+            .AddErrorDescriber<PersianIdentityErrorDescriber>()
             .AddEntityFrameworkStores<ShopDbContext>()
             .AddSignInManager();
 
