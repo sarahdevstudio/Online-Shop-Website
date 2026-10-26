@@ -39,7 +39,7 @@ export default async function EditContentPage({ params }: { params: Promise<{ sl
           <ul>
             {(audit ?? []).map((entry, i) => (
               <li key={i}>
-                {formatJalaliDate(entry.atUtc)} — <bdi dir="ltr">{entry.adminEmail ?? adminMessages.none}</bdi> —{' '}
+                {formatJalaliDate(entry.atUtc)} — <bdi dir="ltr">{entry.adminUsername ?? adminMessages.none}</bdi> —{' '}
                 {[entry.titleChanged && t.titleChanged, entry.bodyChanged && t.bodyChanged].filter(Boolean).join('، ')}
               </li>
             ))}

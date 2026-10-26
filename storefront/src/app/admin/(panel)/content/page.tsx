@@ -33,7 +33,7 @@ export default async function ContentListPage() {
                   <span className={`${styles.badge} ${page.isDraft ? styles.flag : styles.ok}`}>{page.isDraft ? t.draft : t.published}</span>
                 </td>
                 <td className={styles.num}>{formatJalaliDate(page.updatedAtUtc)}</td>
-                <td className={styles.ltr}>{page.updatedByEmail ?? adminMessages.none}</td>
+                <td className={styles.ltr}>{page.updatedByUsername ?? adminMessages.none}</td>
               </tr>
             ))}
           </tbody>

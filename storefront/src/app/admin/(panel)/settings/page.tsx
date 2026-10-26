@@ -47,7 +47,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 {audit.items.map((e) => (
                   <tr key={e.id}>
                     <td className={styles.num}>{formatJalaliDate(e.atUtc)}</td>
-                    <td className={styles.ltr}>{e.adminEmail ?? adminMessages.none}</td>
+                    <td className={styles.ltr}>{e.adminUsername ?? adminMessages.none}</td>
                     <td>{t.fields[e.field] ?? e.field}</td>
                     <td className={styles.ltr}>{e.oldValue ?? adminMessages.none}</td>
                     <td className={styles.ltr}>{e.newValue ?? adminMessages.none}</td>

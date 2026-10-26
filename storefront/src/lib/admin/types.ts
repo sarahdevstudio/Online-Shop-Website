@@ -109,7 +109,7 @@ export interface AdminProductListItem {
 export interface StockHistoryEntry {
   id: number;
   atUtc: string;
-  adminEmail: string | null;
+  adminUsername: string | null;
   delta: number;
   stockAfter: number;
   reason: string | null;
@@ -141,7 +141,7 @@ export interface AdminSettings {
 export interface SettingsAuditEntry {
   id: number;
   atUtc: string;
-  adminEmail: string | null;
+  adminUsername: string | null;
   field: string;
   oldValue: string | null;
   newValue: string | null;
@@ -152,7 +152,7 @@ export interface AdminContentListItem {
   title: string;
   isDraft: boolean;
   updatedAtUtc: string;
-  updatedByEmail: string | null;
+  updatedByUsername: string | null;
 }
 
 export interface AdminContentPage {
@@ -161,13 +161,13 @@ export interface AdminContentPage {
   body: string;
   isDraft: boolean;
   updatedAtUtc: string;
-  updatedByEmail: string | null;
+  updatedByUsername: string | null;
   rowVersion: string;
 }
 
 export interface ContentAuditEntry {
   atUtc: string;
-  adminEmail: string | null;
+  adminUsername: string | null;
   titleChanged: boolean;
   bodyChanged: boolean;
 }

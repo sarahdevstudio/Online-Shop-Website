@@ -64,7 +64,7 @@ function History({ entries }: { entries: StockHistoryEntry[] }) {
           {entries.map((e) => (
             <li key={e.id}>
               {formatJalaliDate(e.atUtc)} — <bdi dir="ltr">{e.delta > 0 ? `+${e.delta}` : e.delta}</bdi> → <bdi dir="ltr">{formatNumber(e.stockAfter)}</bdi> —{' '}
-              <bdi dir="ltr">{e.adminEmail ?? adminMessages.none}</bdi> {e.reason && `— ${e.reason}`}
+              <bdi dir="ltr">{e.adminUsername ?? adminMessages.none}</bdi> {e.reason && `— ${e.reason}`}
             </li>
           ))}
         </ul>
