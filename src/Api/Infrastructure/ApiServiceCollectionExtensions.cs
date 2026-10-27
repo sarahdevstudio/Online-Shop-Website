@@ -126,8 +126,8 @@ public static class ApiServiceCollectionExtensions
             {
                 options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true; // FluentValidation owns "required"
                 options.AllowEmptyInputInBodyModelBinding = true; // an empty body reaches the action as null, like before
-                options.Filters.Add<Controllers.CsrfFilter>();
-                options.Filters.Add<Controllers.RequiredBodyFilter>();
+                options.Filters.Add<Controllers.CsrfFilter>(Controllers.FilterOrder.Csrf); // the wrapper, not the filter, carries the order
+                options.Filters.Add<Controllers.RequiredBodyFilter>(Controllers.FilterOrder.RequiredBody);
             })
             .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)))
             .ConfigureApiBehaviorOptions(options =>
@@ -136,7 +136,24 @@ public static class ApiServiceCollectionExtensions
                 options.InvalidModelStateResponseFactory = _ => new Microsoft.AspNetCore.Mvc.StatusCodeResult(StatusCodes.Status400BadRequest);
             });
 
-        services.AddOpenApi();
+        services.AddOpenApi(options => options.AddOperationTransformer((operation, context, _) =>
+        {
+            // The document has always described JSON bodies as required and as application/json only; MVC adds
+            // application/*+json and text/json and drops "required" because empty bodies are let through to the validators.
+            if (context.Description.ActionDescriptor is Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor
+                && operation.RequestBody is Microsoft.OpenApi.OpenApiRequestBody { Content: { } content } body
+                && content.ContainsKey("application/json"))
+            {
+                foreach (var mediaType in content.Keys.Where(key => key != "application/json").ToList())
+                {
+                    content.Remove(mediaType);
+                }
+
+                body.Required = true;
+            }
+
+            return Task.CompletedTask;
+        }));
         services.AddHealthChecks().AddDbContextCheck<ShopDbContext>("database", tags: ["ready"]);
 
         services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();

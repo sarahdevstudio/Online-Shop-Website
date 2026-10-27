@@ -15,7 +15,7 @@ namespace Shop.Api.Controllers;
 //    -900  CsrfFilter  (was the filter on the /api/v1 group)
 //    -800  StorefrontApiAttribute (was the filter on the /store group)
 //    -700  ValidateRequestAttribute<T> (was WithValidation<T>())
-internal static class FilterOrder
+public static class FilterOrder
 {
     public const int RequiredBody = -1900;
     public const int Csrf = -900;
