@@ -1,0 +1,69 @@
+DELETE /api/v1/admin/blog/{id:int} | auth: Blog.Manage | - | rate: - | -
+DELETE /api/v1/admin/brands/{id:int} | auth: Catalog.Manage | - | rate: - | -
+DELETE /api/v1/admin/categories/{id:int} | auth: Catalog.Manage | - | rate: - | -
+DELETE /api/v1/admin/images/{id:int} | auth: Catalog.Manage | - | rate: - | -
+DELETE /api/v1/store/cart/items/{variantId:int} | auth:  | anonymous | rate: store-cart | storefront
+GET /api/v1/admin/attributes | auth: Catalog.Manage | - | rate: - | -
+GET /api/v1/admin/blog | auth: Blog.Manage | - | rate: - | -
+GET /api/v1/admin/blog/{id:int} | auth: Blog.Manage | - | rate: - | -
+GET /api/v1/admin/blog/{id:int}/audit | auth: Blog.Manage | - | rate: - | -
+GET /api/v1/admin/brands | auth: Catalog.Manage | - | rate: - | -
+GET /api/v1/admin/categories | auth: Catalog.Manage | - | rate: - | -
+GET /api/v1/admin/content-pages | auth: Content.Manage | - | rate: - | -
+GET /api/v1/admin/content-pages/{slug} | auth: Content.Manage | - | rate: - | -
+GET /api/v1/admin/content-pages/{slug}/audit | auth: Content.Manage | - | rate: - | -
+GET /api/v1/admin/dashboard | auth: Orders.Manage | - | rate: - | -
+GET /api/v1/admin/orders | auth: Orders.Manage | - | rate: - | -
+GET /api/v1/admin/orders/{id:int} | auth: Orders.Manage | - | rate: - | -
+GET /api/v1/admin/ping | auth: Settings.Manage | - | rate: - | -
+GET /api/v1/admin/products | auth: Catalog.Manage | - | rate: - | -
+GET /api/v1/admin/products/{id:int} | auth: Catalog.Manage | - | rate: - | -
+GET /api/v1/admin/settings | auth: Settings.Manage | - | rate: - | -
+GET /api/v1/admin/settings/audit | auth: Settings.Manage | - | rate: - | -
+GET /api/v1/admin/variants/{id:int}/stock-history | auth: Catalog.Manage | - | rate: - | -
+GET /api/v1/auth/csrf | auth:  | anonymous | rate: - | -
+GET /api/v1/auth/me | auth: authenticated | - | rate: - | -
+GET /api/v1/catalog/blog | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/blog/sitemap | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/blog/{slug} | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/brands | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/categories | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/categories/{slug} | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/pages | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/pages/{slug} | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/products | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/products/{slug} | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/sitemap | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/store-info | auth:  | anonymous | rate: - | -
+GET /api/v1/customer/profile | auth: Customer | - | rate: - | -
+GET /api/v1/store/cart | auth:  | anonymous | rate: store-cart | storefront
+GET /api/v1/store/cart/count | auth:  | anonymous | rate: store-cart | storefront
+GET /api/v1/store/orders/{token:length(43)} | auth:  | anonymous | rate: store-lookup | storefront
+POST /api/v1/admin/attributes/{id:int}/options | auth: Catalog.Manage | - | rate: - | -
+POST /api/v1/admin/blog | auth: Blog.Manage | - | rate: - | -
+POST /api/v1/admin/brands | auth: Catalog.Manage | - | rate: - | -
+POST /api/v1/admin/categories | auth: Catalog.Manage | - | rate: - | -
+POST /api/v1/admin/orders/{id:int}/cancel | auth: Orders.Manage | - | rate: - | -
+POST /api/v1/admin/orders/{id:int}/confirm-payment | auth: Orders.Manage | - | rate: - | -
+POST /api/v1/admin/orders/{id:int}/status | auth: Orders.Manage | - | rate: - | -
+POST /api/v1/admin/products | auth: Catalog.Manage | - | rate: - | -
+POST /api/v1/admin/products/{id:int}/images | auth: Catalog.Manage | - | rate: - | -
+POST /api/v1/admin/products/{id:int}/variants | auth: Catalog.Manage | - | rate: - | -
+POST /api/v1/admin/variants/{id:int}/stock-adjust | auth: Catalog.Manage | - | rate: - | -
+POST /api/v1/auth/change-password | auth: authenticated | - | rate: auth | -
+POST /api/v1/auth/login | auth:  | anonymous | rate: auth | -
+POST /api/v1/auth/logout | auth: authenticated | - | rate: - | -
+POST /api/v1/auth/register | auth:  | anonymous | rate: auth | -
+POST /api/v1/store/cart/items | auth:  | anonymous | rate: store-cart | storefront
+POST /api/v1/store/orders | auth:  | anonymous | rate: store-order | storefront
+POST /api/v1/store/orders/{token:length(43)}/transfer-reference | auth:  | anonymous | rate: store-lookup | storefront
+PUT /api/v1/admin/blog/{id:int} | auth: Blog.Manage | - | rate: - | -
+PUT /api/v1/admin/brands/{id:int} | auth: Catalog.Manage | - | rate: - | -
+PUT /api/v1/admin/categories/{id:int} | auth: Catalog.Manage | - | rate: - | -
+PUT /api/v1/admin/content-pages/{slug} | auth: Content.Manage | - | rate: - | -
+PUT /api/v1/admin/products/{id:int} | auth: Catalog.Manage | - | rate: - | -
+PUT /api/v1/admin/products/{id:int}/attributes | auth: Catalog.Manage | - | rate: - | -
+PUT /api/v1/admin/products/{id:int}/images/order | auth: Catalog.Manage | - | rate: - | -
+PUT /api/v1/admin/settings | auth: Settings.Manage | - | rate: - | -
+PUT /api/v1/admin/variants/{id:int} | auth: Catalog.Manage | - | rate: - | -
+PUT /api/v1/store/cart/items/{variantId:int} | auth:  | anonymous | rate: store-cart | storefront
