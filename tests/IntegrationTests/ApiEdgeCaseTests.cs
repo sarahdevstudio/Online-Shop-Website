@@ -168,4 +168,153 @@ public sealed class ApiEdgeCaseTests(ApiFixture fixture) : CatalogTestBase(fixtu
         request.Headers.Add("X-Storefront-Key", ApiFixture.StorefrontKey);
         Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(request)).StatusCode);
     }
+
+    private static async Task<HttpResponseMessage> JsonAsync(HttpClient client, HttpMethod method, string url, string? body, string contentType = "application/json")
+    {
+        var csrf = await client.GetFromJsonAsync<CsrfBody>("/api/v1/auth/csrf", Json);
+        using var request = new HttpRequestMessage(method, url);
+        if (body is not null)
+        {
+            request.Content = new StringContent(body, Encoding.UTF8);
+            request.Content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(contentType);
+        }
+
+        request.Headers.Add(csrf!.HeaderName, csrf.Token);
+        return await client.SendAsync(request);
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("")]
+    public async Task NullOrEmptyBody_OnAValidatedEndpoint_Is400_WithTheBodyRequiredDetail(string body)
+    {
+        var response = await JsonAsync(NewClient(), HttpMethod.Post, "/api/v1/auth/login", body);
+
+        var problem = await AssertProblemAsync(response, 400);
+        Assert.Equal(MalformedTitle, problem.Title);
+        Assert.Equal("بدنهٔ درخواست لازم است.", problem.Detail);
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("\"x\"")]
+    [InlineData("5")]
+    [InlineData("  ")]
+    [InlineData("{\"username\":\"a\"")]
+    public async Task UnreadableJson_Is400_WithNoDetail(string body)
+    {
+        var problem = await AssertProblemAsync(await JsonAsync(NewClient(), HttpMethod.Post, "/api/v1/auth/login", body), 400);
+
+        Assert.Equal(MalformedTitle, problem.Title);
+        Assert.Null(problem.Detail);
+    }
+
+    [Theory]
+    [InlineData("application/json; charset=utf-8")]
+    [InlineData("application/vnd.shop+json")]
+    public async Task JsonMediaTypeVariants_AreAccepted(string contentType)
+    {
+        var problem = await AssertProblemAsync(await JsonAsync(NewClient(), HttpMethod.Post, "/api/v1/auth/login", "{}", contentType), 400);
+
+        Assert.Equal("یک یا چند مقدار نامعتبر است.", problem.Title);
+    }
+
+    [Theory]
+    [InlineData("<a/>", "application/xml")]
+    [InlineData("a=b", "application/x-www-form-urlencoded")]
+    public async Task UnsupportedBodyMediaType_Is415(string body, string contentType) =>
+        await AssertProblemAsync(await JsonAsync(NewClient(), HttpMethod.Post, "/api/v1/auth/login", body, contentType), 415);
+
+    [Theory]
+    [InlineData("POST", "/api/v1/admin/orders/999999/status", "null")]
+    [InlineData("POST", "/api/v1/admin/orders/999999/status", "{\"status\":\"zzz\"}")]
+    [InlineData("PUT", "/api/v1/admin/settings", "null")]
+    [InlineData("PUT", "/api/v1/admin/settings", null)]
+    public async Task EndpointsWithoutAValidator_AnswerABareBadRequest_ForAnUnusableBody(string method, string url, string? body)
+    {
+        var admin = await LoginAdminAsync();
+
+        var problem = await AssertProblemAsync(await JsonAsync(admin, new HttpMethod(method), url, body), 400);
+
+        Assert.Equal(MalformedTitle, problem.Title);
+        Assert.Null(problem.Detail);
+    }
+
+    [Fact]
+    public async Task OrderStatusBody_AcceptsANumber_AndAnEmptyObjectIsAnIllegalTransition()
+    {
+        var admin = await LoginAdminAsync();
+
+        await AssertProblemAsync(await JsonAsync(admin, HttpMethod.Post, "/api/v1/admin/orders/999999/status", "{\"status\":2}"), 404);
+        await AssertProblemAsync(await JsonAsync(admin, HttpMethod.Post, "/api/v1/admin/orders/999999/status", "{}"), 409);
+    }
+
+    [Theory]
+    [InlineData("status=Published", 200)]
+    [InlineData("status=1", 200)]
+    [InlineData("status=99", 200)]
+    [InlineData("status=published", 400)] // enum names are case-sensitive in a query string
+    [InlineData("status=PUBLISHED", 400)]
+    [InlineData("status=", 400)]
+    [InlineData("status=Published&status=Draft", 200)] // repeated values are joined with commas, which an enum parse accepts
+    [InlineData("page=0", 200)]
+    [InlineData("page=-1", 200)]
+    [InlineData("page=1.5", 400)]
+    [InlineData("page=99999999999", 400)]
+    [InlineData("page=1&page=2", 400)]
+    [InlineData("page=%20", 400)]
+    public async Task AdminProductList_QueryBinding_FollowsTheBuiltInRules(string query, int expected)
+    {
+        var admin = await LoginAdminAsync();
+
+        Assert.Equal(expected, (int)(await admin.GetAsync("/api/v1/admin/products?" + query)).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("", 200)]
+    [InlineData("page=0", 200)]
+    [InlineData("page=-2", 200)]
+    [InlineData("page=abc", 400)]
+    [InlineData("page=", 400)]
+    public async Task PublicBlogList_PageBinding_FollowsTheBuiltInRules(string query, int expected) =>
+        Assert.Equal(expected, (int)(await NewClient().GetAsync("/api/v1/catalog/blog?" + query)).StatusCode);
+
+    [Theory]
+    [InlineData("page=0", 400)]
+    [InlineData("pageSize=1000", 400)]
+    [InlineData("sort=zzz", 400)]
+    [InlineData("inStock=maybe", 400)]
+    [InlineData("minPrice=abc", 400)]
+    [InlineData("q=", 200)]
+    public async Task PublicProductList_RejectsBadValues_WithAValidationProblem(string query, int expected)
+    {
+        var response = await NewClient().GetAsync("/api/v1/catalog/products?" + query);
+
+        Assert.Equal(expected, (int)response.StatusCode);
+        if (expected == 400)
+        {
+            await AssertProblemAsync(response, 400);
+        }
+    }
+
+    [Fact]
+    public async Task UploadWithABodyThatIsNotMultipart_Is415_AndWithNoBody_Is400()
+    {
+        var admin = await LoginAdminAsync();
+
+        await AssertProblemAsync(await JsonAsync(admin, HttpMethod.Post, "/api/v1/admin/products/1/images", "x", "text/plain"), 415);
+        await AssertProblemAsync(await JsonAsync(admin, HttpMethod.Post, "/api/v1/admin/products/1/images", null), 400);
+    }
+
+    [Fact]
+    public async Task HeadAndOptions_OnAGetEndpoint_Are405_AndRoutingIgnoresCaseAndTrailingSlash()
+    {
+        var client = NewClient();
+
+        Assert.Equal(HttpStatusCode.MethodNotAllowed, (await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, "/api/v1/catalog/categories"))).StatusCode);
+        Assert.Equal(HttpStatusCode.MethodNotAllowed, (await client.SendAsync(new HttpRequestMessage(HttpMethod.Options, "/api/v1/catalog/categories"))).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/API/V1/Catalog/Categories")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/v1/catalog/categories/")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/v1/catalog/blog/")).StatusCode);
+    }
 }
