@@ -2327,25 +2327,16 @@
   ],
   "tags": [
     {
-      "name": "Shop.Api"
-    },
-    {
-      "name": "Auth"
-    },
-    {
-      "name": "Customer"
-    },
-    {
       "name": "Admin"
     },
     {
-      "name": "Catalog"
+      "name": "Admin blog"
     },
     {
       "name": "Admin catalog"
     },
     {
-      "name": "Store"
+      "name": "Admin content"
     },
     {
       "name": "Admin orders"
@@ -2354,16 +2345,25 @@
       "name": "Admin settings"
     },
     {
-      "name": "Content"
-    },
-    {
-      "name": "Admin content"
+      "name": "Auth"
     },
     {
       "name": "Blog"
     },
     {
-      "name": "Admin blog"
+      "name": "Catalog"
+    },
+    {
+      "name": "Content"
+    },
+    {
+      "name": "Customer"
+    },
+    {
+      "name": "Shop.Api"
+    },
+    {
+      "name": "Store"
     }
   ]
 }

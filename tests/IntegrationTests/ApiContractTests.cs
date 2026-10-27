@@ -103,6 +103,12 @@ public sealed class ApiContractTests(ApiFixture fixture) : CatalogTestBase(fixtu
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var document = JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
+        if (document["tags"] is JsonArray tags)
+        {
+            // The order of the top-level tag list follows the order endpoints were registered in, which carries no meaning.
+            document["tags"] = new JsonArray(tags.OrderBy(t => t?["name"]?.GetValue<string>(), StringComparer.Ordinal).Select(t => t?.DeepClone()).ToArray());
+        }
+
         var normalized = Canonical(document)!.ToJsonString(new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
         Snapshot.Assert("openapi.json", normalized + '\n');
     }
