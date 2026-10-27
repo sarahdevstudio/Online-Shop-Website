@@ -90,6 +90,9 @@ api.MapAdminOperationsEndpoints();
 api.MapContentEndpoints();
 api.MapBlogEndpoints();
 
+// Controllers (the endpoint groups above are being moved here one resource at a time).
+app.MapControllers();
+
 await app.RunAsync();
 return 0;
 

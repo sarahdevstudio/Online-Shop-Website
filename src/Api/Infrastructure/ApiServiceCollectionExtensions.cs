@@ -119,6 +119,23 @@ public static class ApiServiceCollectionExtensions
             });
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
+        // Controllers keep every behavior the minimal-API endpoints had: the same JSON options, a bare 400 for a request that
+        // cannot be bound (the status-code pages give it its Persian title), no MVC English problem bodies, and the
+        // same CSRF / key / validation rules as filters (see Controllers/ControllerFilters.cs).
+        services.AddControllers(options =>
+            {
+                options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true; // FluentValidation owns "required"
+                options.AllowEmptyInputInBodyModelBinding = true; // an empty body reaches the action as null, like before
+                options.Filters.Add<Controllers.CsrfFilter>();
+                options.Filters.Add<Controllers.RequiredBodyFilter>();
+            })
+            .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)))
+            .ConfigureApiBehaviorOptions(options =>
+            {
+                options.SuppressMapClientErrors = true;
+                options.InvalidModelStateResponseFactory = _ => new Microsoft.AspNetCore.Mvc.StatusCodeResult(StatusCodes.Status400BadRequest);
+            });
+
         services.AddOpenApi();
         services.AddHealthChecks().AddDbContextCheck<ShopDbContext>("database", tags: ["ready"]);
 
