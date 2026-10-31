@@ -14,12 +14,6 @@ internal static class CatalogAdminEndpoints
             .WithTags("Admin catalog")
             .RequireAuthorization(Permissions.CatalogManage);
 
-        admin.MapGet("/attributes", async (ICatalogAdminService service, CancellationToken ct) =>
-            Results.Ok(await service.GetAttributesAsync(ct)));
-        admin.MapPost("/attributes/{id:int}/options", async (int id, AttributeOptionRequest request, ICatalogAdminService service, CancellationToken ct) =>
-                (await service.AddAttributeOptionAsync(id, request, ct)).ToHttpResult(o => Results.Created($"/api/v1/admin/attributes/{id}", o)))
-            .WithValidation<AttributeOptionRequest>();
-
         admin.MapGet("/products", async (string? q, ProductStatus? status, int? page, ICatalogAdminService service, CancellationToken ct) =>
             Results.Ok(await service.GetProductsAsync(q, status, page ?? 1, ct)));
         admin.MapGet("/products/{id:int}", async (int id, ICatalogAdminService service, CancellationToken ct) =>
