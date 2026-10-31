@@ -14,17 +14,6 @@ internal static class CatalogAdminEndpoints
             .WithTags("Admin catalog")
             .RequireAuthorization(Permissions.CatalogManage);
 
-        admin.MapGet("/categories", async (ICatalogAdminService service, CancellationToken ct) =>
-            Results.Ok(await service.GetCategoriesAsync(ct)));
-        admin.MapPost("/categories", async (CategoryRequest request, ICatalogAdminService service, CancellationToken ct) =>
-                (await service.CreateCategoryAsync(request, ct)).ToHttpResult(c => Results.Created($"/api/v1/admin/categories/{c.Id}", c)))
-            .WithValidation<CategoryRequest>();
-        admin.MapPut("/categories/{id:int}", async (int id, CategoryRequest request, ICatalogAdminService service, CancellationToken ct) =>
-                (await service.UpdateCategoryAsync(id, request, ct)).ToHttpResult(Results.Ok))
-            .WithValidation<CategoryRequest>();
-        admin.MapDelete("/categories/{id:int}", async (int id, ICatalogAdminService service, CancellationToken ct) =>
-            (await service.DeleteCategoryAsync(id, ct)).ToHttpResult(Results.NoContent));
-
         admin.MapGet("/brands", async (ICatalogAdminService service, CancellationToken ct) =>
             Results.Ok(await service.GetBrandsAsync(ct)));
         admin.MapPost("/brands", async (BrandRequest request, ICatalogAdminService service, CancellationToken ct) =>
