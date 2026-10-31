@@ -83,7 +83,6 @@ api.MapCatalogAdminEndpoints();
 api.MapStoreEndpoints();
 api.MapOrderAdminEndpoints();
 api.MapSettingsAdminEndpoints();
-api.MapAdminOperationsEndpoints();
 api.MapContentEndpoints();
 api.MapBlogEndpoints();
 

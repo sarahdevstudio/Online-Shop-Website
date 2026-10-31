@@ -56,9 +56,6 @@ internal static class CatalogAdminEndpoints
         admin.MapPost("/products/{id:int}/variants", async (int id, VariantRequest request, ICatalogAdminService service, CancellationToken ct) =>
                 (await service.AddVariantAsync(id, request, ct)).ToHttpResult(v => Results.Created($"/api/v1/admin/products/{id}", v)))
             .WithValidation<VariantRequest>();
-        admin.MapPut("/variants/{id:int}", async (int id, UpdateVariantRequest request, ICatalogAdminService service, CancellationToken ct) =>
-                (await service.UpdateVariantAsync(id, request, ct)).ToHttpResult(Results.Ok))
-            .WithValidation<UpdateVariantRequest>();
 
         admin.MapPut("/products/{id:int}/attributes", async (int id, ProductAttributesRequest request, ICatalogAdminService service, CancellationToken ct) =>
                 (await service.SetAttributesAsync(id, request, ct)).ToHttpResult(Results.Ok))
