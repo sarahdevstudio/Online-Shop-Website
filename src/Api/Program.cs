@@ -80,7 +80,6 @@ var api = app.MapGroup("/api/v1");
 api.AddEndpointFilter<AntiforgeryFilter>();
 api.MapCatalogEndpoints();
 api.MapStoreEndpoints();
-api.MapOrderAdminEndpoints();
 api.MapSettingsAdminEndpoints();
 api.MapContentEndpoints();
 api.MapBlogEndpoints();
