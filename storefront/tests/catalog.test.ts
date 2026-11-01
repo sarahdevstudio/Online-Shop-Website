@@ -78,7 +78,7 @@ describe('apiGet', () => {
   });
 
   it('calls the server-only base URL with the given revalidation and returns the JSON', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify([{ slug: 'lamps' }]), { status: 200 }));
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ result: [{ slug: 'lamps' }] }), { status: 200 }));
 
     await expect(apiGet('/catalog/categories', 300)).resolves.toEqual([{ slug: 'lamps' }]);
     const [url, init] = fetchMock.mock.calls[0];

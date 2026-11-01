@@ -38,7 +38,8 @@ export async function apiAdminLogin(username: string, password: string): Promise
   const auth = cookieValue(login.headers.getSetCookie(), 'shop_auth');
   if (!auth) return null;
 
-  const account = (await login.json().catch(() => null)) as { username?: string; roles?: string[] } | null;
+  const envelope = (await login.json().catch(() => null)) as { result?: { username?: string; roles?: string[] } } | null;
+  const account = envelope?.result ?? null;
   if (!account?.roles?.includes('Admin')) {
     // A customer account: not allowed here. End that session again (this also revokes its other sessions).
     await endSession(auth, forwarded);

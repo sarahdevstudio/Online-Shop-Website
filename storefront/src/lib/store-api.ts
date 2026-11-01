@@ -64,18 +64,25 @@ export async function storeFetch<T>(method: string, path: string, request: Store
   if (response.status >= 500) throw new ApiUnavailableError(`${label} returned ${response.status}`);
 
   const json: unknown = await response.json().catch(() => null);
-  if (response.ok) return { ok: true, status: response.status, body: json as T };
+  const envelope = (json ?? {}) as {
+    result?: unknown;
+    errorCode?: string | null;
+    errorMessage?: string | null;
+    validationErrors?: Record<string, string[]> | null;
+  };
+  if (response.ok) return { ok: true, status: response.status, body: envelope.result as T };
 
-  const raw = (json ?? {}) as Record<string, unknown>;
+  // Extra machine-readable fields on an error (e.g. the stock conflict's "lines"/"total") travel as `result`.
+  const extensions = (envelope.result ?? {}) as Record<string, unknown>;
   return {
     ok: false,
     status: response.status,
     problem: {
       status: response.status,
-      code: typeof raw.code === 'string' ? raw.code : null,
-      detail: typeof raw.detail === 'string' ? raw.detail : null,
-      errors: (raw.errors as Record<string, string[]> | undefined) ?? null,
-      lines: (raw.lines as Problem['lines']) ?? null,
+      code: typeof envelope.errorCode === 'string' ? envelope.errorCode : null,
+      detail: typeof envelope.errorMessage === 'string' ? envelope.errorMessage : null,
+      errors: envelope.validationErrors ?? null,
+      lines: (extensions.lines as Problem['lines']) ?? null,
     },
   };
 }

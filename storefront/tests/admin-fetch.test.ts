@@ -61,7 +61,7 @@ describe('adminFetch', () => {
   });
 
   it('GET: replays only the API auth cookie, forwards the trusted IP, and needs no antiforgery token', async () => {
-    mockApi(() => respond(200, { newOrders: 1 }));
+    mockApi(() => respond(200, { result: { newOrders: 1 } }));
 
     const result = await adminFetch<{ newOrders: number }>('GET', '/admin/dashboard');
 
@@ -76,8 +76,8 @@ describe('adminFetch', () => {
   it('POST: fetches an identity-bound antiforgery token first and sends cookie + header with the write', async () => {
     mockApi((call) =>
       call.url.endsWith('/auth/csrf')
-        ? respond(200, { headerName: 'X-XSRF-TOKEN', token: 'CSRF-TOKEN' }, ['shop_csrf=CSRF-COOKIE; path=/; httponly'])
-        : respond(200, { ok: true }),
+        ? respond(200, { result: { headerName: 'X-XSRF-TOKEN', token: 'CSRF-TOKEN' } }, ['shop_csrf=CSRF-COOKIE; path=/; httponly'])
+        : respond(200, { result: { ok: true } }),
     );
 
     const result = await adminFetch('POST', '/admin/orders/5/cancel');
@@ -90,7 +90,7 @@ describe('adminFetch', () => {
   });
 
   it('JSON bodies are sent as JSON; the browser never supplies the API headers', async () => {
-    mockApi((call) => (call.url.endsWith('/auth/csrf') ? respond(200, { headerName: 'X-XSRF-TOKEN', token: 't' }, ['shop_csrf=c']) : respond(200, {})));
+    mockApi((call) => (call.url.endsWith('/auth/csrf') ? respond(200, { result: { headerName: 'X-XSRF-TOKEN', token: 't' } }, ['shop_csrf=c']) : respond(200, { result: {} })));
 
     await adminFetch('PUT', '/admin/settings', { body: { settings: { shippingFlatFee: 1 } } });
 
@@ -105,12 +105,12 @@ describe('adminFetch', () => {
   });
 
   it('returns 409 / 403 / 400 problems to the caller (for the "data changed" banner and field errors)', async () => {
-    mockApi((call) => (call.url.endsWith('/auth/csrf') ? respond(200, { headerName: 'X-XSRF-TOKEN', token: 't' }, ['shop_csrf=c']) : respond(409, { title: 'modified', status: 409 })));
+    mockApi((call) => (call.url.endsWith('/auth/csrf') ? respond(200, { result: { headerName: 'X-XSRF-TOKEN', token: 't' } }, ['shop_csrf=c']) : respond(409, { errorMessage: 'modified' })));
 
     const conflict = await adminFetch('PUT', '/admin/variants/3', { body: {} });
     expect(conflict).toMatchObject({ ok: false, status: 409, problem: { code: null } });
 
-    mockApi(() => respond(403, { code: 'step_up_failed', detail: 'x' }));
+    mockApi(() => respond(403, { errorCode: 'step_up_failed', errorMessage: 'x' }));
     expect(await adminFetch('GET', '/admin/settings')).toMatchObject({ ok: false, status: 403, problem: { code: 'step_up_failed' } });
   });
 

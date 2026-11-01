@@ -64,12 +64,12 @@ export async function clearSessionCookie() {
 }
 
 function toProblem(status: number, json: unknown): AdminProblem {
-  const raw = (json ?? {}) as Record<string, unknown>;
+  const envelope = (json ?? {}) as { errorCode?: string | null; errorMessage?: string | null; validationErrors?: Record<string, string[]> | null };
   return {
     status,
-    code: typeof raw.code === 'string' ? raw.code : null,
-    detail: typeof raw.detail === 'string' ? raw.detail : typeof raw.title === 'string' ? raw.title : null,
-    errors: (raw.errors as Record<string, string[]> | undefined) ?? null,
+    code: typeof envelope.errorCode === 'string' ? envelope.errorCode : null,
+    detail: typeof envelope.errorMessage === 'string' ? envelope.errorMessage : null,
+    errors: envelope.validationErrors ?? null,
   };
 }
 
@@ -91,10 +91,10 @@ export async function fetchCsrf(authCookie?: string): Promise<{ cookie: string; 
     throw new ApiUnavailableError('GET /auth/csrf failed', { cause: error });
   }
   if (!response.ok) throw new ApiUnavailableError(`GET /auth/csrf returned ${response.status}`);
-  const body = (await response.json()) as { headerName: string; token: string };
+  const envelope = (await response.json()) as { result: { headerName: string; token: string } };
   const cookie = cookieValue(response.headers.getSetCookie(), 'shop_csrf');
   if (!cookie) throw new ApiUnavailableError('GET /auth/csrf set no antiforgery cookie');
-  return { cookie, token: body.token, headerName: body.headerName };
+  return { cookie, token: envelope.result.token, headerName: envelope.result.headerName };
 }
 
 interface AdminRequest {
@@ -141,7 +141,11 @@ export async function adminFetch<T>(method: string, path: string, request: Admin
 
   const text = await response.text();
   const json: unknown = text ? safeJson(text) : null;
-  if (response.ok) return { ok: true, status: response.status, body: json as T, setCookies: response.headers.getSetCookie() };
+  if (response.ok) {
+    const result = (json as { result?: unknown } | null)?.result ?? null;
+    return { ok: true, status: response.status, body: result as T, setCookies: response.headers.getSetCookie() };
+  }
+
   return { ok: false, status: response.status, problem: toProblem(response.status, json) };
 }
 

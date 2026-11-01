@@ -29,6 +29,19 @@ export function apiBaseUrl(): string {
   throw new ApiUnavailableError('API_BASE_URL is not configured.');
 }
 
+/** The envelope every `/api/v1` response body is wrapped in, success or error (see Shop.Api.Infrastructure.ResponseModel). */
+export interface ApiEnvelope<T> {
+  result: T | null;
+  errorMessage: string | null;
+  successMessage: string | null;
+  infoMessage: string | null;
+  errorCode: string | null;
+  validationErrors: Record<string, string[]> | null;
+  isSuccess: boolean;
+  isError: boolean;
+  message: string | null;
+}
+
 /**
  * GET `/api/v1{path}`. Returns null only for a real API 404; network errors, timeouts and 5xx throw
  * ApiUnavailableError; any other status is a bug in this client and throws a plain Error.
@@ -51,5 +64,6 @@ export async function apiGet<T>(path: string, seconds: number): Promise<T | null
   if (response.status === 404) return null;
   if (response.status >= 500) throw new ApiUnavailableError(`GET ${path} returned ${response.status}`);
   if (!response.ok) throw new Error(`GET ${path} returned ${response.status}`);
-  return (await response.json()) as T;
+  const envelope = (await response.json()) as ApiEnvelope<T>;
+  return envelope.result;
 }
