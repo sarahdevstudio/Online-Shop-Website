@@ -82,7 +82,6 @@ app.MapHealthChecks("/health/ready", new() { Predicate = check => check.Tags.Con
 
 var api = app.MapGroup("/api/v1");
 api.AddEndpointFilter<AntiforgeryFilter>();
-api.MapCatalogEndpoints();
 api.MapStoreEndpoints();
 
 // Controllers (the endpoint groups above are being moved here one resource at a time).
