@@ -1,9 +1,26 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Primitives;
 
 namespace Shop.Api.Controllers;
+
+/// <summary>
+/// Always "succeeds" with null, whatever the query string holds: for a <c>[FromQuery]</c> parameter that exists
+/// only so the OpenAPI document keeps describing it (name and type), while the action itself reads and validates
+/// the raw value through <see cref="QueryBinding"/>. Without this, MVC's own model binder would reject a value our
+/// rules accept (or accept one they reject) and the automatic invalid-ModelState 400 would fire before the action's
+/// own check ever runs.
+/// </summary>
+public sealed class DocumentationOnlyModelBinder : IModelBinder
+{
+    public Task BindModelAsync(ModelBindingContext bindingContext)
+    {
+        bindingContext.Result = ModelBindingResult.Success(null);
+        return Task.CompletedTask;
+    }
+}
 
 /// <summary>
 /// Query-string binding with the rules the minimal API used, which differ from the MVC defaults: repeated values are
@@ -50,13 +67,18 @@ public static class QueryBinding
         query.TryGetValue(name, out StringValues raw) ? raw.ToString() : null;
 }
 
-/// <summary>Marks an action as taking a multipart upload: any other content type is answered 415 before anything else runs.</summary>
+/// <summary>
+/// Marks an action as taking a multipart upload: a wrong content type is answered 415 before anything else runs.
+/// A request with no body/content type at all falls through to the normal "required parameter missing" 400 — it
+/// never declared a content type to be wrong about.
+/// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class RequireMultipartFormAttribute : Attribute, IResourceFilter
 {
     public void OnResourceExecuting(ResourceExecutingContext context)
     {
-        if (!context.HttpContext.Request.HasFormContentType)
+        var request = context.HttpContext.Request;
+        if (request.ContentType is not null && !request.HasFormContentType)
         {
             context.Result = new StatusCodeResult(StatusCodes.Status415UnsupportedMediaType);
         }
