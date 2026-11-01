@@ -1,6 +1,5 @@
 using Serilog;
 using Serilog.Events;
-using Shop.Api.Endpoints;
 using Shop.Api.Infrastructure;
 using Shop.Infrastructure;
 using Shop.Infrastructure.Persistence;
@@ -80,11 +79,6 @@ app.MapRobotsTxt();
 app.MapHealthChecks("/health/live", new() { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new() { Predicate = check => check.Tags.Contains("ready") });
 
-var api = app.MapGroup("/api/v1");
-api.AddEndpointFilter<AntiforgeryFilter>();
-api.MapStoreEndpoints();
-
-// Controllers (the endpoint groups above are being moved here one resource at a time).
 app.MapControllers();
 
 await app.RunAsync();
