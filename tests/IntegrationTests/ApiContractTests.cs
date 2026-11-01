@@ -62,7 +62,7 @@ public sealed class ApiContractTests(ApiFixture fixture) : CatalogTestBase(fixtu
         var anonymous = NewClient();
         var csrfOnly = NewClient();
         var admin = await LoginAdminAsync();
-        var csrfToken = await csrfOnly.GetFromJsonAsync<CsrfBody>("/api/v1/auth/csrf", Json);
+        var csrfToken = await CsrfTokenAsync(csrfOnly);
 
         var lines = new List<string>();
         foreach (var (method, pattern) in endpoints)
@@ -86,7 +86,7 @@ public sealed class ApiContractTests(ApiFixture fixture) : CatalogTestBase(fixtu
                 || (pattern == "/api/v1/admin/settings" && method == "PUT");
             if (!skipAdmin)
             {
-                var adminToken = await admin.GetFromJsonAsync<CsrfBody>("/api/v1/auth/csrf", Json);
+                var adminToken = await CsrfTokenAsync(admin);
                 scenarios.Add("admin=" + await DescribeAsync(admin, method, url, unsafeMethod, csrf: adminToken, key: false));
             }
 
@@ -143,17 +143,20 @@ public sealed class ApiContractTests(ApiFixture fixture) : CatalogTestBase(fixtu
         using var response = await client.SendAsync(request);
         var text = await response.Content.ReadAsStringAsync();
         var status = (int)response.StatusCode;
-        if (response.Content.Headers.ContentType?.MediaType == "application/problem+json")
+        if (response.Content.Headers.ContentType?.MediaType == "application/json" && text.Length > 0)
         {
-            using var problem = JsonDocument.Parse(text);
-            var root = problem.RootElement;
-            var code = root.TryGetProperty("code", out var c) ? c.GetString() : null;
-            var title = root.TryGetProperty("title", out var t) ? t.GetString() : null;
-            var shape = string.Join(",", root.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal));
-            var errors = root.TryGetProperty("errors", out var e) && e.ValueKind == JsonValueKind.Object
-                ? "{" + string.Join(",", e.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal)) + "}"
-                : "";
-            return $"{status} problem[{shape}] code={code} title={title} errors={errors}";
+            using var envelope = JsonDocument.Parse(text);
+            var root = envelope.RootElement;
+            if (root.TryGetProperty("isSuccess", out var successProperty) && !successProperty.GetBoolean())
+            {
+                var code = root.TryGetProperty("errorCode", out var c) ? c.GetString() : null;
+                var message = root.TryGetProperty("errorMessage", out var m) ? m.GetString() : null;
+                var shape = string.Join(",", root.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal));
+                var errors = root.TryGetProperty("validationErrors", out var e) && e.ValueKind == JsonValueKind.Object
+                    ? "{" + string.Join(",", e.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal)) + "}"
+                    : "";
+                return $"{status} error[{shape}] code={code} message={message} errors={errors}";
+            }
         }
 
         var kind = text.Length == 0 ? "empty" : response.Content.Headers.ContentType?.MediaType ?? "?";

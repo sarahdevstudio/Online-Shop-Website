@@ -54,7 +54,7 @@ public sealed class PlatformTests(ApiFixture fixture) : ApiTestBase(fixture)
         foreach (var response in new[] { unknownRoute, noBody })
         {
             using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-            var title = document.RootElement.GetProperty("title").GetString();
+            var title = document.RootElement.GetProperty("errorMessage").GetString();
             Assert.True(title is { Length: > 0 } && title.Any(c => c is >= '\u0600' and <= '\u06FF') && !title.Any(char.IsAsciiLetter), $"title was '{title}'");
         }
     }

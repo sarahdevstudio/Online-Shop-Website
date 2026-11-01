@@ -34,6 +34,10 @@ app.UseForwardedHeaders();
 // Non-production deployments tell crawlers to stay away on every response (SITE_ENV).
 app.UseNoIndexOutsideProduction();
 
+// Wraps every /api/v1 response body in ResponseModel<T>; must wrap everything downstream (routing, auth, the
+// exception handler, status-code pages), so it runs before all of them.
+app.UseMiddleware<ResponseEnvelopeMiddleware>();
+
 // Request logging is OUTSIDE the exception handler on purpose: it then logs the status the client really gets (a stale
 // row version is a 409, not a 500) while the handler still logs real failures itself.
 app.UseSerilogRequestLogging(options =>

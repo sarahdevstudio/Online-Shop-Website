@@ -53,14 +53,14 @@ public abstract class CatalogTestBase(ApiFixture fixture) : ApiTestBase(fixture)
 
     protected static async Task<HttpResponseMessage> SendAsync(HttpClient client, HttpMethod method, string url, object? body = null)
     {
-        var csrf = await client.GetFromJsonAsync<CsrfBody>("/api/v1/auth/csrf", Json);
+        var csrf = (await client.GetFromJsonAsync<Envelope<CsrfBody>>("/api/v1/auth/csrf", Json))!.Result!;
         using var request = new HttpRequestMessage(method, url);
         if (body is not null)
         {
             request.Content = JsonContent.Create(body, options: ApiJson);
         }
 
-        request.Headers.Add(csrf!.HeaderName, csrf.Token);
+        request.Headers.Add(csrf.HeaderName, csrf.Token);
         return await client.SendAsync(request);
     }
 
@@ -68,14 +68,14 @@ public abstract class CatalogTestBase(ApiFixture fixture) : ApiTestBase(fixture)
     {
         var response = await SendAsync(client, method, url, body);
         Assert.True(response.IsSuccessStatusCode, $"{method} {url} → {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
-        return (await response.Content.ReadFromJsonAsync<T>(ApiJson))!;
+        return (await response.Content.ReadFromJsonAsync<Envelope<T>>(ApiJson))!.Result!;
     }
 
     protected static async Task<T> GetOkAsync<T>(HttpClient client, string url)
     {
         var response = await client.GetAsync(url);
         Assert.True(response.StatusCode == HttpStatusCode.OK, $"GET {url} → {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
-        return (await response.Content.ReadFromJsonAsync<T>(ApiJson))!;
+        return (await response.Content.ReadFromJsonAsync<Envelope<T>>(ApiJson))!.Result!;
     }
 
     protected static Task<IdBody> CreateCategoryAsync(HttpClient admin, string slug, int? parentId = null, bool isActive = true) =>

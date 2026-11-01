@@ -96,7 +96,7 @@ public sealed class StoreOrderTests(ApiFixture fixture) : StoreTestBase(fixture)
         await SetPriceAsync(variant, 120_000); // changes while the customer is filling in the form
         var (response, _) = await PlaceAsync(shopper, expectedTotal: seen);
 
-        var problem = await Shopper.ReadAsync<StockProblemBody>(response);
+        var problem = await Shopper.ReadStockProblemAsync(response);
         Assert.Equal(409, problem.Status);
         Assert.Equal("price_changed", problem.Code);
         Assert.Equal(170_000, problem.Total);
@@ -137,7 +137,7 @@ public sealed class StoreOrderTests(ApiFixture fixture) : StoreTestBase(fixture)
 
         var (response, _) = await PlaceAsync(shopper, expectedTotal: total);
 
-        var problem = await Shopper.ReadAsync<StockProblemBody>(response);
+        var problem = await Shopper.ReadStockProblemAsync(response);
         Assert.Equal(409, problem.Status);
         Assert.Equal("stock_insufficient", problem.Code);
         var line = Assert.Single(problem.Lines!);
@@ -233,7 +233,7 @@ public sealed class StoreOrderTests(ApiFixture fixture) : StoreTestBase(fixture)
 
             Assert.Equal(1, responses.Count(r => r.StatusCode == HttpStatusCode.Created));
             var loser = Assert.Single(responses, r => r.StatusCode != HttpStatusCode.Created);
-            var problem = await Shopper.ReadAsync<StockProblemBody>(loser);
+            var problem = await Shopper.ReadStockProblemAsync(loser);
             Assert.Equal("stock_insufficient", problem.Code);
             Assert.Equal(variant, Assert.Single(problem.Lines!).VariantId);
             Assert.Equal(0, await StockOfAsync(variant));

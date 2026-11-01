@@ -48,7 +48,7 @@ public sealed class SettingsTests(ApiFixture fixture) : StoreTestBase(fixture)
     {
         var response = await ChangeAsync(admin, change);
         Assert.True(response.IsSuccessStatusCode, await response.Content.ReadAsStringAsync());
-        return (await response.Content.ReadFromJsonAsync<AdminSettingsBody>(ApiJson))!;
+        return (await response.Content.ReadFromJsonAsync<Envelope<AdminSettingsBody>>(ApiJson))!.Result!;
     }
 
     /// <summary>Tests share one database: every test that edits settings puts the baseline back.</summary>
@@ -162,7 +162,7 @@ public sealed class SettingsTests(ApiFixture fixture) : StoreTestBase(fixture)
 
             var response = await NewClient().GetAsync("/api/v1/catalog/store-info"); // anonymous
             var raw = await response.Content.ReadAsStringAsync();
-            var info = System.Text.Json.JsonSerializer.Deserialize<StoreInfoBody>(raw, Json)!;
+            var info = System.Text.Json.JsonSerializer.Deserialize<Envelope<StoreInfoBody>>(raw, Json)!.Result!;
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal("021-12345678", info.StorePhone);

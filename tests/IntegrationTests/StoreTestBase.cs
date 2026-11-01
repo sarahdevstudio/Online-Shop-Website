@@ -38,6 +38,9 @@ public sealed record StockLineBody(int VariantId, string ProductName, string? Va
 
 public sealed record StockProblemBody(int Status, string? Code, StockLineBody[]? Lines, long? Total, long? ExpectedTotal, string? Detail);
 
+/// <summary>The stock-conflict error's extra, machine-readable fields, carried as the envelope's <c>result</c>.</summary>
+public sealed record StockConflictExtensions(StockLineBody[]? Lines, long? Total, long? ExpectedTotal);
+
 /// <summary>A browser as the Next.js server sees it: a cart token, a client address, and the shared storefront key.</summary>
 public sealed class Shopper(HttpClient client, string ip)
 {
@@ -82,7 +85,9 @@ public sealed class Shopper(HttpClient client, string ip)
             using var json = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
 
             // What the storefront does with its cookie: a new token replaces the old one (e.g. after an order emptied the cart).
-            if (json.RootElement.TryGetProperty("newToken", out var newToken) && newToken.ValueKind == System.Text.Json.JsonValueKind.String)
+            if (json.RootElement.TryGetProperty("result", out var result)
+                && result.ValueKind == System.Text.Json.JsonValueKind.Object
+                && result.TryGetProperty("newToken", out var newToken) && newToken.ValueKind == System.Text.Json.JsonValueKind.String)
             {
                 CartToken = newToken.GetString();
             }
@@ -95,11 +100,19 @@ public sealed class Shopper(HttpClient client, string ip)
     {
         var response = await SendAsync(HttpMethod.Get, "/api/v1/store/cart");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        return (await response.Content.ReadFromJsonAsync<CartBody>(Json))!;
+        return (await response.Content.ReadFromJsonAsync<Envelope<CartBody>>(Json))!.Result!;
     }
 
     public static async Task<T> ReadAsync<T>(HttpResponseMessage response) =>
-        (await response.Content.ReadFromJsonAsync<T>(Json))!;
+        (await response.Content.ReadFromJsonAsync<Envelope<T>>(Json))!.Result!;
+
+    /// <summary>Reads a stock-conflict (409) error: code/detail from the envelope, lines/totals from its extensions.</summary>
+    public static async Task<StockProblemBody> ReadStockProblemAsync(HttpResponseMessage response)
+    {
+        var envelope = (await response.Content.ReadFromJsonAsync<Envelope<StockConflictExtensions>>(Json))!;
+        return new StockProblemBody(
+            (int)response.StatusCode, envelope.ErrorCode, envelope.Result?.Lines, envelope.Result?.Total, envelope.Result?.ExpectedTotal, envelope.ErrorMessage);
+    }
 }
 
 public abstract class StoreTestBase(ApiFixture fixture) : CatalogTestBase(fixture)

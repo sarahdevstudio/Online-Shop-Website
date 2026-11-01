@@ -329,7 +329,7 @@ public sealed class CatalogAdminTests(ApiFixture fixture) : CatalogTestBase(fixt
 
     private static async Task<HttpResponseMessage> UploadAsync(HttpClient client, int productId, byte[] bytes, string fileName, string contentType)
     {
-        var csrf = await client.GetFromJsonAsync<CsrfBody>("/api/v1/auth/csrf", Json);
+        var csrf = await CsrfTokenAsync(client);
         using var content = new MultipartFormDataContent();
         var file = new ByteArrayContent(bytes);
         file.Headers.ContentType = new MediaTypeHeaderValue(contentType);

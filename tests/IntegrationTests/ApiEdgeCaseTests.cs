@@ -15,7 +15,7 @@ public sealed class ApiEdgeCaseTests(ApiFixture fixture) : CatalogTestBase(fixtu
 
     private static async Task<HttpResponseMessage> RawPostAsync(HttpClient client, string url, HttpContent? content)
     {
-        var csrf = await client.GetFromJsonAsync<CsrfBody>("/api/v1/auth/csrf", Json);
+        var csrf = await CsrfTokenAsync(client);
         using var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
         request.Headers.Add(csrf!.HeaderName, csrf.Token);
         return await client.SendAsync(request);
@@ -46,7 +46,7 @@ public sealed class ApiEdgeCaseTests(ApiFixture fixture) : CatalogTestBase(fixtu
         var response = await RawPostAsync(NewClient(), "/api/v1/auth/login", null);
 
         var problem = await AssertProblemAsync(response, 400);
-        Assert.Equal(MalformedTitle, problem.Title);
+        Assert.Equal("بدنهٔ درخواست لازم است.", problem.ErrorMessage);
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public sealed class ApiEdgeCaseTests(ApiFixture fixture) : CatalogTestBase(fixtu
 
     private static async Task<HttpResponseMessage> JsonAsync(HttpClient client, HttpMethod method, string url, string? body, string contentType = "application/json")
     {
-        var csrf = await client.GetFromJsonAsync<CsrfBody>("/api/v1/auth/csrf", Json);
+        var csrf = await CsrfTokenAsync(client);
         using var request = new HttpRequestMessage(method, url);
         if (body is not null)
         {
@@ -191,8 +191,7 @@ public sealed class ApiEdgeCaseTests(ApiFixture fixture) : CatalogTestBase(fixtu
         var response = await JsonAsync(NewClient(), HttpMethod.Post, "/api/v1/auth/login", body);
 
         var problem = await AssertProblemAsync(response, 400);
-        Assert.Equal(MalformedTitle, problem.Title);
-        Assert.Equal("بدنهٔ درخواست لازم است.", problem.Detail);
+        Assert.Equal("بدنهٔ درخواست لازم است.", problem.ErrorMessage);
     }
 
     [Theory]
@@ -205,8 +204,7 @@ public sealed class ApiEdgeCaseTests(ApiFixture fixture) : CatalogTestBase(fixtu
     {
         var problem = await AssertProblemAsync(await JsonAsync(NewClient(), HttpMethod.Post, "/api/v1/auth/login", body), 400);
 
-        Assert.Equal(MalformedTitle, problem.Title);
-        Assert.Null(problem.Detail);
+        Assert.Equal(MalformedTitle, problem.ErrorMessage);
     }
 
     [Theory]
@@ -236,8 +234,7 @@ public sealed class ApiEdgeCaseTests(ApiFixture fixture) : CatalogTestBase(fixtu
 
         var problem = await AssertProblemAsync(await JsonAsync(admin, new HttpMethod(method), url, body), 400);
 
-        Assert.Equal(MalformedTitle, problem.Title);
-        Assert.Null(problem.Detail);
+        Assert.Equal(MalformedTitle, problem.ErrorMessage);
     }
 
     [Fact]

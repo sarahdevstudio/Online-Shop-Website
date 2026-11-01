@@ -186,7 +186,7 @@ public sealed class AuthenticationTests(ApiFixture fixture) : ApiTestBase(fixtur
     public async Task UnsafeRequest_WithTokenFromAnotherSession_IsRejected()
     {
         var other = NewClient();
-        var foreignToken = await other.GetFromJsonAsync<CsrfBody>("/api/v1/auth/csrf", Json);
+        var foreignToken = await CsrfTokenAsync(other);
         var client = NewClient();
         using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/auth/login")
         {

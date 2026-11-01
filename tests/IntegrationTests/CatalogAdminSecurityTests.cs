@@ -63,7 +63,7 @@ public sealed class CatalogAdminSecurityTests(ApiFixture fixture) : CatalogTestB
     }
 
     private static async Task<string> CsrfAsync(HttpClient client) =>
-        (await client.GetFromJsonAsync<CsrfBody>("/api/v1/auth/csrf", Json))!.Token;
+        (await CsrfTokenAsync(client))!.Token;
 
     [Theory]
     [MemberData(nameof(Endpoints))]
