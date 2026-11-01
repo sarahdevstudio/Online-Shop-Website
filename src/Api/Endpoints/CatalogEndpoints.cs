@@ -10,9 +10,6 @@ internal static class CatalogEndpoints
     {
         var catalog = api.MapGroup("/catalog").WithTags("Catalog").AllowAnonymous();
 
-        catalog.MapGet("/brands", async (ICatalogService service, CancellationToken ct) =>
-            Results.Ok(await service.GetBrandsAsync(ct)));
-
         // ?category=&q=&brand=a,b&<attributeCode>=slug1,slug2&minPrice=&maxPrice=&inStock=&sort=&page=&pageSize=
         catalog.MapGet("/products", async (HttpRequest request, ICatalogService service, CancellationToken ct) =>
         {
