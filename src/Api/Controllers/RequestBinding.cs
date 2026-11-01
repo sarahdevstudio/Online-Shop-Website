@@ -17,7 +17,11 @@ public sealed class DocumentationOnlyModelBinder : IModelBinder
 {
     public Task BindModelAsync(ModelBindingContext bindingContext)
     {
-        bindingContext.Result = ModelBindingResult.Success(null);
+        // null for a reference/nullable-value type; the type's default (never null) for a plain value type.
+        var value = bindingContext.ModelType.IsValueType && Nullable.GetUnderlyingType(bindingContext.ModelType) is null
+            ? Activator.CreateInstance(bindingContext.ModelType)
+            : null;
+        bindingContext.Result = ModelBindingResult.Success(value);
         return Task.CompletedTask;
     }
 }

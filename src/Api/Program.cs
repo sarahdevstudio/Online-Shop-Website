@@ -85,7 +85,6 @@ api.AddEndpointFilter<AntiforgeryFilter>();
 api.MapCatalogEndpoints();
 api.MapStoreEndpoints();
 api.MapContentEndpoints();
-api.MapBlogEndpoints();
 
 // Controllers (the endpoint groups above are being moved here one resource at a time).
 app.MapControllers();
