@@ -23,20 +23,6 @@ internal static class StoreEndpoints
             .WithMetadata(StorefrontEndpointMetadata.Instance)
             .AddEndpointFilter<StorefrontKeyFilter>();
 
-        var cart = store.MapGroup("/cart").RequireRateLimiting(CartPolicy);
-        cart.MapGet("", async (HttpRequest request, ICartService carts, CancellationToken ct) =>
-            Results.Ok(await carts.GetAsync(CartToken(request), ct)));
-        cart.MapGet("/count", async (HttpRequest request, ICartService carts, CancellationToken ct) =>
-            Results.Ok(new CartCountDto(await carts.CountAsync(CartToken(request), ct))));
-        cart.MapPost("/items", async (HttpRequest request, AddCartItemRequest body, ICartService carts, CancellationToken ct) =>
-                (await carts.AddItemAsync(CartToken(request), body, ct)).ToHttpResult(Results.Ok))
-            .WithValidation<AddCartItemRequest>();
-        cart.MapPut("/items/{variantId:int}", async (HttpRequest request, int variantId, UpdateCartItemRequest body, ICartService carts, CancellationToken ct) =>
-                (await carts.SetQuantityAsync(CartToken(request), variantId, body.Quantity, ct)).ToHttpResult(Results.Ok))
-            .WithValidation<UpdateCartItemRequest>();
-        cart.MapDelete("/items/{variantId:int}", async (HttpRequest request, int variantId, ICartService carts, CancellationToken ct) =>
-            (await carts.SetQuantityAsync(CartToken(request), variantId, 0, ct)).ToHttpResult(Results.Ok));
-
         store.MapPost("/orders", async (HttpContext http, PlaceOrderRequest body, IOrderService orders, CancellationToken ct) =>
             {
                 if (!Guid.TryParse(http.Request.Headers[IdempotencyKeyHeader].ToString(), out var key) || key == Guid.Empty)

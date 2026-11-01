@@ -26,6 +26,16 @@ internal sealed class StorefrontEndpointMetadata
 }
 
 /// <summary>
+/// The controller equivalent of <see cref="StorefrontEndpointMetadata"/>: attributes become endpoint metadata
+/// automatically, so this alone is enough for anything that only checks for the marker (e.g. the route snapshot).
+/// The actual key check and CSRF exemption are <c>Shop.Api.Controllers.StorefrontApiAttribute</c>.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class)]
+public sealed class StorefrontEndpointAttribute : Attribute
+{
+}
+
+/// <summary>
 /// The <c>/api/v1/store</c> endpoints use no cookie authentication (identity is the explicit cart / order token), so
 /// there is nothing for CSRF to ride on; instead only the Next.js server, which knows the shared key, may call them.
 /// </summary>

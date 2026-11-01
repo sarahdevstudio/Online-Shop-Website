@@ -50,9 +50,11 @@ public static class StartupChecks
 
 internal static class StoreEndpointsPolicies
 {
-    public const string Cart = Endpoints.StoreEndpoints.CartPolicy;
-    public const string Order = Endpoints.StoreEndpoints.OrderPolicy;
-    public const string Lookup = Endpoints.StoreEndpoints.LookupPolicy;
+    public const string Cart = "store-cart";
+    public const string Order = "store-order";
+    public const string Lookup = "store-lookup";
+    public const string CartTokenHeader = "X-Cart-Token";
+    public const string IdempotencyKeyHeader = "Idempotency-Key";
 }
 
 public static class ApiServiceCollectionExtensions
