@@ -1,0 +1,21 @@
+.link {
+  display: block;
+  border-radius: var(--radius-lg);
+}
+.link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.frame {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-muted);
+}
+.frame img {
+  object-fit: cover;
+}
+.sm { aspect-ratio: 4 / 1; min-block-size: 7rem; }
+.md { aspect-ratio: 3 / 1; min-block-size: 10rem; }
+.lg { aspect-ratio: 2 / 1; min-block-size: 14rem; }

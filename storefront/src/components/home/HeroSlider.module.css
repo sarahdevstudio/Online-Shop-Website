@@ -1,0 +1,161 @@
+.hero {
+  position: relative;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+.viewport {
+  position: relative;
+}
+.slide {
+  position: relative;
+  display: grid;
+  align-items: end;
+  min-block-size: 18rem;
+}
+.slide[hidden] {
+  display: none;
+}
+.withImage {
+  aspect-ratio: 4 / 3;
+  background: var(--color-primary);
+}
+.textOnly {
+  align-items: center;
+  min-block-size: 16rem;
+}
+.image {
+  object-fit: cover;
+}
+/* Light text over a photo always sits on a dark gradient, so contrast does not depend on the picture. */
+.withImage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.72), rgb(0 0 0 / 0.1) 70%);
+}
+.withImage .caption {
+  position: relative;
+  z-index: 1;
+  color: #ffffff;
+}
+.caption {
+  inline-size: 100%;
+  padding-block: var(--space-8) var(--space-12);
+}
+.captionBox {
+  display: grid;
+  gap: var(--space-3);
+  max-inline-size: 36rem;
+  justify-items: start;
+}
+.title {
+  margin: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+.text {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+.cta {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--control-height);
+  padding-inline: var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-contrast);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+.withImage .cta {
+  background: #ffffff;
+  color: #1a1a1a;
+}
+.cta:hover {
+  text-decoration: underline;
+}
+.cta:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
+.controls {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  z-index: 2;
+}
+.dots {
+  display: flex;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dot,
+.arrow,
+.pause {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: var(--control-height);
+  min-block-size: var(--control-height);
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+}
+.dot::before {
+  content: '';
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  border: 2px solid #ffffff;
+  border-radius: var(--radius-full);
+  background: transparent;
+}
+.dot[aria-current='true']::before {
+  background: #ffffff;
+}
+.arrow::before {
+  content: '';
+  inline-size: 0.6rem;
+  block-size: 0.6rem;
+  border: 0 solid #ffffff;
+}
+/* Physical borders on purpose: in this RTL layout "next" points left, "previous" right. */
+.next::before {
+  border-left-width: 3px; /* rtl-ok */
+  border-bottom-width: 3px;
+  transform: rotate(45deg);
+}
+.prev::before {
+  border-right-width: 3px; /* rtl-ok */
+  border-bottom-width: 3px;
+  transform: rotate(-45deg);
+}
+.pause {
+  padding-inline: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+.dot:focus-visible,
+.arrow:focus-visible,
+.pause:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: -2px;
+  background: rgb(0 0 0 / 0.35);
+}
+.controls {
+  background: linear-gradient(to top, rgb(0 0 0 / 0.35), transparent);
+}
+@media (min-width: 768px) {
+  .withImage {
+    aspect-ratio: 21 / 8;
+  }
+  .caption {
+    padding-block: var(--space-12);
+  }
+}

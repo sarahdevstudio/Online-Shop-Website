@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { HomeBlocks } from '@/components/home/HomeBlocks';
 import { ProductCard } from '@/components/ProductCard';
 import { getCategoryTree, getProducts } from '@/lib/catalog';
 import { messages } from '@/lib/messages';
@@ -14,6 +15,17 @@ export async function generateMetadata() {
 const NEWEST_COUNT = 8;
 
 export default async function HomePage() {
+  const { home, seo } = await getSiteConfig();
+  // The configured blocks, in order; with none configured (or the API unreachable) the built-in home page below.
+  if (home.blocks.length > 0) {
+    return (
+      <>
+        <h1 className="ui-visually-hidden">{seo.siteName}</h1>
+        <HomeBlocks blocks={home.blocks} />
+      </>
+    );
+  }
+
   const [categories, newest] = await Promise.all([getCategoryTree(), getProducts({ inStock: true, pageSize: NEWEST_COUNT })]);
 
   return (
