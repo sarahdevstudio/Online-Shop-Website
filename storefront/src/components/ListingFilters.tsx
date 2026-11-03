@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Form, FormActions, FormGrid, SubmitButton, TextField } from '@/components/form';
 import type { FacetOptionDto, FacetsDto } from '@/lib/catalog';
 import { formatNumber } from '@/lib/format';
 import {
@@ -87,7 +88,7 @@ export function ListingFilters({ basePath, state, facets, allFacets }: ListingFi
         ))}
 
         {range && (
-          <form className={styles.group} method="get" action={basePath}>
+          <Form className={styles.group} method="get" action={basePath}>
             <fieldset className={styles.priceFields}>
               <legend className={styles.legend}>{messages.price}</legend>
               {OPTION_KEYS.map(
@@ -98,33 +99,15 @@ export function ListingFilters({ basePath, state, facets, allFacets }: ListingFi
               )}
               {state.inStock && <input type="hidden" name="inStock" value="1" />}
               {state.sort && <input type="hidden" name="sort" value={state.sort} />}
-              <label className={styles.priceLabel}>
-                <span>{messages.priceFrom}</span>
-                <input
-                  className="ui-control"
-                  name="minPrice"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  defaultValue={state.minPrice ?? ''}
-                  placeholder={formatNumber(range.min)}
-                />
-              </label>
-              <label className={styles.priceLabel}>
-                <span>{messages.priceTo}</span>
-                <input
-                  className="ui-control"
-                  name="maxPrice"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  defaultValue={state.maxPrice ?? ''}
-                  placeholder={formatNumber(range.max)}
-                />
-              </label>
-              <button type="submit" className={styles.apply}>
-                {messages.applyPrice}
-              </button>
+              <FormGrid columns="pair">
+                <TextField name="minPrice" label={messages.priceFrom} defaultValue={state.minPrice ?? ''} inputMode="numeric" ltr autoComplete="off" placeholder={formatNumber(range.min)} />
+                <TextField name="maxPrice" label={messages.priceTo} defaultValue={state.maxPrice ?? ''} inputMode="numeric" ltr autoComplete="off" placeholder={formatNumber(range.max)} />
+              </FormGrid>
+              <FormActions>
+                <SubmitButton variant="secondary">{messages.applyPrice}</SubmitButton>
+              </FormActions>
             </fieldset>
-          </form>
+          </Form>
         )}
 
         <div className={styles.group}>

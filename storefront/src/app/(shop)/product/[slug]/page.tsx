@@ -5,7 +5,7 @@ import { addToCartAction } from '@/app/(shop)/cart/actions';
 import { Alert } from '@/components/Alert';
 import { Badge } from '@/components/Badge';
 import { Breadcrumb } from '@/components/Breadcrumb';
-import { Button } from '@/components/Button';
+import { Form, SubmitButton, TextField } from '@/components/form';
 import { JsonLd } from '@/components/JsonLd';
 import { Price } from '@/components/Price';
 import { ProductGallery } from '@/components/ProductGallery';
@@ -105,14 +105,11 @@ export default async function ProductPage({ params, searchParams }: Props) {
                   <>
                     <Badge variant="success">{messages.inStock}</Badge>
                     {/* A plain form posting to a Server Action: adds the selected variant with no JavaScript needed. */}
-                    <form action={addToCartAction} className="ui-cluster">
+                    <Form action={addToCartAction} inline>
                       <input type="hidden" name="variantId" value={variant.id} />
-                      <label>
-                        <span className="ui-visually-hidden">{messages.quantity}</span>
-                        <input className="ui-control" style={{ inlineSize: '5rem' }} type="number" name="quantity" inputMode="numeric" min={1} defaultValue={1} />
-                      </label>
-                      <Button type="submit">{messages.addToCart}</Button>
-                    </form>
+                      <TextField name="quantity" label={messages.quantity} defaultValue={1} inputMode="numeric" ltr autoComplete="off" maxLength={3} compact />
+                      <SubmitButton>{messages.addToCart}</SubmitButton>
+                    </Form>
                   </>
                 ) : (
                   <Badge>{messages.outOfStock}</Badge>

@@ -1,7 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Alert } from '@/components/Alert';
-import { Button, ButtonLink } from '@/components/Button';
+import { ButtonLink } from '@/components/Button';
+import { Form, SubmitButton, TextField } from '@/components/form';
 import { formatNumber } from '@/lib/format';
 import { messages } from '@/lib/messages';
 import type { SearchParams } from '@/lib/paging';
@@ -79,31 +80,18 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
                   <LineNotice line={line} />
                   <div className={styles.controls}>
                     {line.available && (
-                      <form action={updateQuantityAction} className={styles.controls}>
+                      <Form action={updateQuantityAction} inline>
                         <input type="hidden" name="variantId" value={line.variantId} />
-                        <label>
-                          <span className="ui-visually-hidden">{messages.quantity}</span>
-                          <input
-                            className={`ui-control ${styles.qty}`}
-                            type="number"
-                            name="quantity"
-                            inputMode="numeric"
-                            min={1}
-                            max={line.maxQuantity}
-                            defaultValue={line.quantity}
-                          />
-                        </label>
-                        <Button type="submit" variant="secondary" size="sm">
-                          {messages.cartUpdate}
-                        </Button>
-                      </form>
+                        <TextField name="quantity" label={messages.quantity} defaultValue={line.quantity} inputMode="numeric" ltr autoComplete="off" maxLength={String(line.maxQuantity).length} compact />
+                        <SubmitButton variant="secondary">{messages.cartUpdate}</SubmitButton>
+                      </Form>
                     )}
-                    <form action={removeItemAction} className={styles.inline}>
+                    <Form action={removeItemAction} inline>
                       <input type="hidden" name="variantId" value={line.variantId} />
-                      <Button type="submit" variant="ghost" size="sm" aria-label={messages.cartRemoveItem(line.productName)}>
+                      <SubmitButton variant="ghost" aria-label={messages.cartRemoveItem(line.productName)}>
                         {messages.cartRemove}
-                      </Button>
-                    </form>
+                      </SubmitButton>
+                    </Form>
                     {line.available && (
                       <span className={styles.lineTotal}>
                         {formatNumber(line.lineTotal)} {messages.currencyUnit}
