@@ -2,12 +2,12 @@
 
 import { useActionState } from 'react';
 import { Alert } from '@/components/Alert';
+import { CheckField, Form, FormActions, FormGrid, FormSection, RequiredNote, SubmitButton, TextAreaField, TextField } from '@/components/form';
 import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminSettings } from '@/lib/admin/types';
-import { CheckField, Field, FormBanner, SubmitButton } from '../../_components/FormBits';
+import { FormBanner } from '../../_components/FormBits';
 import { saveSettingsAction } from './actions';
-import styles from '../../admin.module.css';
 
 const t = adminMessages.settings;
 
@@ -19,57 +19,59 @@ export function SettingsForm({ data }: { data: AdminSettings }) {
   const v = (name: string, stored: string | number | null) => (typed && name in state.submitted ? state.submitted[name] : stored);
   const on = (name: string, stored: boolean) => (typed ? name in state.submitted : stored);
   return (
-    <form action={action} className={styles.grid2}>
-      <div className={styles.wide}>
-        <FormBanner state={state} />
-        <Alert variant={data.cardToCardOffered ? 'success' : 'warning'}>{data.cardToCardOffered ? t.offered : t.notOffered}</Alert>
-      </div>
-
+    <Form
+      action={action}
+      errors={state.errors}
+      banner={
+        <>
+          <FormBanner state={state} />
+          <Alert variant={data.cardToCardOffered ? 'success' : 'warning'}>{data.cardToCardOffered ? t.offered : t.notOffered}</Alert>
+        </>
+      }
+    >
       {/* Fields are keyed by the stored version (fresh values after a save or reload); the banner state is not. */}
       <input type="hidden" name="rowVersion" value={data.rowVersion} />
+      <RequiredNote />
       <div key={data.rowVersion} style={{ display: 'contents' }}>
-      <fieldset className={`${styles.panel} ${styles.wide}`}>
-        <legend className="ui-heading-4">{t.shipping}</legend>
-        <div className={styles.grid2}>
-          <Field name="shippingFlatFee" label={t.shippingFee} state={state} type="text" inputMode="numeric" ltr defaultValue={v('shippingFlatFee', s.shippingFlatFee)} required />
-          <Field name="freeShippingThreshold" label={t.freeThreshold} state={state} type="text" inputMode="numeric" ltr defaultValue={v('freeShippingThreshold', s.freeShippingThreshold)} />
-          <Field name="maxQuantityPerLine" label={t.maxQty} state={state} type="text" inputMode="numeric" ltr defaultValue={v('maxQuantityPerLine', s.maxQuantityPerLine)} required />
-        </div>
-      </fieldset>
+        <FormSection card title={t.shipping}>
+          <FormGrid columns={3}>
+            <TextField name="shippingFlatFee" label={t.shippingFee} inputMode="numeric" ltr autoComplete="off" defaultValue={v('shippingFlatFee', s.shippingFlatFee)} required />
+            <TextField name="freeShippingThreshold" label={t.freeThreshold} hint={t.freeThresholdHint} inputMode="numeric" ltr autoComplete="off" defaultValue={v('freeShippingThreshold', s.freeShippingThreshold)} />
+            <TextField name="maxQuantityPerLine" label={t.maxQty} inputMode="numeric" ltr autoComplete="off" defaultValue={v('maxQuantityPerLine', s.maxQuantityPerLine)} required />
+          </FormGrid>
+        </FormSection>
 
-      <fieldset className={`${styles.panel} ${styles.wide}`}>
-        <legend className="ui-heading-4">{t.payment}</legend>
-        <div className={styles.grid2}>
-          <CheckField name="cardToCardEnabled" label={t.cardToCard} defaultChecked={on('cardToCardEnabled', s.cardToCardEnabled)} />
-          <CheckField name="cashOnDeliveryEnabled" label={t.cashOnDelivery} defaultChecked={on('cashOnDeliveryEnabled', s.cashOnDeliveryEnabled)} />
-          {state.errors.paymentMethods && <span className={`${styles.error} ${styles.wide}`}>{state.errors.paymentMethods}</span>}
-          <Field name="cardNumber" label={t.cardNumber} state={state} ltr inputMode="numeric" defaultValue={v('cardNumber', s.cardNumber)} />
-          <Field name="cardHolderName" label={t.cardHolder} state={state} defaultValue={v('cardHolderName', s.cardHolderName)} />
-          <Field name="bankName" label={t.bankName} state={state} defaultValue={v('bankName', s.bankName)} />
-        </div>
-      </fieldset>
+        <FormSection card title={t.payment}>
+          <FormGrid>
+            <CheckField name="cardToCardEnabled" label={t.cardToCard} defaultChecked={on('cardToCardEnabled', s.cardToCardEnabled)} error={state.errors.paymentMethods} />
+            <CheckField name="cashOnDeliveryEnabled" label={t.cashOnDelivery} defaultChecked={on('cashOnDeliveryEnabled', s.cashOnDeliveryEnabled)} />
+          </FormGrid>
+          <FormGrid columns={3}>
+            <TextField name="cardNumber" label={t.cardNumber} inputMode="numeric" ltr autoComplete="off" defaultValue={v('cardNumber', s.cardNumber)} />
+            <TextField name="cardHolderName" label={t.cardHolder} autoComplete="off" defaultValue={v('cardHolderName', s.cardHolderName)} />
+            <TextField name="bankName" label={t.bankName} autoComplete="off" defaultValue={v('bankName', s.bankName)} />
+          </FormGrid>
+        </FormSection>
 
-      <fieldset className={`${styles.panel} ${styles.wide}`}>
-        <legend className="ui-heading-4">{t.contact}</legend>
-        <div className={styles.grid2}>
-          <Field name="storePhone" label={t.phone} state={state} ltr type="tel" defaultValue={v('storePhone', s.storePhone)} />
-          <Field name="instagramHandle" label={t.instagram} state={state} ltr defaultValue={v('instagramHandle', s.instagramHandle)} />
-          <Field name="workingHours" label={t.hours} state={state} defaultValue={v('workingHours', s.workingHours)} />
-          <Field name="storeAddress" label={t.address} state={state} defaultValue={v('storeAddress', s.storeAddress)} multiline wide />
-        </div>
-      </fieldset>
+        <FormSection card title={t.contact}>
+          <FormGrid columns={3}>
+            <TextField name="storePhone" label={t.phone} type="tel" inputMode="tel" ltr autoComplete="off" defaultValue={v('storePhone', s.storePhone)} />
+            <TextField name="instagramHandle" label={t.instagram} hint={t.instagramHint} ltr autoComplete="off" defaultValue={v('instagramHandle', s.instagramHandle)} />
+            <TextField name="workingHours" label={t.hours} autoComplete="off" defaultValue={v('workingHours', s.workingHours)} />
+            <TextAreaField name="storeAddress" label={t.address} rows={3} defaultValue={v('storeAddress', s.storeAddress) as string | null} />
+          </FormGrid>
+        </FormSection>
 
-      <fieldset className={`${styles.panel} ${styles.wide}`}>
-        <legend className="ui-heading-4">{t.stepUpTitle}</legend>
-        <p className={styles.hint}>{t.stepUpHint}</p>
-        <Field name="currentPassword" label={adminMessages.currentPassword} state={state} type="password" ltr autoComplete="current-password" />
-      </fieldset>
-
+        <FormSection card title={t.stepUpTitle} hint={t.stepUpHint}>
+          <FormGrid>
+            <TextField name="currentPassword" label={adminMessages.currentPassword} type="password" ltr autoComplete="current-password" />
+          </FormGrid>
+        </FormSection>
       </div>
 
-      <div className={styles.row}>
+      <FormActions>
         <SubmitButton>{adminMessages.save}</SubmitButton>
-      </div>
-    </form>
+      </FormActions>
+    </Form>
   );
 }

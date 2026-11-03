@@ -6,9 +6,9 @@ import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminContentPage } from '@/lib/admin/types';
 import { renderMarkdown } from '@/lib/markdown';
-import { Field, FormBanner, SubmitButton } from '../../_components/FormBits';
+import { Form, FormActions, FormBlock, FormGrid, RequiredNote, SubmitButton, TextAreaField, TextField } from '@/components/form';
+import { FormBanner } from '../../_components/FormBits';
 import { saveContentAction } from './actions';
-import styles from '../../admin.module.css';
 
 const t = adminMessages.content;
 
@@ -25,50 +25,36 @@ export function ContentEditor({ page }: { page: AdminContentPage }) {
   }
 
   return (
-    <form action={action} className={styles.grid2}>
+    <Form
+      action={action}
+      errors={state.errors}
+      banner={
+        <>
+          <FormBanner state={state} />
+          {page.isDraft && <Alert variant="warning">{t.draftWarning}</Alert>}
+        </>
+      }
+    >
       <input type="hidden" name="slug" value={page.slug} />
       <input type="hidden" name="rowVersion" value={page.rowVersion} />
-      <div className={styles.wide}>
-        <FormBanner state={state} />
-        {page.isDraft && <Alert variant="warning">{t.draftWarning}</Alert>}
-      </div>
+      <RequiredNote />
 
-      <div key={page.rowVersion} style={{ display: 'contents' }}>
-        <Field name="title" label={t.pageTitle} state={state} defaultValue={page.title} required wide />
-      </div>
+      <FormGrid>
+        <div key={page.rowVersion} style={{ display: 'contents' }}>
+          <TextField name="title" label={t.pageTitle} defaultValue={page.title} required full />
+        </div>
 
-      <div className={`${styles.field} ${styles.wide}`}>
-        <label htmlFor="content-body" className={styles.fieldLabel}>
-          {t.body}
-        </label>
-        <textarea
-          id="content-body"
-          className="ui-control"
-          name="body"
-          rows={22}
-          dir="auto"
-          value={body}
-          onChange={(event) => setBody(event.target.value)}
-          aria-invalid={state.errors.body ? true : undefined}
-          aria-describedby={state.errors.body ? 'content-body-error' : undefined}
-          style={{ fontFamily: 'ui-monospace, monospace' }}
-        />
-        {state.errors.body && (
-          <span id="content-body-error" className={styles.error}>
-            {state.errors.body}
-          </span>
-        )}
-      </div>
+        <TextAreaField name="body" label={t.body} value={body} onChange={(event) => setBody(event.target.value)} rows={22} code />
 
-      <section className={styles.field} aria-label={t.preview}>
-        <span className={styles.fieldLabel}>{t.preview}</span>
-        {/* Safe: raw HTML is disabled and only safe links survive (lib/markdown.ts), same as on the public page. */}
-        <div className={`ui-prose ${styles.panel}`} dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }} />
-      </section>
+        <FormBlock title={t.preview}>
+          {/* Safe: raw HTML is disabled and only safe links survive (lib/markdown.ts), same as on the public page. */}
+          <div className="ui-prose" dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }} />
+        </FormBlock>
+      </FormGrid>
 
-      <div className={styles.row}>
+      <FormActions>
         <SubmitButton>{adminMessages.save}</SubmitButton>
-      </div>
-    </form>
+      </FormActions>
+    </Form>
   );
 }

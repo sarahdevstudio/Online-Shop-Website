@@ -3,11 +3,12 @@
 import { useActionState, useRef } from 'react';
 import { Alert } from '@/components/Alert';
 import { Button } from '@/components/Button';
+import { CheckField, Form, FormActions, FormSection, SubmitButton } from '@/components/form';
 import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
 import { messages } from '@/lib/messages';
 import type { OrderStatus, PaymentMethod, PaymentStatus } from '@/lib/store-types';
-import { FormBanner, SubmitButton } from '../../../_components/FormBits';
+import { FormBanner } from '../../../_components/FormBits';
 import { advanceStatusAction, cancelOrderAction, confirmPaymentAction } from '../actions';
 import styles from '../../../admin.module.css';
 
@@ -39,64 +40,56 @@ export function OrderActions({ id, status, paymentStatus, paymentMethod }: Props
   if (!canConfirmPayment && !next && !canCancel) return null;
 
   return (
-    <section className={styles.panel} aria-labelledby="actions">
-      <h2 id="actions" className="ui-heading-4">
-        {adminMessages.orders.detail}
-      </h2>
-
+    <FormSection card title={adminMessages.orders.detail}>
       {canConfirmPayment && (
-        <form action={confirmAction} className={styles.grid2}>
+        <Form action={confirmAction} errors={confirmState.errors} banner={<FormBanner state={confirmState} />}>
           <input type="hidden" name="id" value={id} />
-          <FormBanner state={confirmState} />
-          <p className={styles.hint}>{adminMessages.orders.confirmPaymentHint}</p>
-          <div>
-            <SubmitButton>{adminMessages.orders.confirmPayment}</SubmitButton>
-          </div>
-        </form>
+          <FormSection hint={adminMessages.orders.confirmPaymentHint}>
+            <FormActions>
+              <SubmitButton>{adminMessages.orders.confirmPayment}</SubmitButton>
+            </FormActions>
+          </FormSection>
+        </Form>
       )}
 
       {next && (
-        <form action={advanceAction} className={styles.row}>
+        <Form action={advanceAction} errors={advanceState.errors} banner={<FormBanner state={advanceState} />}>
           <input type="hidden" name="id" value={id} />
           <input type="hidden" name="status" value={next} />
-          <FormBanner state={advanceState} />
-          <SubmitButton>{adminMessages.orders.advanceTo(messages.statuses[next])}</SubmitButton>
-        </form>
+          <FormActions>
+            <SubmitButton>{adminMessages.orders.advanceTo(messages.statuses[next])}</SubmitButton>
+          </FormActions>
+        </Form>
       )}
 
       {canCancel && (
         <>
-          <div>
+          <FormActions>
             <Button type="button" variant="danger" onClick={() => dialog.current?.showModal()}>
               {adminMessages.orders.cancelOrder}
             </Button>
-          </div>
-          <dialog ref={dialog} className={styles.dialog} aria-labelledby="cancel-title">
-            <form action={cancelAction} className={styles.grid2}>
+          </FormActions>
+          <dialog ref={dialog} className={styles.dialog} aria-label={adminMessages.orders.cancelOrder}>
+            <Form action={cancelAction} errors={cancelState.errors} banner={<FormBanner state={cancelState} />}>
               <input type="hidden" name="id" value={id} />
-              <h3 id="cancel-title" className="ui-heading-4">
-                {adminMessages.orders.cancelOrder}
-              </h3>
-              <p>{adminMessages.orders.cancelWarning}</p>
-              {paid && (
-                <>
-                  <Alert variant="warning">{adminMessages.orders.cancelPaidWarning}</Alert>
-                  <label className={styles.checkRow}>
-                    <input type="checkbox" name="acknowledge" required /> {adminMessages.orders.acknowledgeRefund}
-                  </label>
-                </>
-              )}
-              <FormBanner state={cancelState} />
-              <div className={styles.row}>
-                <SubmitButton variant="danger">{adminMessages.orders.confirmCancel}</SubmitButton>
-                <Button type="button" variant="secondary" onClick={() => dialog.current?.close()}>
-                  {adminMessages.cancel}
-                </Button>
-              </div>
-            </form>
+              <FormSection title={adminMessages.orders.cancelOrder} hint={adminMessages.orders.cancelWarning}>
+                {paid && (
+                  <>
+                    <Alert variant="warning">{adminMessages.orders.cancelPaidWarning}</Alert>
+                    <CheckField name="acknowledge" label={adminMessages.orders.acknowledgeRefund} />
+                  </>
+                )}
+                <FormActions>
+                  <SubmitButton variant="danger">{adminMessages.orders.confirmCancel}</SubmitButton>
+                  <Button type="button" variant="secondary" onClick={() => dialog.current?.close()}>
+                    {adminMessages.cancel}
+                  </Button>
+                </FormActions>
+              </FormSection>
+            </Form>
           </dialog>
         </>
       )}
-    </section>
+    </FormSection>
   );
 }

@@ -19,7 +19,7 @@ export default async function BlogListPage() {
       {posts.length === 0 ? (
         <p className={styles.muted}>{t.noPosts}</p>
       ) : (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} tabIndex={0} role="region" aria-label={adminMessages.scrollableTable}>
           <table className={styles.table}>
             <thead>
               <tr>

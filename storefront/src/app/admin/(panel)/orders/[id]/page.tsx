@@ -88,7 +88,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
         <h2 id="lines" className="ui-heading-4">
           {adminMessages.orders.lines}
         </h2>
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} tabIndex={0} role="region" aria-label={adminMessages.scrollableTable}>
           <table className={styles.table}>
             <tbody>
               {order.lines.map((l) => (

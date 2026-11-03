@@ -1,44 +1,48 @@
 'use client';
 
 import { useActionState } from 'react';
+import { CheckField, Form, FormActions, FormBlock, FormGrid, FormSection, RequiredNote, SubmitButton, TextField } from '@/components/form';
 import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminBrand } from '@/lib/admin/types';
-import { CheckField, Field, FormBanner, SubmitButton } from '../../_components/FormBits';
+import { FormBanner } from '../../_components/FormBits';
 import { deleteBrandAction, saveBrandAction } from './actions';
-import styles from '../../admin.module.css';
 
-export function BrandForm({ brand }: { brand?: AdminBrand }) {
+/** Create (no `brand`, with a `title`) or edit a brand. */
+export function BrandForm({ brand, title }: { brand?: AdminBrand; title?: string }) {
   const [state, action] = useActionState(saveBrandAction, INITIAL_FORM_STATE);
   return (
-    <form action={action} className={styles.grid2}>
+    <Form action={action} errors={state.errors} banner={<FormBanner state={state} />}>
       {brand && <input type="hidden" name="id" value={brand.id} />}
-      <div className={styles.wide}>
-        <FormBanner state={state} />
-      </div>
-      <Field name="name" label={adminMessages.products.name} state={state} defaultValue={brand?.name} required />
-      {brand ? (
-        <p className={`${styles.ltr} ${styles.muted}`}>{brand.slug}</p>
-      ) : (
-        <Field name="slug" label={adminMessages.products.slug} hint={adminMessages.products.slugHint} state={state} ltr required />
-      )}
-      <CheckField name="isActive" label={adminMessages.active} defaultChecked={brand?.isActive ?? true} />
-      <div className={styles.row}>
-        <SubmitButton>{brand ? adminMessages.save : adminMessages.create}</SubmitButton>
-      </div>
-    </form>
+      <FormSection card={Boolean(title)} title={title}>
+        <RequiredNote />
+        <FormGrid>
+          <TextField name="name" label={adminMessages.products.name} defaultValue={brand?.name} required />
+          {brand ? (
+            <FormBlock title={adminMessages.products.slug} full={false}>
+              <bdi dir="ltr">{brand.slug}</bdi>
+            </FormBlock>
+          ) : (
+            <TextField name="slug" label={adminMessages.products.slug} hint={adminMessages.products.slugHint} ltr required />
+          )}
+          <CheckField name="isActive" label={adminMessages.active} defaultChecked={brand?.isActive ?? true} full />
+        </FormGrid>
+        <FormActions>
+          <SubmitButton>{brand ? adminMessages.save : adminMessages.create}</SubmitButton>
+        </FormActions>
+      </FormSection>
+    </Form>
   );
 }
 
 export function DeleteBrandForm({ id }: { id: number }) {
   const [state, action] = useActionState(deleteBrandAction, INITIAL_FORM_STATE);
   return (
-    <form action={action}>
+    <Form action={action} errors={state.errors} banner={<FormBanner state={state} />}>
       <input type="hidden" name="id" value={id} />
-      <FormBanner state={state} />
-      <SubmitButton variant="danger" size="sm">
-        {adminMessages.delete}
-      </SubmitButton>
-    </form>
+      <FormActions>
+        <SubmitButton variant="danger">{adminMessages.delete}</SubmitButton>
+      </FormActions>
+    </Form>
   );
 }

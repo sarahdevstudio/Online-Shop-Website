@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Form, SelectField, SubmitButton, TextField } from '@/components/form';
 import { adminGet } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminOrderListItem, PagedList } from '@/lib/admin/types';
@@ -60,42 +61,31 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     <>
       <h1 className="ui-heading-2">{adminMessages.orders.title}</h1>
 
-      <form method="get" className={styles.filters}>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>{adminMessages.orders.status}</span>
-          <select className="ui-control" name="status" defaultValue={status}>
-            <option value="">{adminMessages.orders.allStatuses}</option>
-            <option value="new">{adminMessages.orders.newGroup}</option>
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {messages.statuses[s]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>{adminMessages.orders.payment}</span>
-          <select className="ui-control" name="paymentStatus" defaultValue={paymentStatus}>
-            <option value="">{adminMessages.orders.allPayments}</option>
-            <option value="unpaid">{messages.paymentStatuses.unpaid}</option>
-            <option value="paid">{messages.paymentStatuses.paid}</option>
-          </select>
-        </label>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>{adminMessages.orders.search}</span>
-          <input className="ui-control" type="search" name="q" defaultValue={q} />
-        </label>
+      <Form method="get" inline>
+        <SelectField name="status" label={adminMessages.orders.status} defaultValue={status}>
+          <option value="">{adminMessages.orders.allStatuses}</option>
+          <option value="new">{adminMessages.orders.newGroup}</option>
+          {STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {messages.statuses[s]}
+            </option>
+          ))}
+        </SelectField>
+        <SelectField name="paymentStatus" label={adminMessages.orders.payment} defaultValue={paymentStatus}>
+          <option value="">{adminMessages.orders.allPayments}</option>
+          <option value="unpaid">{messages.paymentStatuses.unpaid}</option>
+          <option value="paid">{messages.paymentStatuses.paid}</option>
+        </SelectField>
+        <TextField name="q" label={adminMessages.orders.search} type="search" defaultValue={q} autoComplete="off" />
         {onlyWithReference && <input type="hidden" name="ref" value="1" />}
-        <button className="ui-control" type="submit">
-          {adminMessages.orders.filter}
-        </button>
-      </form>
+        <SubmitButton variant="secondary">{adminMessages.orders.filter}</SubmitButton>
+      </Form>
       {onlyWithReference && <p className={styles.hint}>{adminMessages.orders.hasReference}</p>}
 
       {items.length === 0 ? (
         <p>{adminMessages.orders.empty}</p>
       ) : (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} tabIndex={0} role="region" aria-label={adminMessages.scrollableTable}>
           <table className={styles.table}>
             <thead>
               <tr>

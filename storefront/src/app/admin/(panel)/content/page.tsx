@@ -13,7 +13,7 @@ export default async function ContentListPage() {
     <>
       <h1 className="ui-heading-2">{t.title}</h1>
       <p className={styles.hint}>{t.hint}</p>
-      <div className={styles.tableWrap}>
+      <div className={styles.tableWrap} tabIndex={0} role="region" aria-label={adminMessages.scrollableTable}>
         <table className={styles.table}>
           <thead>
             <tr>

@@ -32,7 +32,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         {audit.items.length === 0 ? (
           <p>{t.noAudit}</p>
         ) : (
-          <div className={styles.tableWrap}>
+          <div className={styles.tableWrap} tabIndex={0} role="region" aria-label={adminMessages.scrollableTable}>
             <table className={styles.table}>
               <thead>
                 <tr>

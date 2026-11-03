@@ -38,7 +38,7 @@ export async function cancelOrderAction(_previous: FormState, formData: FormData
   const current = await adminFetch<AdminOrder>('GET', `/admin/orders/${id}`);
   if (!current.ok) return problemState(current.problem);
   if (current.body.order.paymentStatus === 'paid' && formData.get('acknowledge') !== 'on') {
-    return failState(adminMessages.orders.mustAcknowledge);
+    return failState(adminMessages.orders.mustAcknowledge, submittedFrom(formData), { acknowledge: adminMessages.orders.mustAcknowledge });
   }
   return post(id, 'cancel', undefined, submittedFrom(formData));
 }

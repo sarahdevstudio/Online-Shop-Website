@@ -1,55 +1,59 @@
 'use client';
 
 import { useActionState } from 'react';
+import { CheckField, Form, FormActions, FormBlock, FormGrid, FormSection, RequiredNote, SelectField, SubmitButton, TextAreaField, TextField } from '@/components/form';
 import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminCategory } from '@/lib/admin/types';
-import { CheckField, Field, FormBanner, SelectField, SubmitButton } from '../../_components/FormBits';
+import { FormBanner } from '../../_components/FormBits';
 import { deleteCategoryAction, saveCategoryAction } from './actions';
-import styles from '../../admin.module.css';
 
-export function CategoryForm({ category, roots }: { category?: AdminCategory; roots: AdminCategory[] }) {
+/** Create (no `category`, with a `title`) or edit a category. */
+export function CategoryForm({ category, roots, title }: { category?: AdminCategory; roots: AdminCategory[]; title?: string }) {
   const [state, action] = useActionState(saveCategoryAction, INITIAL_FORM_STATE);
   const parents = roots.filter((r) => r.id !== category?.id);
   return (
-    <form action={action} className={styles.grid2}>
+    <Form action={action} errors={state.errors} banner={<FormBanner state={state} />}>
       {category && <input type="hidden" name="id" value={category.id} />}
-      <div className={styles.wide}>
-        <FormBanner state={state} />
-      </div>
-      <Field name="name" label={adminMessages.products.name} state={state} defaultValue={category?.name} required />
-      {category ? (
-        <p className={`${styles.ltr} ${styles.muted}`}>{category.slug}</p>
-      ) : (
-        <Field name="slug" label={adminMessages.products.slug} hint={adminMessages.products.slugHint} state={state} ltr required />
-      )}
-      <SelectField name="parentId" label={adminMessages.taxonomy.parent} state={state} defaultValue={category?.parentId ?? ''}>
-        <option value="">{adminMessages.taxonomy.root}</option>
-        {parents.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </SelectField>
-      <Field name="sortOrder" label={adminMessages.products.sortOrder} state={state} type="number" defaultValue={category?.sortOrder ?? 0} />
-      <Field name="description" label={adminMessages.products.description} state={state} defaultValue={category?.description} multiline wide />
-      <CheckField name="isActive" label={adminMessages.active} defaultChecked={category?.isActive ?? true} />
-      <div className={styles.row}>
-        <SubmitButton>{category ? adminMessages.save : adminMessages.create}</SubmitButton>
-      </div>
-    </form>
+      <FormSection card={Boolean(title)} title={title}>
+        <RequiredNote />
+        <FormGrid>
+          <TextField name="name" label={adminMessages.products.name} defaultValue={category?.name} required />
+          {category ? (
+            <FormBlock title={adminMessages.products.slug} full={false}>
+              <bdi dir="ltr">{category.slug}</bdi>
+            </FormBlock>
+          ) : (
+            <TextField name="slug" label={adminMessages.products.slug} hint={adminMessages.products.slugHint} ltr required />
+          )}
+          <SelectField name="parentId" label={adminMessages.taxonomy.parent} defaultValue={category?.parentId ?? ''}>
+            <option value="">{adminMessages.taxonomy.root}</option>
+            {parents.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </SelectField>
+          <TextField name="sortOrder" label={adminMessages.products.sortOrder} defaultValue={category?.sortOrder ?? 0} inputMode="numeric" ltr autoComplete="off" />
+          <TextAreaField name="description" label={adminMessages.products.description} defaultValue={category?.description} rows={3} />
+          <CheckField name="isActive" label={adminMessages.active} defaultChecked={category?.isActive ?? true} full />
+        </FormGrid>
+        <FormActions>
+          <SubmitButton>{category ? adminMessages.save : adminMessages.create}</SubmitButton>
+        </FormActions>
+      </FormSection>
+    </Form>
   );
 }
 
 export function DeleteCategoryForm({ id }: { id: number }) {
   const [state, action] = useActionState(deleteCategoryAction, INITIAL_FORM_STATE);
   return (
-    <form action={action}>
+    <Form action={action} errors={state.errors} banner={<FormBanner state={state} />}>
       <input type="hidden" name="id" value={id} />
-      <FormBanner state={state} />
-      <SubmitButton variant="danger" size="sm">
-        {adminMessages.delete}
-      </SubmitButton>
-    </form>
+      <FormActions>
+        <SubmitButton variant="danger">{adminMessages.delete}</SubmitButton>
+      </FormActions>
+    </Form>
   );
 }

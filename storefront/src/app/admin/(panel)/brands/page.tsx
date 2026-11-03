@@ -9,12 +9,7 @@ export default async function BrandsPage() {
   return (
     <>
       <h1 className="ui-heading-2">{adminMessages.taxonomy.brands}</h1>
-      <section className={styles.panel} aria-labelledby="new">
-        <h2 id="new" className="ui-heading-4">
-          {adminMessages.taxonomy.newBrand}
-        </h2>
-        <BrandForm />
-      </section>
+      <BrandForm title={adminMessages.taxonomy.newBrand} />
 
       <p className={styles.hint}>{adminMessages.taxonomy.deleteHint}</p>
       {brands.map((brand) => (

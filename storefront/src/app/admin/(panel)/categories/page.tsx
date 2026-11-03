@@ -10,12 +10,7 @@ export default async function CategoriesPage() {
   return (
     <>
       <h1 className="ui-heading-2">{adminMessages.taxonomy.categories}</h1>
-      <section className={styles.panel} aria-labelledby="new">
-        <h2 id="new" className="ui-heading-4">
-          {adminMessages.taxonomy.newCategory}
-        </h2>
-        <CategoryForm roots={roots} />
-      </section>
+      <CategoryForm roots={roots} title={adminMessages.taxonomy.newCategory} />
 
       <p className={styles.hint}>{adminMessages.taxonomy.deleteHint}</p>
       {categories.map((category) => (
