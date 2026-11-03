@@ -1,15 +1,16 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { ThemeHead } from '@/components/ThemeHead';
-import { getSiteConfig } from '@/lib/site-config';
+import { getPreviewConfig, getSiteConfig } from '@/lib/site-config';
 import { site } from '@/lib/seo';
 import { themeColor } from '@/lib/theme-css';
 import './globals.css';
 
 /** Site-wide defaults come from the published site configuration (built-in values when it is unavailable). */
 export async function generateMetadata(): Promise<Metadata> {
-  const { seo, theme } = await getSiteConfig();
+  const [{ seo, theme }, preview] = await Promise.all([getSiteConfig(), getPreviewConfig()]);
   return {
+    robots: preview ? { index: false, follow: false } : undefined,
     metadataBase: new URL(site.url),
     title: { default: seo.homeTitle, template: seo.titleTemplate },
     description: seo.defaultDescription,

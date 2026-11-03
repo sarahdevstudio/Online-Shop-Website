@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { connection } from 'next/server';
 import { apiBaseUrl } from './api';
+import { fetchDraftDocument, readPreviewAuth } from './site-preview';
 import { DEFAULT_THEME, sanitizeTheme, type ThemeValues } from './theme-css';
 import { site } from './seo';
 
@@ -360,10 +361,23 @@ export const SITE_CACHE_TAG = 'site';
 const REVALIDATE_SECONDS = 60;
 const TIMEOUT_MS = 5_000;
 
-/** The published configuration; any failure means the built-in defaults. One API call per render. */
+/**
+ * The draft configuration for an admin who started a preview, or null (no valid preview cookie, or the API refused it: the
+ * preview then silently turns itself off). Never cached.
+ */
+export const getPreviewConfig = cache(async (): Promise<SiteConfig | null> => {
+  const auth = await readPreviewAuth();
+  if (!auth) return null;
+  const document = await fetchDraftDocument(auth);
+  return document ? parseSiteConfig(document) : null;
+});
+
+/** The published configuration (or the draft while previewing); any failure means the built-in defaults. One API call per render. */
 export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
   try {
     await connection();
+    const preview = await getPreviewConfig();
+    if (preview) return preview;
     const response = await fetch(`${apiBaseUrl()}/api/v1/catalog/site`, {
       headers: { accept: 'application/json' },
       next: { revalidate: REVALIDATE_SECONDS, tags: [SITE_CACHE_TAG] },
@@ -376,4 +390,3 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
     return DEFAULT_SITE_CONFIG;
   }
 });
-

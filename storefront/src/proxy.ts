@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { ADMIN_COOKIE, readSessionConfig, sealSession, sessionCookieOptions, sessionState, touchSession, unsealSession } from './lib/admin/session';
 import { securityHeaders } from './lib/security-headers';
+import { PREVIEW_COOKIE } from './lib/site-preview';
 
 /**
  * Runs before every request (except static files and the streaming upload route):
@@ -30,6 +31,11 @@ export function proxy(request: NextRequest) {
   const response = pathname === '/admin' || pathname.startsWith('/admin/') ? adminGate(request) : NextResponse.next();
 
   for (const [name, value] of Object.entries(securityHeaders(pathname))) response.headers.set(name, value);
+  // A draft preview is for one admin only: never cached, never indexed.
+  if (request.cookies.has(PREVIEW_COOKIE)) {
+    response.headers.set('Cache-Control', 'private, no-store');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  }
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow'); // the admin is never indexed, in any environment
     response.headers.set('Cache-Control', 'no-store');

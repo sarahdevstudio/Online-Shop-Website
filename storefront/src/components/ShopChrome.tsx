@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
 import { JsonLd } from '@/components/JsonLd';
+import { PreviewBanner } from '@/components/PreviewBanner';
 import { SiteFooter, type FooterGroup } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { TrustBadges } from '@/components/TrustBadges';
@@ -9,13 +10,13 @@ import { getInfoLinks } from '@/lib/content';
 import { messages } from '@/lib/messages';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/seo';
 import { buildMenu } from '@/lib/site-menu';
-import { SOCIAL_PLATFORMS, getSiteConfig } from '@/lib/site-config';
+import { SOCIAL_PLATFORMS, getPreviewConfig, getSiteConfig } from '@/lib/site-config';
 import { getCartCount } from '@/lib/store';
 import { getStoreInfo } from '@/lib/store-info';
 
 /** The public shop's header, footer and structured data around a page. The admin panel has its own shell. */
 export async function ShopChrome({ children }: { children: ReactNode }) {
-  const [categories, config] = await Promise.all([getCategoryTree(), getSiteConfig()]);
+  const [categories, config, preview] = await Promise.all([getCategoryTree(), getSiteConfig(), getPreviewConfig()]);
   const [cartCount, info, infoLinks] = await Promise.all([getCartCount(), getStoreInfo(), getInfoLinks()]);
   const { seo, chrome, theme } = config;
 
@@ -37,6 +38,7 @@ export async function ShopChrome({ children }: { children: ReactNode }) {
     <>
       <JsonLd data={{ ...organizationJsonLd(), name: seo.siteName, ...(sameAs.length > 0 ? { sameAs } : {}) }} />
       <JsonLd data={{ ...websiteJsonLd(), name: seo.siteName }} />
+      {preview && <PreviewBanner />}
       {announcement.enabled && <AnnouncementBar text={announcement.text} href={announcement.link} style={announcement.style} dismissible={announcement.dismissible} />}
       <SiteHeader brandName={seo.siteName} logo={theme.logo} menu={buildMenu(chrome.headerMenu, categories)} cartCount={cartCount} />
       <main id="main" tabIndex={-1}>

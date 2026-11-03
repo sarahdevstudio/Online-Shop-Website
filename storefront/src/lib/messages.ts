@@ -17,6 +17,8 @@ export const messages = {
   menu: 'منو',
   announcement: 'اعلان فروشگاه',
   trustBadges: 'نمادهای اعتماد',
+  previewBanner: 'پیش‌نمایش پیش‌نویس — منتشر نشده',
+  previewBack: 'خروج از پیش‌نمایش و بازگشت به مدیریت',
   enamadAlt: 'نماد اعتماد الکترونیکی (اینماد)',
   samandehiAlt: 'نماد ساماندهی',
   closeAnnouncement: 'بستن اعلان',
