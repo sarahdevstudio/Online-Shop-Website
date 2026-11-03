@@ -3,6 +3,7 @@ import { AnnouncementBar } from '@/components/AnnouncementBar';
 import { JsonLd } from '@/components/JsonLd';
 import { SiteFooter, type FooterGroup } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
+import { TrustBadges } from '@/components/TrustBadges';
 import { getCategoryTree } from '@/lib/catalog';
 import { getInfoLinks } from '@/lib/content';
 import { messages } from '@/lib/messages';
@@ -51,6 +52,7 @@ export async function ShopChrome({ children }: { children: ReactNode }) {
         instagram={instagram}
         social={social}
         copyright={`© ${seo.siteName}`}
+        badges={config.badges.enamad || config.badges.samandehi ? <TrustBadges badges={config.badges} /> : undefined}
       />
     </>
   );

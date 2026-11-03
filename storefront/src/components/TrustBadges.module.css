@@ -1,0 +1,21 @@
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.badges a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--control-height);
+}
+.badges img {
+  display: block;
+  block-size: 5rem;
+  inline-size: auto;
+  max-inline-size: 8rem;
+  object-fit: contain;
+}
