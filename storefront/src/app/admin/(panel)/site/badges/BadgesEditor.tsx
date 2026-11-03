@@ -8,10 +8,10 @@ import { badgesAction } from './actions';
 
 const t = siteMessages.badges;
 
-export function BadgesEditor({ doc }: { doc: AdminSiteDocument<BadgesPayload> }) {
+function BadgesFields({ doc }: { doc: AdminSiteDocument<BadgesPayload> }) {
   const payload = (doc.draft?.payload ?? doc.published?.payload) as BadgesPayload;
   return (
-    <SiteEditor kind="badges" action={badgesAction} published={doc.published} draft={doc.draft}>
+    <>
       <FormSection card title={t.title} hint={t.explanation}>
         <p className="ui-hint">{t.footerNote}</p>
       </FormSection>
@@ -28,6 +28,14 @@ export function BadgesEditor({ doc }: { doc: AdminSiteDocument<BadgesPayload> })
           <TextField name="samandehi.logoCode" label={t.samandehiLogo} hint={t.samandehiLogoHint} defaultValue={payload.samandehi?.logoCode ?? ''} ltr autoComplete="off" maxLength={64} />
         </FormGrid>
       </FormSection>
+    </>
+  );
+}
+
+export function BadgesEditor({ doc }: { doc: AdminSiteDocument<BadgesPayload> }) {
+  return (
+    <SiteEditor kind="badges" action={badgesAction} published={doc.published} draft={doc.draft}>
+      <BadgesFields doc={doc} />
     </SiteEditor>
   );
 }

@@ -41,7 +41,7 @@ function imageOf(media: Record<string, SiteMediaInfo>, id: number | null): Uploa
   return id !== null && info ? { id, url: info.url, width: info.width, height: info.height } : null;
 }
 
-export function HomeEditor({ doc, categories }: { doc: AdminSiteDocument<HomePayload>; categories: Category[] }) {
+function HomeFields({ doc, categories }: { doc: AdminSiteDocument<HomePayload>; categories: Category[] }) {
   const [blocks, setBlocks] = useState<BlockState[]>(() => fromPayload(doc.draft?.payload ?? doc.published?.payload));
   const [newType, setNewType] = useState<BlockType>('hero');
   const { state } = useSiteEditor();
@@ -50,7 +50,7 @@ export function HomeEditor({ doc, categories }: { doc: AdminSiteDocument<HomePay
   const patch = (index: number, change: (block: BlockState) => BlockState) => setBlocks((current) => replaceAt(current, index, change(current[index])));
 
   return (
-    <SiteEditor kind="home" action={homeAction} published={doc.published} draft={doc.draft}>
+    <>
       <input type="hidden" name="payload" value={JSON.stringify(toPayload(blocks))} />
       <FormSection card title={t.blocks} hint={t.intro}>
         {blocks.length === 0 && <p className="ui-hint">{t.empty}</p>}
@@ -97,7 +97,7 @@ export function HomeEditor({ doc, categories }: { doc: AdminSiteDocument<HomePay
           </div>
         </FormGrid>
       </FormSection>
-    </SiteEditor>
+    </>
   );
 }
 
@@ -249,4 +249,12 @@ function BlockFields({ block, index, categories, media, onChange }: { block: Blo
       );
     }
   }
+}
+
+export function HomeEditor({ doc, categories }: { doc: AdminSiteDocument<HomePayload>; categories: Category[] }) {
+  return (
+    <SiteEditor kind="home" action={homeAction} published={doc.published} draft={doc.draft}>
+      <HomeFields doc={doc} categories={categories} />
+    </SiteEditor>
+  );
 }

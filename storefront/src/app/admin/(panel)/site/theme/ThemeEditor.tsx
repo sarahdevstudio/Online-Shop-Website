@@ -25,7 +25,7 @@ function hasFailures(items: readonly ContrastItem[]) {
   return items.some((item) => !item.ok);
 }
 
-export function ThemeEditor({ doc }: { doc: AdminSiteDocument<ThemePayload> }) {
+function ThemeFields({ doc }: { doc: AdminSiteDocument<ThemePayload> }) {
   const payload = (doc.draft?.payload ?? doc.published?.payload) as ThemePayload;
   const [colors, setColors] = useState<Record<ColorName, string>>(() => Object.fromEntries(COLORS.map((name) => [name, payload[name]])) as Record<ColorName, string>);
   const valid = COLORS.every((name) => isHexColor(colors[name]));
@@ -33,7 +33,7 @@ export function ThemeEditor({ doc }: { doc: AdminSiteDocument<ThemePayload> }) {
   const saved = doc.report?.contrast ?? [];
 
   return (
-    <SiteEditor kind="theme" action={themeAction} published={doc.published} draft={doc.draft}>
+    <>
       <FormSection card title={t.colors} hint={t.colorsHint}>
         <FormGrid columns={3}>
           {COLORS.map((name) => (
@@ -122,6 +122,14 @@ export function ThemeEditor({ doc }: { doc: AdminSiteDocument<ThemePayload> }) {
         <TextField name="logo.alt" label={t.logoAlt} defaultValue={payload.logo?.alt ?? ''} maxLength={100} />
         <ImageUploadField name="favicon.mediaId" label={t.favicon} hint={t.faviconHint} purpose="favicon" initial={imageOf(doc.media, payload.favicon?.mediaId)} removable onPrimary />
       </FormSection>
+    </>
+  );
+}
+
+export function ThemeEditor({ doc }: { doc: AdminSiteDocument<ThemePayload> }) {
+  return (
+    <SiteEditor kind="theme" action={themeAction} published={doc.published} draft={doc.draft}>
+      <ThemeFields doc={doc} />
     </SiteEditor>
   );
 }

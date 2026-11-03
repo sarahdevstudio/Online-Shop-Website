@@ -15,7 +15,7 @@ function counter(value: string, max: number) {
   return t.counter(formatNumber(value.length), formatNumber(max));
 }
 
-export function SeoEditor({ doc }: { doc: AdminSiteDocument<SeoPayload> }) {
+function SeoFields({ doc }: { doc: AdminSiteDocument<SeoPayload> }) {
   const payload = (doc.draft?.payload ?? doc.published?.payload) as SeoPayload;
   const [siteName, setSiteName] = useState(payload.siteName);
   const [template, setTemplate] = useState(payload.titleTemplate);
@@ -25,7 +25,7 @@ export function SeoEditor({ doc }: { doc: AdminSiteDocument<SeoPayload> }) {
   const example = template.includes('%s') ? template.replace('%s', 'کابل برق') : '';
 
   return (
-    <SiteEditor kind="seo" action={seoAction} published={doc.published} draft={doc.draft}>
+    <>
       <FormSection card title={t.title} hint={t.note}>
         <FormGrid>
           <TextField name="siteName" label={t.siteName} hint={`${t.siteNameHint} ${counter(siteName, 60)}`} value={siteName} onChange={(e) => setSiteName(e.target.value)} maxLength={60} required />
@@ -58,6 +58,14 @@ export function SeoEditor({ doc }: { doc: AdminSiteDocument<SeoPayload> }) {
           removable
         />
       </FormSection>
+    </>
+  );
+}
+
+export function SeoEditor({ doc }: { doc: AdminSiteDocument<SeoPayload> }) {
+  return (
+    <SiteEditor kind="seo" action={seoAction} published={doc.published} draft={doc.draft}>
+      <SeoFields doc={doc} />
     </SiteEditor>
   );
 }

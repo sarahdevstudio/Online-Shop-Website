@@ -6,11 +6,10 @@ import { ChromeEditor } from './ChromeEditor';
 export default async function HeaderFooterPage() {
   const [doc, audit] = await Promise.all([getSiteDocument('chrome'), getSiteAudit('chrome', 1)]);
   if (!doc || !(doc.draft ?? doc.published)) notFound();
-  const revision = doc.draft?.rowVersion ?? `published-${doc.published?.version}`;
 
   return (
     <EditorPage kind="chrome" doc={doc} audit={audit?.items ?? []}>
-      <ChromeEditor key={revision} doc={doc} />
+      <ChromeEditor doc={doc} />
     </EditorPage>
   );
 }

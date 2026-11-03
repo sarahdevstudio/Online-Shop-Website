@@ -43,7 +43,7 @@ function Tools({ index, count, onMove, onRemove }: { index: number; count: numbe
   );
 }
 
-export function ChromeEditor({ doc }: { doc: AdminSiteDocument<ChromePayload> }) {
+function ChromeFields({ doc }: { doc: AdminSiteDocument<ChromePayload> }) {
   const initial = normalizeChrome(doc.draft?.payload ?? doc.published?.payload);
   const [ann, setAnn] = useState(initial.announcement);
   const [menu, setMenu] = useState(initial.headerMenu);
@@ -59,7 +59,7 @@ export function ChromeEditor({ doc }: { doc: AdminSiteDocument<ChromePayload> })
   };
 
   return (
-    <SiteEditor kind="chrome" action={chromeAction} published={doc.published} draft={doc.draft}>
+    <>
       <input type="hidden" name="payload" value={JSON.stringify(payload)} />
 
       <FormSection card title={t.announcement}>
@@ -165,6 +165,14 @@ export function ChromeEditor({ doc }: { doc: AdminSiteDocument<ChromePayload> })
           <p className="ui-hint">{t.instagramNote}</p>
         </FormBlock>
       </FormSection>
+    </>
+  );
+}
+
+export function ChromeEditor({ doc }: { doc: AdminSiteDocument<ChromePayload> }) {
+  return (
+    <SiteEditor kind="chrome" action={chromeAction} published={doc.published} draft={doc.draft}>
+      <ChromeFields doc={doc} />
     </SiteEditor>
   );
 }
