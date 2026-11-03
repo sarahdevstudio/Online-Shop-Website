@@ -3,7 +3,7 @@ import { connection } from 'next/server';
 import { apiBaseUrl } from './api';
 import { fetchDraftDocument, readPreviewAuth } from './site-preview';
 import { DEFAULT_THEME, sanitizeTheme, type ThemeValues } from './theme-css';
-import { site } from './seo';
+import { absoluteUrl, site } from './seo';
 
 /**
  * The compiled site configuration (`GET /api/v1/catalog/site`, see docs/10-site-customization.md §11). Everything read from the
@@ -390,3 +390,9 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
     return DEFAULT_SITE_CONFIG;
   }
 });
+
+/** Site name and fallback share image (absolute URL) from the SEO defaults, for pages that build their own metadata. */
+export async function seoDefaults(): Promise<{ siteName: string; image: string | null }> {
+  const { seo } = await getSiteConfig();
+  return { siteName: seo.siteName, image: seo.defaultOgImage ? absoluteUrl(seo.defaultOgImage.url) : null };
+}

@@ -7,6 +7,7 @@ import { formatJalaliDate } from '@/lib/format';
 import { renderMarkdown } from '@/lib/markdown';
 import { messages } from '@/lib/messages';
 import { absoluteUrl, breadcrumbJsonLd, pageMetadata, site } from '@/lib/seo';
+import { seoDefaults } from '@/lib/site-config';
 import styles from '../blog.module.css';
 
 type Props = { params: Promise<{ slug: string }> };
@@ -16,7 +17,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!isBlogSlug(slug)) return {};
   const post = await getBlogPost(slug);
   if (!post) return {};
-  return pageMetadata({ title: post.title, description: post.excerpt, path: `/blog/${post.slug}`, type: 'article' });
+  const defaults = await seoDefaults();
+  return pageMetadata({ title: post.title, description: post.excerpt, path: `/blog/${post.slug}`, type: 'article', siteName: defaults.siteName, image: defaults.image });
 }
 
 export default async function BlogPostPage({ params }: Props) {

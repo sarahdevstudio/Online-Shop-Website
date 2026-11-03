@@ -24,12 +24,14 @@ interface PageMetaInput {
    * for filtered/sorted listings whose links should still be crawled.
    */
   noindex?: boolean | 'follow';
+  /** The configured site name (SEO defaults); falls back to the built-in one. */
+  siteName?: string;
   /** Emit a canonical link (default). Off for noindex listings: noindex must not be mixed with a cross-page canonical. */
   canonical?: boolean;
 }
 
 /** Builds title, description, canonical, Open Graph and Twitter tags in one place. */
-export function pageMetadata({ title, description, path, image, type = 'website', noindex, canonical = true }: PageMetaInput): Metadata {
+export function pageMetadata({ title, description, path, image, type = 'website', noindex, canonical = true, siteName }: PageMetaInput): Metadata {
   const url = absoluteUrl(path);
   return {
     title,
@@ -40,7 +42,7 @@ export function pageMetadata({ title, description, path, image, type = 'website'
       title,
       description,
       url,
-      siteName: site.name,
+      siteName: siteName ?? site.name,
       locale: site.locale,
       type,
       images: image ? [{ url: image }] : undefined,

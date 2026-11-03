@@ -15,6 +15,7 @@ import { getProduct, type ProductDetailDto, type VariantDto } from '@/lib/catalo
 import { messages } from '@/lib/messages';
 import type { SearchParams } from '@/lib/paging';
 import { absoluteUrl, pageMetadata, productJsonLd, type Availability } from '@/lib/seo';
+import { seoDefaults } from '@/lib/site-config';
 import { pickVariant, selectionFromParams, variantQuery } from '@/lib/variants';
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<SearchParams> };
@@ -25,11 +26,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProduct((await params).slug);
   if (!product) return {};
   // Variant URLs (?wattage=…) canonicalize to the clean product URL. Archived products stay indexable.
+  const defaults = await seoDefaults();
   return pageMetadata({
+    siteName: defaults.siteName,
     title: product.name,
     description: product.description ?? product.name,
     path: `/product/${product.slug}`,
-    image: product.images[0] ? absoluteUrl(product.images[0].url) : null,
+    image: product.images[0] ? absoluteUrl(product.images[0].url) : defaults.image,
   });
 }
 

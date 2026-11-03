@@ -5,6 +5,7 @@ import { getContentPage, isInfoSlug } from '@/lib/content';
 import { messages } from '@/lib/messages';
 import { plainDescription, renderMarkdown } from '@/lib/markdown';
 import { contactJsonLd, pageMetadata } from '@/lib/seo';
+import { seoDefaults } from '@/lib/site-config';
 import { getStoreInfo } from '@/lib/store-info';
 import styles from './info-page.module.css';
 
@@ -17,7 +18,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await getContentPage(slug);
   if (!page) return {};
   // Indexable and self-canonical.
-  return pageMetadata({ title: page.title, description: plainDescription(page.body) || page.title, path: `/${slug}` });
+  const defaults = await seoDefaults();
+  return pageMetadata({ title: page.title, description: plainDescription(page.body) || page.title, path: `/${slug}`, siteName: defaults.siteName, image: defaults.image });
 }
 
 export default async function InfoPage({ params }: Props) {

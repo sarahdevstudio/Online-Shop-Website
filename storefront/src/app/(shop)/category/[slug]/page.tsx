@@ -23,6 +23,7 @@ import {
 import { messages } from '@/lib/messages';
 import { isPageInRange, type SearchParams } from '@/lib/paging';
 import { pageMetadata } from '@/lib/seo';
+import { seoDefaults } from '@/lib/site-config';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -65,7 +66,10 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const data = await load(props);
   if (!data) return {};
   const { basePath, category, state, result } = data;
+  const defaults = await seoDefaults();
   return pageMetadata({
+    siteName: defaults.siteName,
+    image: defaults.image,
     title: result.page > 1 ? `${category.name} - صفحه ${formatNumber(result.page)}` : category.name,
     description: category.description || category.name,
     path: listingHref(basePath, state),

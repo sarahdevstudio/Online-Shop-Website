@@ -7,6 +7,7 @@ import { formatJalaliDate } from '@/lib/format';
 import { messages } from '@/lib/messages';
 import { isPageInRange, pageOneRedirect, parsePageParam, type SearchParams } from '@/lib/paging';
 import { pageMetadata } from '@/lib/seo';
+import { seoDefaults } from '@/lib/site-config';
 import styles from './blog.module.css';
 
 type Props = { searchParams: Promise<SearchParams> };
@@ -15,7 +16,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const query = await searchParams;
   const page = typeof query.page === 'string' || query.page === undefined ? parsePageParam(query.page) : null;
   // Every page is indexable and canonical to itself; page 1 is the clean URL.
+  const defaults = await seoDefaults();
   return pageMetadata({
+    siteName: defaults.siteName,
+    image: defaults.image,
     title: page && page > 1 ? `${messages.blogTitle} (صفحه ${page})` : messages.blogTitle,
     description: messages.blogDescription,
     path: page && page > 1 ? `/blog?page=${page}` : '/blog',
