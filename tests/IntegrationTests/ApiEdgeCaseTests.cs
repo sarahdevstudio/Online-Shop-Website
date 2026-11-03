@@ -112,6 +112,30 @@ public sealed class ApiEdgeCaseTests(ApiFixture fixture) : CatalogTestBase(fixtu
         Assert.Equal(MalformedTitle, problem.Title);
     }
 
+    [Theory]
+    [InlineData("Draft")]
+    [InlineData("Published")]
+    [InlineData("Archived")]
+    public async Task AdminProductList_AcceptsEveryStatusName(string status)
+    {
+        var admin = await LoginAdminAsync();
+
+        var response = await admin.GetAsync($"/api/v1/admin/products?status={status}");
+
+        Assert.True(response.IsSuccessStatusCode, await response.Content.ReadAsStringAsync());
+    }
+
+    [Theory]
+    [InlineData("draft")]
+    [InlineData("published")]
+    [InlineData("archived")]
+    public async Task AdminProductList_StatusNamesAreCaseSensitive(string status)
+    {
+        var admin = await LoginAdminAsync();
+
+        await AssertProblemAsync(await admin.GetAsync($"/api/v1/admin/products?status={status}"), 400);
+    }
+
     [Fact]
     public async Task AdminOrderFilter_WithAnUnknownStatus_Is400_WithAFilterError()
     {

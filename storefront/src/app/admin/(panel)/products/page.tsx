@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Form, SelectField, SubmitButton, TextField } from '@/components/form';
 import { adminGet } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
+import { apiProductStatus, parseProductStatus, PRODUCT_STATUSES } from '@/lib/admin/product-status';
 import type { AdminProductListItem, PagedList } from '@/lib/admin/types';
 import { formatJalaliDate, formatNumber } from '@/lib/format';
 import { messages } from '@/lib/messages';
@@ -9,16 +10,15 @@ import type { SearchParams } from '@/lib/paging';
 import styles from '../../admin.module.css';
 
 const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value) ?? '';
-const STATUSES = ['draft', 'published', 'archived'];
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
   const q = first(sp.q).trim();
-  const status = STATUSES.includes(first(sp.status)) ? first(sp.status) : '';
+  const status = parseProductStatus(first(sp.status));
   const page = Math.max(Number.parseInt(first(sp.page), 10) || 1, 1);
   const query = new URLSearchParams({ page: String(page) });
   if (q) query.set('q', q);
-  if (status) query.set('status', status);
+  if (status) query.set('status', apiProductStatus(status));
   const list = await adminGet<PagedList<AdminProductListItem>>(`/admin/products?${query}`);
   if (!list) throw new Error('Products are unavailable.');
   const lastPage = Math.max(Math.ceil(list.total / list.pageSize), 1);
@@ -43,7 +43,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         <TextField name="q" label={adminMessages.products.search} type="search" defaultValue={q} autoComplete="off" />
         <SelectField name="status" label={adminMessages.products.status} defaultValue={status}>
           <option value="">{adminMessages.orders.allStatuses}</option>
-          {STATUSES.map((s) => (
+          {PRODUCT_STATUSES.map((s) => (
             <option key={s} value={s}>
               {adminMessages.products.statuses[s]}
             </option>
