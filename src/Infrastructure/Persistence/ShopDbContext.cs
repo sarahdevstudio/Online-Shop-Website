@@ -8,6 +8,7 @@ using Shop.Domain.Customers;
 using Shop.Domain.Inventory;
 using Shop.Domain.Orders;
 using Shop.Domain.Settings;
+using Shop.Domain.Site;
 using Shop.Infrastructure.Identity;
 
 namespace Shop.Infrastructure.Persistence;
@@ -36,6 +37,9 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     public DbSet<ContentAuditLog> ContentAuditLogs => Set<ContentAuditLog>();
     public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
     public DbSet<BlogAuditLog> BlogAuditLogs => Set<BlogAuditLog>();
+    public DbSet<SiteConfigVersion> SiteConfigVersions => Set<SiteConfigVersion>();
+    public DbSet<SiteMedia> SiteMedia => Set<SiteMedia>();
+    public DbSet<SiteAuditLog> SiteAuditLogs => Set<SiteAuditLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
