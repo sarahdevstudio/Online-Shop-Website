@@ -27,7 +27,17 @@ public class ProductListQueryParserTests
         Assert.Equal(ProductListQuery.DefaultPageSize, query.PageSize);
         Assert.Equal(ProductSort.Newest, query.Sort);
         Assert.False(query.InStock);
+        Assert.False(query.Discounted);
         Assert.Empty(query.Attributes!);
+    }
+
+    [Fact]
+    public void Discounted_IsAReservedBooleanKey()
+    {
+        Assert.True(ParseOk(("discounted", ["true"])).Discounted);
+        Assert.True(ParseOk(("discounted", ["1"])).Discounted);
+        Assert.False(ParseOk(("discounted", ["false"])).Discounted);
+        Assert.Empty(ParseOk(("discounted", ["true"])).Attributes!);
     }
 
     [Fact]
@@ -61,6 +71,7 @@ public class ProductListQueryParserTests
     [InlineData("pageSize", "1000")]
     [InlineData("sort", "cheapest")]
     [InlineData("inStock", "yes")]
+    [InlineData("discounted", "maybe")]
     [InlineData("minPrice", "-5")]
     [InlineData("maxPrice", "1.5")]
     public void InvalidValues_AreValidationErrors(string key, string value)

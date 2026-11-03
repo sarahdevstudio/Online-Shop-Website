@@ -78,6 +78,7 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : IC
             CategoryIds = categoryIds,
             Tokens = PersianText.SearchKey(query.Q).Split(' ', StringSplitOptions.RemoveEmptyEntries),
             InStock = query.InStock,
+            Discounted = query.Discounted,
             MinPrice = query.MinPrice,
             MaxPrice = query.MaxPrice,
             // Unknown slugs simply match nothing: brand=unknown gives an empty list, like any filter with no matches.
@@ -235,6 +236,7 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : IC
         public List<int>? CategoryIds { get; init; }
         public string[] Tokens { get; init; } = [];
         public bool InStock { get; init; }
+        public bool Discounted { get; init; }
         public long? MinPrice { get; init; }
         public long? MaxPrice { get; init; }
         public List<int>? BrandIds { get; init; }
@@ -263,6 +265,11 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : IC
         if (filter.InStock)
         {
             query = query.Where(p => p.Variants.Any(v => v.IsActive && v.Stock > 0));
+        }
+
+        if (filter.Discounted)
+        {
+            query = query.Where(p => p.Variants.Any(v => v.IsActive && v.CompareAtPrice != null && v.CompareAtPrice > v.Price));
         }
 
         if (except != Facet.Brand && filter.BrandIds is { } brandIds)

@@ -58,6 +58,21 @@ public static class ProductListQueryParser
                     }
 
                     break;
+                case "discounted":
+                    if (single is null or "false" or "0")
+                    {
+                        result = result with { Discounted = false };
+                    }
+                    else if (single is "true" or "1")
+                    {
+                        result = result with { Discounted = true };
+                    }
+                    else
+                    {
+                        errors["discounted"] = ["مقدار باید «بله» یا «خیر» باشد."];
+                    }
+
+                    break;
                 case "sort":
                     ProductSort? sort = single switch
                     {

@@ -195,6 +195,26 @@ public sealed class CatalogPublicTests(ApiFixture fixture) : CatalogTestBase(fix
     }
 
     [Fact]
+    public async Task DiscountedFilter_ListsOnlyProductsWithAnActiveVariantOnSale()
+    {
+        var s = await SetUpAsync();
+        var admin = await LoginAdminAsync();
+        var v = s.BVariant;
+
+        Assert.Empty((await ListAsync($"category={s.Root}&discounted=true")).Items);
+
+        var onSale = await SendOkAsync<AdminVariantBody>(admin, HttpMethod.Put, $"/api/v1/admin/variants/{v.Id}",
+            new { v.Sku, v.Price, compareAtPrice = v.Price + 50_000, stock = 3, v.IsActive, v.SortOrder, v.RowVersion });
+        Assert.Equal(Expected(s.B), Slugs(await ListAsync($"category={s.Root}&discounted=true")));
+        Assert.Equal(3, (await ListAsync($"category={s.Root}&discounted=false")).Total);
+
+        // Removing the old price ends the discount.
+        await SendOkAsync<AdminVariantBody>(admin, HttpMethod.Put, $"/api/v1/admin/variants/{v.Id}",
+            new { v.Sku, v.Price, compareAtPrice = (long?)null, stock = 3, v.IsActive, v.SortOrder, onSale.RowVersion });
+        Assert.Empty((await ListAsync($"category={s.Root}&discounted=true")).Items);
+    }
+
+    [Fact]
     public async Task Sorting_ByPrice_And_Paging()
     {
         var s = await SetUpAsync();

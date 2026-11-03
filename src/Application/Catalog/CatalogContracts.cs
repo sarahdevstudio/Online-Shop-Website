@@ -81,7 +81,8 @@ public sealed record ProductListQuery(
     bool InStock = false,
     ProductSort Sort = ProductSort.Newest,
     int Page = 1,
-    int PageSize = ProductListQuery.DefaultPageSize)
+    int PageSize = ProductListQuery.DefaultPageSize,
+    bool Discounted = false)
 {
     public const int DefaultPageSize = 24;
     public const int MaxPageSize = 60;
@@ -90,7 +91,7 @@ public sealed record ProductListQuery(
     /// <summary>Query-string keys with a fixed meaning; every other key is treated as an attribute code.</summary>
     public static readonly IReadOnlySet<string> ReservedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
-        "category", "q", "brand", "minPrice", "maxPrice", "inStock", "sort", "page", "pageSize",
+        "category", "q", "brand", "minPrice", "maxPrice", "inStock", "discounted", "sort", "page", "pageSize",
     };
 }
 
