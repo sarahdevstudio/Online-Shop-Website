@@ -12,6 +12,8 @@ interface Shared {
   /** Spans every column of the grid (long fields: address, description, text). */
   full?: boolean;
   disabled?: boolean;
+  /** Keep the label for screen readers only (cells of a dense matrix). */
+  hideLabel?: boolean;
   /** Explicit error text; normally the error comes from the surrounding <Form errors>. */
   error?: string;
 }
@@ -38,9 +40,9 @@ function FieldMessages({ id, hint, error }: { id: string; hint?: string; error?:
   );
 }
 
-function Label({ id, label, required }: { id: string; label: string; required?: boolean }) {
+function Label({ id, label, required, hidden }: { id: string; label: string; required?: boolean; hidden?: boolean }) {
   return (
-    <label htmlFor={id} className="ui-label">
+    <label htmlFor={id} className={hidden ? 'ui-visually-hidden' : 'ui-label'}>
       {label}
       {required && (
         <span className="ui-required" aria-hidden="true">
@@ -66,11 +68,11 @@ interface TextProps extends Shared {
   compact?: boolean;
 }
 
-export function TextField({ name, label, hint, required, full, disabled, error: errorProp, type = 'text', ltr, inputMode, autoComplete, maxLength, placeholder, defaultValue, value, onChange, compact }: TextProps) {
+export function TextField({ name, label, hint, required, full, disabled, hideLabel, error: errorProp, type = 'text', ltr, inputMode, autoComplete, maxLength, placeholder, defaultValue, value, onChange, compact }: TextProps) {
   const { id, error, describedBy, invalid } = useFieldIds(name, Boolean(hint), errorProp);
   return (
     <div className={cls('ui-field', full && 'ui-field--full', compact && 'ui-field--compact')}>
-      <Label id={id} label={label} required={required} />
+      <Label id={id} label={label} required={required} hidden={hideLabel} />
       <input
         id={id}
         name={name}
@@ -104,11 +106,11 @@ interface AreaProps extends Shared {
   onChange?: ChangeEventHandler<HTMLTextAreaElement>;
 }
 
-export function TextAreaField({ name, label, hint, required, full = true, disabled, error: errorProp, rows = 4, autoComplete, maxLength, ltr, code, defaultValue, value, onChange }: AreaProps) {
+export function TextAreaField({ name, label, hint, required, full = true, disabled, hideLabel, error: errorProp, rows = 4, autoComplete, maxLength, ltr, code, defaultValue, value, onChange }: AreaProps) {
   const { id, error, describedBy, invalid } = useFieldIds(name, Boolean(hint), errorProp);
   return (
     <div className={cls('ui-field', full && 'ui-field--full')}>
-      <Label id={id} label={label} required={required} />
+      <Label id={id} label={label} required={required} hidden={hideLabel} />
       <textarea
         id={id}
         name={name}
@@ -133,11 +135,11 @@ interface SelectProps extends Shared {
   children: ReactNode;
 }
 
-export function SelectField({ name, label, hint, required, full, disabled, error: errorProp, defaultValue, children }: SelectProps) {
+export function SelectField({ name, label, hint, required, full, disabled, hideLabel, error: errorProp, defaultValue, children }: SelectProps) {
   const { id, error, describedBy, invalid } = useFieldIds(name, Boolean(hint), errorProp);
   return (
     <div className={cls('ui-field', full && 'ui-field--full')}>
-      <Label id={id} label={label} required={required} />
+      <Label id={id} label={label} required={required} hidden={hideLabel} />
       <select id={id} name={name} className="ui-control" defaultValue={defaultValue ?? ''} required={required} disabled={disabled} aria-invalid={invalid} aria-describedby={describedBy}>
         {children}
       </select>
@@ -209,5 +211,27 @@ export function ChoiceGroup({ name, legend, options, defaultValue, required, err
       ))}
       <FieldMessages id={id} error={error} />
     </fieldset>
+  );
+}
+
+interface FileProps {
+  name: string;
+  label: string;
+  accept?: string;
+  hint?: string;
+  required?: boolean;
+  full?: boolean;
+  error?: string;
+}
+
+/** Native file picker with the shared field markup (label, required mark, hint, error). */
+export function FileField({ name, label, accept, hint, required, full, error: errorProp }: FileProps) {
+  const { id, error, describedBy, invalid } = useFieldIds(name, Boolean(hint), errorProp);
+  return (
+    <div className={cls('ui-field', full && 'ui-field--full')}>
+      <Label id={id} label={label} required={required} />
+      <input id={id} className="ui-control" type="file" name={name} accept={accept} required={required} aria-invalid={invalid} aria-describedby={describedBy} />
+      <FieldMessages id={id} hint={hint} error={error} />
+    </div>
   );
 }

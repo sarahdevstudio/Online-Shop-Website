@@ -15,7 +15,7 @@
 .ui-form--inline {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: var(--space-3) var(--space-4);
 }
 
@@ -25,11 +25,16 @@
 
 .ui-form--inline .ui-field--compact {
   flex: 0 0 auto;
-  inline-size: 6.5rem;
+  inline-size: 8rem;
 }
 
 .ui-form button {
   min-block-size: var(--control-height);
+}
+
+/* A button next to labelled fields lines up with the controls (label height + gap), whatever hints or errors sit below them. */
+.ui-form--inline:has(.ui-field) > button {
+  margin-block-start: calc(1em * var(--line-height-snug) + var(--space-1));
 }
 
 /* ---------- sections ---------- */

@@ -208,8 +208,9 @@ input.ui-check[type='checkbox']:checked::after {
   content: '';
   inline-size: 0.7rem;
   block-size: 0.4rem;
-  border-inline-start: 2px solid var(--color-primary-contrast);
-  border-block-end: 2px solid var(--color-primary-contrast);
+  /* Physical sides on purpose: the tick must not mirror in RTL. */
+  border-left: 2px solid var(--color-primary-contrast); /* rtl-ok */
+  border-bottom: 2px solid var(--color-primary-contrast);
   transform: translateY(-1px) rotate(-45deg);
 }
 

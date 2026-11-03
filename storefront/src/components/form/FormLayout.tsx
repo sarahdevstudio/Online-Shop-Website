@@ -35,3 +35,13 @@ export function FormActions({ children, end, stretch }: { children: ReactNode; e
     </div>
   );
 }
+
+/** A labelled read-only block inside a form grid (live preview, a fixed slug, a status line). */
+export function FormBlock({ title, full = true, children }: { title?: string; full?: boolean; children: ReactNode }) {
+  return (
+    <div className={`ui-field ${full ? 'ui-field--full' : ''}`}>
+      {title && <span className="ui-label">{title}</span>}
+      {children}
+    </div>
+  );
+}
