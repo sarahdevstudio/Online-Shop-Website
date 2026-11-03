@@ -13,6 +13,8 @@ using Shop.Infrastructure.Content;
 using Shop.Application.Orders;
 using Shop.Application.Payments;
 using Shop.Application.Settings;
+using Shop.Application.Site;
+using Shop.Infrastructure.Site;
 using Shop.Infrastructure.Settings;
 using Shop.Infrastructure.Orders;
 using Shop.Infrastructure.Accounts;
@@ -77,6 +79,9 @@ public static class DependencyInjection
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IAdminOrderService, AdminOrderService>();
+        services.AddScoped<SiteCompiler>();
+        services.AddSingleton<ISiteConfigService, SiteConfigProvider>();
+        services.AddScoped<IAdminSiteService, AdminSiteService>();
         services.Configure<MediaOptions>(configuration.GetSection(MediaOptions.SectionName));
         services.AddSingleton<IMediaStorage, LocalMediaStorage>();
 
