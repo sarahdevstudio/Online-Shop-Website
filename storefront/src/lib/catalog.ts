@@ -156,6 +156,8 @@ export interface ProductQuery {
   page?: number;
   pageSize?: number;
   inStock?: boolean;
+  /** Only products with a discounted variant (API `discounted=true`). */
+  discounted?: boolean;
   /** Category-page filters and sort (see ./listing). */
   listing?: ListingState;
 }
@@ -163,7 +165,7 @@ export interface ProductQuery {
 /** The API's q limit; longer input is cut rather than turned into an error page. */
 export const Q_MAX_LENGTH = 100;
 
-export function productListPath({ category, q, page = 1, pageSize = PAGE_SIZE, inStock, listing }: ProductQuery): string {
+export function productListPath({ category, q, page = 1, pageSize = PAGE_SIZE, inStock, discounted, listing }: ProductQuery): string {
   const params = new URLSearchParams();
   if (category) params.set('category', category);
   const query = q?.trim().slice(0, Q_MAX_LENGTH);
@@ -175,6 +177,7 @@ export function productListPath({ category, q, page = 1, pageSize = PAGE_SIZE, i
   if (listing?.minPrice != null) params.set('minPrice', String(listing.minPrice));
   if (listing?.maxPrice != null) params.set('maxPrice', String(listing.maxPrice));
   if (inStock || listing?.inStock) params.set('inStock', 'true');
+  if (discounted) params.set('discounted', 'true');
   if (listing?.sort) params.set('sort', listing.sort);
   const pageNumber = listing?.page ?? page;
   if (pageNumber > 1) params.set('page', String(pageNumber));
