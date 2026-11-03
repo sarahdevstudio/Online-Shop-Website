@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Form, SelectField, SubmitButton, TextField } from '@/components/form';
 import { adminGet } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminProductListItem, PagedList } from '@/lib/admin/types';
@@ -38,31 +39,23 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         </Link>
       </div>
 
-      <form method="get" className={styles.filters}>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>{adminMessages.products.search}</span>
-          <input className="ui-control" type="search" name="q" defaultValue={q} />
-        </label>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>{adminMessages.products.status}</span>
-          <select className="ui-control" name="status" defaultValue={status}>
-            <option value="">{adminMessages.orders.allStatuses}</option>
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {adminMessages.products.statuses[s]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button className="ui-control" type="submit">
-          {adminMessages.orders.filter}
-        </button>
-      </form>
+      <Form method="get" inline>
+        <TextField name="q" label={adminMessages.products.search} type="search" defaultValue={q} autoComplete="off" />
+        <SelectField name="status" label={adminMessages.products.status} defaultValue={status}>
+          <option value="">{adminMessages.orders.allStatuses}</option>
+          {STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {adminMessages.products.statuses[s]}
+            </option>
+          ))}
+        </SelectField>
+        <SubmitButton variant="secondary">{adminMessages.orders.filter}</SubmitButton>
+      </Form>
 
       {list.items.length === 0 ? (
         <p>{adminMessages.products.empty}</p>
       ) : (
-        <div className={styles.tableWrap}>
+        <div className={styles.tableWrap} tabIndex={0} role="region" aria-label={adminMessages.scrollableTable}>
           <table className={styles.table}>
             <thead>
               <tr>

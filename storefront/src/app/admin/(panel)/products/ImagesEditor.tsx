@@ -4,11 +4,12 @@ import { useRouter } from 'next/navigation';
 import { useActionState, useState, type FormEvent } from 'react';
 import { Alert } from '@/components/Alert';
 import { Button } from '@/components/Button';
+import { FileField, Form, FormActions, FormGrid, FormSection, SubmitButton, TextField } from '@/components/form';
 import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { MAX_IMAGE_BYTES } from '@/lib/admin/image-upload';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminProduct } from '@/lib/admin/types';
-import { FormBanner, SubmitButton } from '../../_components/FormBits';
+import { FormBanner } from '../../_components/FormBits';
 import { deleteImageAction, reorderImagesAction } from './actions';
 import styles from '../../admin.module.css';
 
@@ -29,33 +30,28 @@ function ImageRow({ productId, image, order, index }: { productId: number; image
       <span className={styles.muted}>{image.alt}</span>
       <FormBanner state={moveState} />
       <FormBanner state={deleteState} />
-      <div className={styles.row}>
-        {index > 0 && (
-          <form action={move}>
-            <input type="hidden" name="productId" value={productId} />
-            <input type="hidden" name="order" value={swapped(index, index - 1)} />
-            <SubmitButton variant="secondary" size="sm">
-              {t.moveUp}
-            </SubmitButton>
-          </form>
-        )}
-        {index < order.length - 1 && (
-          <form action={move}>
-            <input type="hidden" name="productId" value={productId} />
-            <input type="hidden" name="order" value={swapped(index, index + 1)} />
-            <SubmitButton variant="secondary" size="sm">
-              {t.moveDown}
-            </SubmitButton>
-          </form>
-        )}
-        <form action={remove}>
+      <FormActions end={
+        <Form action={remove} inline>
           <input type="hidden" name="productId" value={productId} />
           <input type="hidden" name="imageId" value={image.id} />
-          <SubmitButton variant="danger" size="sm">
-            {adminMessages.delete}
-          </SubmitButton>
-        </form>
-      </div>
+          <SubmitButton variant="danger">{adminMessages.delete}</SubmitButton>
+        </Form>
+      }>
+        {index > 0 && (
+          <Form action={move} inline>
+            <input type="hidden" name="productId" value={productId} />
+            <input type="hidden" name="order" value={swapped(index, index - 1)} />
+            <SubmitButton variant="secondary">{t.moveUp}</SubmitButton>
+          </Form>
+        )}
+        {index < order.length - 1 && (
+          <Form action={move} inline>
+            <input type="hidden" name="productId" value={productId} />
+            <input type="hidden" name="order" value={swapped(index, index + 1)} />
+            <SubmitButton variant="secondary">{t.moveDown}</SubmitButton>
+          </Form>
+        )}
+      </FormActions>
     </li>
   );
 }
@@ -64,17 +60,22 @@ export function ImagesEditor({ product }: { product: AdminProduct }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [fileError, setFileError] = useState<string | undefined>();
   const order = product.images.map((i) => i.id);
 
   async function upload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const file = (form.elements.namedItem('file') as HTMLInputElement).files?.[0];
-    if (!file) return;
-    if (file.size > MAX_IMAGE_BYTES) {
-      setResult({ ok: false, message: t.imageTooBig });
+    if (!file) {
+      setFileError(t.imageRequired);
       return;
     }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setFileError(t.imageTooBig);
+      return;
+    }
+    setFileError(undefined);
     setBusy(true);
     setResult(null);
     try {
@@ -94,37 +95,29 @@ export function ImagesEditor({ product }: { product: AdminProduct }) {
   }
 
   return (
-    <section className={styles.panel} aria-labelledby="images">
-      <h2 id="images" className="ui-heading-4">
-        {t.images}
-      </h2>
-      {product.images.length === 0 ? (
-        <p className={styles.muted}>{t.noImages}</p>
-      ) : (
-        <ul className={styles.thumbs}>
-          {product.images.map((image, index) => (
-            <ImageRow key={image.id} productId={product.id} image={image} order={order} index={index} />
-          ))}
-        </ul>
-      )}
-      <form onSubmit={upload} className={styles.row} encType="multipart/form-data">
-        <div className={styles.field}>
-          <label htmlFor="img-file" className={styles.fieldLabel}>
-            {t.upload}
-          </label>
-          <input id="img-file" className="ui-control" type="file" name="file" accept="image/jpeg,image/png,image/webp" required />
-        </div>
-        <div className={styles.field}>
-          <label htmlFor="img-alt" className={styles.fieldLabel}>
-            {t.alt}
-          </label>
-          <input id="img-alt" className="ui-control" type="text" name="alt" maxLength={200} />
-        </div>
-        <Button type="submit" loading={busy}>
-          {busy ? t.uploading : t.upload}
-        </Button>
-      </form>
-      {result && <Alert variant={result.ok ? 'success' : 'danger'}>{result.message}</Alert>}
-    </section>
+    <div id="images">
+      <FormSection card title={t.images}>
+        {product.images.length === 0 ? (
+          <p className={styles.muted}>{t.noImages}</p>
+        ) : (
+          <ul className={styles.thumbs}>
+            {product.images.map((image, index) => (
+              <ImageRow key={image.id} productId={product.id} image={image} order={order} index={index} />
+            ))}
+          </ul>
+        )}
+        <Form onSubmit={upload} encType="multipart/form-data" errors={{ file: fileError }} banner={result ? <Alert variant={result.ok ? 'success' : 'danger'}>{result.message}</Alert> : null}>
+          <FormGrid>
+            <FileField name="file" label={t.upload} accept="image/jpeg,image/png,image/webp" required full />
+            <TextField name="alt" label={t.alt} maxLength={200} autoComplete="off" full />
+          </FormGrid>
+          <FormActions>
+            <Button type="submit" loading={busy}>
+              {busy ? t.uploading : t.upload}
+            </Button>
+          </FormActions>
+        </Form>
+      </FormSection>
+    </div>
   );
 }

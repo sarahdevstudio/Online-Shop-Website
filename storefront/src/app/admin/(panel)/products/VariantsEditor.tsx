@@ -1,11 +1,12 @@
 'use client';
 
 import { useActionState } from 'react';
+import { CheckField, Form, FormActions, FormGrid, FormSection, RequiredNote, SubmitButton, TextField } from '@/components/form';
 import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminVariant, StockHistoryEntry } from '@/lib/admin/types';
 import { formatJalaliDate, formatNumber } from '@/lib/format';
-import { CheckField, Field, FormBanner, SubmitButton } from '../../_components/FormBits';
+import { FormBanner } from '../../_components/FormBits';
 import { addVariantAction, adjustStockAction, saveVariantAction } from './actions';
 import styles from '../../admin.module.css';
 
@@ -14,42 +15,42 @@ const t = adminMessages.products;
 function VariantForm({ productId, variant }: { productId: number; variant: AdminVariant }) {
   const [state, action] = useActionState(saveVariantAction, INITIAL_FORM_STATE);
   return (
-    <form action={action} className={styles.grid2}>
+    <Form action={action} errors={state.errors} banner={<FormBanner state={state} />}>
       <input type="hidden" name="productId" value={productId} />
       <input type="hidden" name="variantId" value={variant.id} />
       {/* The version this form was loaded with: if anything changed the variant meanwhile, saving is a 409 "data changed". */}
       <input type="hidden" name="rowVersion" value={variant.rowVersion} />
-      <div className={styles.wide}>
-        <FormBanner state={state} />
-      </div>
       {/* Only the fields are keyed by the version: after any save (or a reload) they show the stored values, while the form
           itself - and with it the success / "data changed" banner above - is not remounted. */}
-      <div key={variant.rowVersion} style={{ display: 'contents' }}>
-        <Field name="sku" label={t.sku} state={state} ltr defaultValue={variant.sku} required />
-        <Field name="price" label={t.price} state={state} ltr inputMode="numeric" defaultValue={variant.price} required />
-        <Field name="compareAtPrice" label={t.compareAt} state={state} ltr inputMode="numeric" defaultValue={variant.compareAtPrice} />
-        <Field name="stock" label={t.setStock} state={state} ltr inputMode="numeric" defaultValue={variant.stock} required />
-        <Field name="sortOrder" label={t.sortOrder} state={state} ltr inputMode="numeric" defaultValue={variant.sortOrder} />
-        <CheckField name="isActive" label={adminMessages.active} defaultChecked={variant.isActive} />
+      <div key={variant.rowVersion}>
+        <FormGrid columns={3}>
+          <TextField name="sku" label={t.sku} ltr defaultValue={variant.sku} required />
+          <TextField name="price" label={t.price} ltr inputMode="numeric" autoComplete="off" defaultValue={variant.price} required />
+          <TextField name="compareAtPrice" label={t.compareAt} ltr inputMode="numeric" autoComplete="off" defaultValue={variant.compareAtPrice} />
+          <TextField name="stock" label={t.setStock} ltr inputMode="numeric" autoComplete="off" defaultValue={variant.stock} required />
+          <TextField name="sortOrder" label={t.sortOrder} ltr inputMode="numeric" autoComplete="off" defaultValue={variant.sortOrder} />
+          <CheckField name="isActive" label={adminMessages.active} defaultChecked={variant.isActive} full />
+        </FormGrid>
       </div>
-      <div className={styles.row}>
+      <FormActions>
         <SubmitButton>{adminMessages.save}</SubmitButton>
-      </div>
-    </form>
+      </FormActions>
+    </Form>
   );
 }
 
 function AdjustForm({ productId, variantId }: { productId: number; variantId: number }) {
   const [state, action] = useActionState(adjustStockAction, INITIAL_FORM_STATE);
   return (
-    <form action={action} className={styles.row}>
-      <input type="hidden" name="productId" value={productId} />
-      <input type="hidden" name="variantId" value={variantId} />
-      <Field name="delta" label={t.adjust} hint={t.adjustHint} state={state} ltr inputMode="numeric" />
-      <Field name="reason" label={t.reason} state={state} />
-      <FormBanner state={state} />
-      <SubmitButton variant="secondary">{t.apply}</SubmitButton>
-    </form>
+    <FormSection hint={t.adjustHint}>
+      <Form action={action} errors={state.errors} banner={<FormBanner state={state} />} inline>
+        <input type="hidden" name="productId" value={productId} />
+        <input type="hidden" name="variantId" value={variantId} />
+        <TextField name="delta" label={t.adjust} ltr inputMode="text" autoComplete="off" compact />
+        <TextField name="reason" label={t.reason} autoComplete="off" />
+        <SubmitButton variant="secondary">{t.apply}</SubmitButton>
+      </Form>
+    </FormSection>
   );
 }
 
@@ -76,43 +77,41 @@ function History({ entries }: { entries: StockHistoryEntry[] }) {
 function AddVariantForm({ productId }: { productId: number }) {
   const [state, action] = useActionState(addVariantAction, INITIAL_FORM_STATE);
   return (
-    <form action={action} className={styles.grid2}>
+    <Form action={action} errors={state.errors} banner={<FormBanner state={state} />}>
       <input type="hidden" name="productId" value={productId} />
-      <div className={styles.wide}>
-        <FormBanner state={state} />
-      </div>
-      <Field name="sku" label={t.sku} state={state} ltr required />
-      <Field name="price" label={t.price} state={state} ltr inputMode="numeric" required />
-      <Field name="compareAtPrice" label={t.compareAt} state={state} ltr inputMode="numeric" />
-      <Field name="stock" label={t.stock} state={state} ltr inputMode="numeric" defaultValue={0} required />
-      <CheckField name="isActive" label={adminMessages.active} defaultChecked />
-      <div className={styles.row}>
+      <RequiredNote />
+      <FormGrid columns={3}>
+        <TextField name="sku" label={t.sku} ltr required />
+        <TextField name="price" label={t.price} ltr inputMode="numeric" autoComplete="off" required />
+        <TextField name="compareAtPrice" label={t.compareAt} ltr inputMode="numeric" autoComplete="off" />
+        <TextField name="stock" label={t.stock} ltr inputMode="numeric" autoComplete="off" defaultValue={0} required />
+        <CheckField name="isActive" label={adminMessages.active} defaultChecked full />
+      </FormGrid>
+      <FormActions>
         <SubmitButton>{t.addVariant}</SubmitButton>
-      </div>
-    </form>
+      </FormActions>
+    </Form>
   );
 }
 
 export function VariantsEditor({ productId, variants, history }: { productId: number; variants: AdminVariant[]; history: Record<number, StockHistoryEntry[]> }) {
   return (
-    <section className={styles.panel} aria-labelledby="variants">
-      <h2 id="variants" className="ui-heading-4">
-        {t.variants}
-      </h2>
-      {variants.map((variant, index) => (
-        <div key={variant.id} className={styles.variantCard}>
-          <strong>
-            {t.variantRow(formatNumber(index + 1))} · <bdi dir="ltr">{variant.sku}</bdi> · {t.stock}: {formatNumber(variant.stock)}
-          </strong>
-          <VariantForm productId={productId} variant={variant} />
-          <AdjustForm productId={productId} variantId={variant.id} />
-          <History entries={history[variant.id] ?? []} />
-        </div>
-      ))}
-      <details>
-        <summary>{t.addVariant}</summary>
-        <AddVariantForm productId={productId} />
-      </details>
-    </section>
+    <div id="variants">
+      <FormSection title={t.variants}>
+        {variants.map((variant, index) => (
+          <FormSection key={variant.id} card title={`${t.variantRow(formatNumber(index + 1))} · ${variant.sku} · ${t.stock}: ${formatNumber(variant.stock)}`}>
+            <VariantForm productId={productId} variant={variant} />
+            <AdjustForm productId={productId} variantId={variant.id} />
+            <History entries={history[variant.id] ?? []} />
+          </FormSection>
+        ))}
+        <FormSection card>
+          <details>
+            <summary>{t.addVariant}</summary>
+            <AddVariantForm productId={productId} />
+          </details>
+        </FormSection>
+      </FormSection>
+    </div>
   );
 }
