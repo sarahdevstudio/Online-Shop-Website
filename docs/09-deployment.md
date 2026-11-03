@@ -194,3 +194,8 @@ Managed by admins with the `Site.Manage` permission under `/admin/site`; nothing
 - **Preview.** Preview uses a sealed `site_preview` cookie (same secret as the admin session) and always answers `Cache-Control: no-store`; it never reaches visitors. «خروج از پیش‌نمایش» clears it.
 - **Trust badges.** E-Namad and Samandehi are built from IDs only, with a fixed template; no HTML or script from an admin is ever rendered. The URL templates were derived from the issuers' public embed code and have not been verified against live issuer pages: check the badges once after the first publish.
 - **History.** The last 20 published versions of each part are kept; restoring puts a version into the draft (optionally publishing it).
+
+## 11. Translations
+
+One more migration creates the `Translations` tables; on start the API inserts the shipped texts that are missing (996 keys at the time of writing) and never overwrites an edit. The admin role gets `Translations.Manage` at startup (sign in again after the upgrade). Nothing else to configure: the storefront reads texts from the API and falls back to its bundled copy. Back up the database as usual: edited texts live in the `Translations` table. See `docs/12-translations.md`.
+
