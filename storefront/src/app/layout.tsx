@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { ThemeHead } from '@/components/ThemeHead';
+import { TextsProvider } from '@/lib/i18n/TextsProvider';
+import { clientTexts, ensureTexts } from '@/lib/i18n/texts-server';
 import { getPreviewConfig, getSiteConfig } from '@/lib/site-config';
 import { site } from '@/lib/seo';
 import { themeColor } from '@/lib/theme-css';
@@ -8,6 +10,7 @@ import './globals.css';
 
 /** Site-wide defaults come from the published site configuration (built-in values when it is unavailable). */
 export async function generateMetadata(): Promise<Metadata> {
+  await ensureTexts();
   const [{ seo, theme }, preview] = await Promise.all([getSiteConfig(), getPreviewConfig()]);
   return {
     robots: preview ? { index: false, follow: false } : undefined,
@@ -39,13 +42,16 @@ export async function generateViewport(): Promise<Viewport> {
 
 /** Only the document shell. The public shop's header/footer are in `(shop)/layout.tsx`, the admin panel's in `admin/layout.tsx`. */
 export default async function RootLayout({ children }: { children: ReactNode }) {
+  await ensureTexts();
   const { theme } = await getSiteConfig();
   return (
     <html lang="fa" dir="rtl">
       <head>
         <ThemeHead theme={theme} />
       </head>
-      <body>{children}</body>
+      <body>
+        <TextsProvider texts={clientTexts(['common.', 'shop.', 'seo.'])}>{children}</TextsProvider>
+      </body>
     </html>
   );
 }

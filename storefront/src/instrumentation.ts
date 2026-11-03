@@ -3,6 +3,11 @@
  * letting the admin panel run with a guessable sealing key. Skipped while building (no secret is needed to build).
  */
 export async function register() {
+  if (process.env.NEXT_RUNTIME === 'nodejs' && process.env.NEXT_PHASE !== 'phase-production-build') {
+    // Load the edited texts before the first request, so no page is rendered with the shipped text of an edited one.
+    const { ensureTexts } = await import('./lib/i18n/texts-server');
+    await ensureTexts().catch(() => undefined);
+  }
   if (process.env.NEXT_RUNTIME !== 'nodejs' || process.env.NODE_ENV !== 'production') return;
   if (process.env.NEXT_PHASE === 'phase-production-build') return;
   const { readSessionConfig } = await import('./lib/admin/session');
