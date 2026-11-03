@@ -48,6 +48,8 @@ public sealed class DatabaseInitializer(
     IOptions<StoreDefaultsOptions> storeDefaults,
     CatalogSeeder catalogSeeder,
     SiteSeeder siteSeeder,
+    Shop.Infrastructure.Translations.TranslationSeeder translationSeeder,
+    Shop.Infrastructure.Translations.TranslationCache translationCache,
     IHostEnvironment environment,
     TimeProvider clock,
     ILogger<DatabaseInitializer> logger)
@@ -60,6 +62,8 @@ public sealed class DatabaseInitializer(
             await db.Database.MigrateAsync(ct);
         }
 
+        await translationSeeder.EnsureAsync(ct);
+        await translationCache.ReloadAsync(ct);
         await SyncRolesAndPermissionsAsync();
         await EnsureAdminAsync();
         await EnsureStoreSettingsAsync(ct);

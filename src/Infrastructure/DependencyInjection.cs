@@ -89,6 +89,9 @@ public static class DependencyInjection
         services.Configure<SeedOptions>(configuration.GetSection(SeedOptions.SectionName));
         services.AddScoped<CatalogSeeder>();
         services.AddScoped<SiteSeeder>();
+        services.AddScoped<Shop.Infrastructure.Translations.TranslationSeeder>();
+        services.AddSingleton<Shop.Infrastructure.Translations.TranslationCache>();
+        services.AddHostedService<Shop.Infrastructure.Translations.TranslationRefreshService>();
         services.AddScoped<DatabaseInitializer>();
 
         if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
