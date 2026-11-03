@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { adminMessages } from '@/lib/admin/messages';
 import styles from '../admin.module.css';
 
-const ITEMS = [
+const items = (): { href: string; label: string; exact?: boolean }[] => [
   { href: '/admin', label: adminMessages.nav.dashboard, exact: true },
   { href: '/admin/orders', label: adminMessages.nav.orders },
   { href: '/admin/products', label: adminMessages.nav.products },
@@ -14,6 +14,7 @@ const ITEMS = [
   { href: '/admin/content', label: adminMessages.nav.content },
   { href: '/admin/blog', label: adminMessages.nav.blog },
   { href: '/admin/site', label: adminMessages.nav.site },
+  { href: '/admin/translations', label: adminMessages.nav.translations },
   { href: '/admin/settings', label: adminMessages.nav.settings },
   { href: '/admin/account', label: adminMessages.nav.account },
 ];
@@ -23,7 +24,7 @@ export function Nav() {
   return (
     <nav aria-label={adminMessages.title} className={styles.navWrap}>
       <ul className={styles.nav}>
-        {ITEMS.map((item) => {
+        {items().map((item) => {
           const current = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <li key={item.href}>

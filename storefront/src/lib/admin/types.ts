@@ -193,3 +193,30 @@ export interface BlogAuditEntry {
   action: string;
   adminUsername: string | null;
 }
+
+export interface AdminTranslation {
+  id: number;
+  key: string;
+  culture: string;
+  text: string;
+  defaultText: string;
+  isEdited: boolean;
+  inUse: boolean;
+  placeholders: string[];
+  updatedAtUtc: string;
+  updatedBy: string | null;
+  rowVersion: string;
+}
+
+export interface TranslationArea {
+  area: string;
+  count: number;
+  edited: number;
+}
+
+export interface TranslationAuditEntry {
+  atUtc: string;
+  adminUsername: string | null;
+  oldText: string;
+  newText: string;
+}
