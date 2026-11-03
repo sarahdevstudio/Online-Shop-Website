@@ -4,11 +4,11 @@ import { useState, type ChangeEvent } from 'react';
 import { Alert } from '@/components/Alert';
 import { Button } from '@/components/Button';
 import { FileField } from '@/components/form';
+import { useFieldIds } from '@/components/form/Form';
 import { MAX_IMAGE_BYTES } from '@/lib/admin/image-upload';
 import { siteMessages } from '@/lib/admin/site-messages';
 import type { SiteImagePurpose, SiteUploadResult } from '@/lib/admin/site-types';
 import { formatNumber } from '@/lib/format';
-import { useSiteEditor } from './SiteEditor';
 import styles from './site.module.css';
 
 export interface UploadedImage {
@@ -44,7 +44,9 @@ export function ImageUploadField({ name, label, purpose, initial, hint, removabl
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [narrow, setNarrow] = useState(false);
-  const { state } = useSiteEditor();
+  // The API reports a media problem under the payload path (`logo.mediaId`), which is this field's name; the message goes
+  // inline under the file input like every other field's, and the input is the one that takes focus.
+  const { error } = useFieldIds(name, false);
 
   async function upload(event: ChangeEvent<HTMLDivElement>) {
     const input = event.target as HTMLInputElement;
@@ -92,7 +94,7 @@ export function ImageUploadField({ name, label, purpose, initial, hint, removabl
     <div className="ui-field ui-field--full">
       <input type="hidden" name={name} value={image?.id ?? ''} />
       <div onChange={upload}>
-        <FileField name={`${name}File`} label={label} error={state.errors[name]} accept="image/jpeg,image/png,image/webp" hint={hint ? `${hint} ${siteMessages.upload.formats}` : siteMessages.upload.formats} />
+        <FileField name={`${name}File`} label={label} error={error} accept="image/jpeg,image/png,image/webp" hint={hint ? `${hint} ${siteMessages.upload.formats}` : siteMessages.upload.formats} />
       </div>
       <div className={styles.preview} aria-live="polite">
         {busy && <span className={styles.muted}>{siteMessages.upload.uploading}</span>}
