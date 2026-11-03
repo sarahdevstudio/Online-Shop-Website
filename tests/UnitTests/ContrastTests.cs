@@ -77,9 +77,10 @@ public class ContrastTests
 
         Assert.False(result.Ok);
         Assert.Equal(4.5, result.Min);
-        Assert.Contains("متن روی پس‌زمینه", result.Message);
-        Assert.Contains("۲٫۳۲", result.Message); // 2.32 : 1
-        Assert.Contains("حداقل ۴٫۵", result.Message);
+        var message = Shop.Application.Translations.Translate.Resolve(result.Message);
+        Assert.Contains("متن روی پس‌زمینه", message);
+        Assert.Contains("۲٫۳۲", message); // 2.32 : 1
+        Assert.Contains("حداقل ۴٫۵", message);
     }
 
     [Fact]

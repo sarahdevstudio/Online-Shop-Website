@@ -1,6 +1,7 @@
 using System.Globalization;
 using Shop.Application.Common;
 using Shop.Domain.Catalog;
+using Shop.Domain.Common;
 
 namespace Shop.Application.Catalog;
 
@@ -29,7 +30,7 @@ public static class ProductListQueryParser
                 case "q":
                     if (single is { Length: > ProductListQuery.QMaxLength })
                     {
-                        errors["q"] = [$"حداکثر {ProductListQuery.QMaxLength} نویسه."];
+                        errors["q"] = [Msg.Of("api.validation.query-max-length", ("max", ProductListQuery.QMaxLength))];
                     }
 
                     result = result with { Q = single };
@@ -54,7 +55,7 @@ public static class ProductListQueryParser
                     }
                     else
                     {
-                        errors["inStock"] = ["مقدار باید «بله» یا «خیر» باشد."];
+                        errors["inStock"] = ["api.validation.yes-no"];
                     }
 
                     break;
@@ -69,7 +70,7 @@ public static class ProductListQueryParser
                     }
                     else
                     {
-                        errors["discounted"] = ["مقدار باید «بله» یا «خیر» باشد."];
+                        errors["discounted"] = ["api.validation.yes-no"];
                     }
 
                     break;
@@ -83,7 +84,7 @@ public static class ProductListQueryParser
                     };
                     if (sort is null)
                     {
-                        errors["sort"] = ["ترتیب نمایش نامعتبر است."];
+                        errors["sort"] = ["api.validation.sort-invalid"];
                     }
                     else
                     {
@@ -112,7 +113,7 @@ public static class ProductListQueryParser
 
         if (result is { MinPrice: { } min, MaxPrice: { } max } && min > max)
         {
-            errors["minPrice"] = ["حداقل قیمت نباید از حداکثر قیمت بیشتر باشد."];
+            errors["minPrice"] = ["api.validation.price-range"];
         }
 
         return errors.Count > 0

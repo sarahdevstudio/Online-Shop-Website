@@ -25,15 +25,15 @@ public sealed class PlaceOrderRequestValidator : AbstractValidator<PlaceOrderReq
 {
     public PlaceOrderRequestValidator()
     {
-        RuleFor(x => x.FullName).Must(v => LengthBetween(v, 3, Order.NameMaxLength)).WithMessage("نام و نام خانوادگی را وارد کنید.");
-        RuleFor(x => x.Mobile).Must(v => IranianMobile.TryNormalize(v, out _)).WithMessage("شماره موبایل معتبر نیست (مثال: ۰۹۱۲۳۴۵۶۷۸۹).");
-        RuleFor(x => x.Province).Must(v => LengthBetween(v, 2, Order.ProvinceMaxLength)).WithMessage("استان را وارد کنید.");
-        RuleFor(x => x.City).Must(v => LengthBetween(v, 2, Order.CityMaxLength)).WithMessage("شهر را وارد کنید.");
-        RuleFor(x => x.Address).Must(v => LengthBetween(v, 10, Order.AddressMaxLength)).WithMessage("نشانی کامل را وارد کنید (حداقل ۱۰ نویسه).");
-        RuleFor(x => x.PostalCode).Must(v => PostalCodes.TryNormalize(v, out _)).WithMessage("کد پستی باید ۱۰ رقم باشد.");
+        RuleFor(x => x.FullName).Must(v => LengthBetween(v, 3, Order.NameMaxLength)).WithMessage("api.validation.order-full-name");
+        RuleFor(x => x.Mobile).Must(v => IranianMobile.TryNormalize(v, out _)).WithMessage("api.validation.order-mobile");
+        RuleFor(x => x.Province).Must(v => LengthBetween(v, 2, Order.ProvinceMaxLength)).WithMessage("api.validation.order-province");
+        RuleFor(x => x.City).Must(v => LengthBetween(v, 2, Order.CityMaxLength)).WithMessage("api.validation.order-city");
+        RuleFor(x => x.Address).Must(v => LengthBetween(v, 10, Order.AddressMaxLength)).WithMessage("api.validation.order-address");
+        RuleFor(x => x.PostalCode).Must(v => PostalCodes.TryNormalize(v, out _)).WithMessage("api.validation.order-postal-code");
         RuleFor(x => x.Note).Must(v => v is null || PersianText.NormalizeLetters(v).Length <= Order.NoteMaxLength)
-            .WithMessage($"توضیحات حداکثر {Order.NoteMaxLength} نویسه باشد.");
-        RuleFor(x => x.PaymentMethod).IsInEnum().WithMessage("روش پرداخت را انتخاب کنید.");
+            .WithMessage(Msg.Of("api.validation.order-note-max", ("max", Order.NoteMaxLength)));
+        RuleFor(x => x.PaymentMethod).IsInEnum().WithMessage("api.validation.order-payment-method");
         RuleFor(x => x.ExpectedTotal).GreaterThanOrEqualTo(0);
     }
 
@@ -46,11 +46,11 @@ public sealed class TransferReferenceRequestValidator : AbstractValidator<Transf
     public TransferReferenceRequestValidator()
     {
         RuleFor(x => x.Tracking).Must(v => PersianText.Normalize(Digits.ToLatin(v)).Length is var n && n >= 4 && n <= Order.TrackingMaxLength)
-            .WithMessage("شماره پیگیری را وارد کنید.");
+            .WithMessage("api.validation.transfer-tracking");
         RuleFor(x => x.Time).Must(v => PersianText.Normalize(Digits.ToLatin(v)).Length is var n && n >= 1 && n <= Order.TransferTimeMaxLength)
-            .WithMessage("زمان انتقال را وارد کنید.");
+            .WithMessage("api.validation.transfer-time");
         RuleFor(x => x.CardLast4).Must(v => Digits.ToLatin(v) is { Length: 4 } d && d.All(char.IsAsciiDigit))
-            .WithMessage("۴ رقم آخر کارت را وارد کنید.");
+            .WithMessage("api.validation.transfer-card-last");
     }
 }
 

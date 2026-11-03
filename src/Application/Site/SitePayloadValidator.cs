@@ -35,11 +35,11 @@ public static partial class SitePayloadValidator
     [GeneratedRegex(@"^[A-Za-z0-9]{10,64}$")]
     private static partial Regex Code();
 
-    private const string Required = "این مقدار الزامی است.";
-    private const string Invalid = "مقدار واردشده معتبر نیست.";
-    private const string BadLink = "نشانی باید مسیری داخلی مانند /about یا نشانی کامل https:// باشد.";
+    private const string Required = "api.validation.site-required";
+    private const string Invalid = "api.validation.site-invalid";
+    private const string BadLink = "api.validation.site-link";
 
-    private static string TooLong(int max) => $"حداکثر {Fa(max)} نویسه مجاز است.";
+    private static string TooLong(int max) => Msg.Of("api.validation.site-max-length", ("max", Fa(max)));
 
     private static string Fa(int number) => Contrast.Format(number);
 
@@ -196,11 +196,11 @@ public static partial class SitePayloadValidator
         }
         else if (!refs.Media.TryGetValue(id.Value, out var actual))
         {
-            errors.Add(path, "تصویر پیدا نشد؛ آن را دوباره بارگذاری کنید.");
+            errors.Add(path, "api.validation.site-image-missing");
         }
         else if (purpose is not null && actual != purpose)
         {
-            errors.Add(path, "این تصویر برای این بخش بارگذاری نشده است.");
+            errors.Add(path, "api.validation.site-image-wrong-purpose");
         }
     }
 
@@ -211,7 +211,7 @@ public static partial class SitePayloadValidator
         var color = value?.Trim() ?? string.Empty;
         if (!HexColor().IsMatch(color))
         {
-            errors.Add(path, "رنگ باید به شکل #rrggbb باشد.");
+            errors.Add(path, "api.validation.site-color");
             return color;
         }
 
@@ -223,13 +223,13 @@ public static partial class SitePayloadValidator
         var font = theme.Font?.Trim().ToLowerInvariant() ?? string.Empty;
         if (!SiteValues.Fonts.Contains(font))
         {
-            errors.Add("font", "قلم انتخاب‌شده مجاز نیست.");
+            errors.Add("font", "api.validation.site-font");
         }
 
         var radius = theme.Radius?.Trim().ToLowerInvariant() ?? string.Empty;
         if (!SiteValues.Radii.Contains(radius))
         {
-            errors.Add("radius", "گوشه‌گردی انتخاب‌شده مجاز نیست.");
+            errors.Add("radius", "api.validation.site-radius");
         }
 
         ThemeLogo? logo = null;
@@ -272,7 +272,7 @@ public static partial class SitePayloadValidator
         var known = home.Blocks.Where(b => b.Data is not null && SiteValues.BlockTypes.Contains(b.Type)).ToList();
         if (known.Count > SiteValues.MaxBlocks)
         {
-            errors.Add("blocks", $"حداکثر {Fa(SiteValues.MaxBlocks)} بخش مجاز است.");
+            errors.Add("blocks", Msg.Of("api.validation.site-blocks-max", ("max", Fa(SiteValues.MaxBlocks))));
         }
 
         var seen = new HashSet<Guid>();
@@ -284,7 +284,7 @@ public static partial class SitePayloadValidator
             var id = block.Id == Guid.Empty ? Guid.NewGuid() : block.Id;
             if (!seen.Add(id))
             {
-                errors.Add($"{path}.id", "شناسهٔ بخش تکراری است.");
+                errors.Add($"{path}.id", "api.validation.site-block-duplicate");
             }
 
             object data = block.Data switch
@@ -306,12 +306,12 @@ public static partial class SitePayloadValidator
     {
         if (hero.AutoplaySeconds != 0 && hero.AutoplaySeconds is < 4 or > 12)
         {
-            errors.Add($"{path}.autoplaySeconds", "زمان تعویض خودکار باید ۰ (خاموش) یا بین ۴ تا ۱۲ ثانیه باشد.");
+            errors.Add($"{path}.autoplaySeconds", "api.validation.site-hero-autoplay");
         }
 
         if (hero.Slides.Count is < 1 or > 6)
         {
-            errors.Add($"{path}.slides", "تعداد اسلایدها باید بین ۱ تا ۶ باشد.");
+            errors.Add($"{path}.slides", "api.validation.site-hero-slides");
         }
 
         var slides = new List<HeroSlide>();
@@ -343,7 +343,7 @@ public static partial class SitePayloadValidator
             }
             else if (title.Length == 0)
             {
-                errors.Add($"{p}.title", "اسلاید باید تصویر یا عنوان داشته باشد.");
+                errors.Add($"{p}.title", "api.validation.site-slide-content");
             }
 
             slides.Add(new HeroSlide
@@ -364,7 +364,7 @@ public static partial class SitePayloadValidator
     {
         if (tiles.Items.Count is < 2 or > 12)
         {
-            errors.Add($"{path}.items", "تعداد دسته‌ها باید بین ۲ تا ۱۲ باشد.");
+            errors.Add($"{path}.items", "api.validation.site-tiles-count");
         }
 
         var seen = new HashSet<int>();
@@ -375,11 +375,11 @@ public static partial class SitePayloadValidator
             var p = $"{path}.items[{i}]";
             if (!refs.CategoryIds.Contains(item.CategoryId))
             {
-                errors.Add($"{p}.categoryId", "دسته پیدا نشد.");
+                errors.Add($"{p}.categoryId", "api.validation.site-category-missing");
             }
             else if (!seen.Add(item.CategoryId))
             {
-                errors.Add($"{p}.categoryId", "این دسته تکراری است.");
+                errors.Add($"{p}.categoryId", "api.validation.site-category-duplicate");
             }
 
             var label = OptionalText(item.Label);
@@ -400,12 +400,12 @@ public static partial class SitePayloadValidator
         var source = row.Source?.Trim() ?? string.Empty;
         if (!SiteValues.ProductSources.Contains(source))
         {
-            errors.Add($"{path}.source", "منبع محصولات مجاز نیست.");
+            errors.Add($"{path}.source", "api.validation.site-row-source");
         }
 
         if (row.Limit is < 4 or > 12)
         {
-            errors.Add($"{path}.limit", "تعداد محصولات باید بین ۴ تا ۱۲ باشد.");
+            errors.Add($"{path}.limit", "api.validation.site-row-limit");
         }
 
         int? categoryId = null;
@@ -414,7 +414,7 @@ public static partial class SitePayloadValidator
         {
             if (row.CategoryId is null || !refs.CategoryIds.Contains(row.CategoryId.Value))
             {
-                errors.Add($"{path}.categoryId", "دسته پیدا نشد.");
+                errors.Add($"{path}.categoryId", "api.validation.site-category-missing");
             }
 
             categoryId = row.CategoryId;
@@ -424,12 +424,12 @@ public static partial class SitePayloadValidator
             productIds = row.ProductIds.Distinct().ToList();
             if (productIds.Count is < 1 or > 12)
             {
-                errors.Add($"{path}.productIds", "تعداد محصولات انتخاب‌شده باید بین ۱ تا ۱۲ باشد.");
+                errors.Add($"{path}.productIds", "api.validation.site-row-handpicked-count");
             }
 
             if (productIds.Any(id => !refs.ProductIds.Contains(id)))
             {
-                errors.Add($"{path}.productIds", "یکی از محصولات پیدا نشد.");
+                errors.Add($"{path}.productIds", "api.validation.site-row-product-missing");
             }
         }
 
@@ -461,7 +461,7 @@ public static partial class SitePayloadValidator
         var height = data.Height?.Trim() ?? string.Empty;
         if (!SiteValues.BannerHeights.Contains(height))
         {
-            errors.Add($"{path}.height", "ارتفاع بنر مجاز نیست.");
+            errors.Add($"{path}.height", "api.validation.site-banner-height");
         }
 
         return new BannerData { MediaId = data.MediaId, Alt = alt, Link = link, Height = height };
@@ -475,7 +475,7 @@ public static partial class SitePayloadValidator
         var style = bar.Style?.Trim() ?? string.Empty;
         if (!SiteValues.AnnouncementStyles.Contains(style))
         {
-            errors.Add("announcement.style", "سبک نوار اعلان مجاز نیست.");
+            errors.Add("announcement.style", "api.validation.site-announcement-style");
         }
 
         var barText = RequiredText(bar.Text, 140, "announcement.text", errors, required: bar.Enabled);
@@ -490,7 +490,7 @@ public static partial class SitePayloadValidator
 
         if (chrome.HeaderMenu.Count > 8)
         {
-            errors.Add("headerMenu", $"حداکثر {Fa(8)} گزینه در منوی بالا مجاز است.");
+            errors.Add("headerMenu", Msg.Of("api.validation.site-menu-max", ("max", Fa(8))));
         }
 
         var menu = new List<MenuItem>();
@@ -505,7 +505,7 @@ public static partial class SitePayloadValidator
             {
                 if (item.Children.Count > 8)
                 {
-                    errors.Add($"{p}.children", $"حداکثر {Fa(8)} زیرمنو مجاز است.");
+                    errors.Add($"{p}.children", Msg.Of("api.validation.site-submenu-max", ("max", Fa(8))));
                 }
 
                 for (var c = 0; c < item.Children.Count; c++)
@@ -530,7 +530,7 @@ public static partial class SitePayloadValidator
         var about = RequiredText(chrome.Footer.About, 300, "footer.about", errors, required: false);
         if (chrome.Footer.Columns.Count > 4)
         {
-            errors.Add("footer.columns", $"حداکثر {Fa(4)} ستون در پاورقی مجاز است.");
+            errors.Add("footer.columns", Msg.Of("api.validation.site-footer-columns-max", ("max", Fa(4))));
         }
 
         var columns = new List<FooterColumn>();
@@ -541,7 +541,7 @@ public static partial class SitePayloadValidator
             var title = RequiredText(column.Title, 40, $"{p}.title", errors);
             if (column.Links.Count > 8)
             {
-                errors.Add($"{p}.links", $"حداکثر {Fa(8)} پیوند در هر ستون مجاز است.");
+                errors.Add($"{p}.links", Msg.Of("api.validation.site-footer-links-max", ("max", Fa(8))));
             }
 
             var links = column.Links.Select((link, l) => new FooterLink
@@ -581,7 +581,7 @@ public static partial class SitePayloadValidator
         var normalized = SocialLinkNormalizer.Normalize(platform, input);
         if (normalized is null)
         {
-            errors.Add($"social.{platform}", "شناسه یا نشانی این شبکه معتبر نیست.");
+            errors.Add($"social.{platform}", "api.validation.site-social");
         }
 
         return normalized;
@@ -594,7 +594,7 @@ public static partial class SitePayloadValidator
         var siteName = Text(seo.SiteName);
         if (siteName.Length is < 2 or > 60)
         {
-            errors.Add("siteName", "نام سایت باید بین ۲ تا ۶۰ نویسه باشد.");
+            errors.Add("siteName", "api.validation.site-name-length");
         }
 
         var template = Text(seo.TitleTemplate);
@@ -604,7 +604,7 @@ public static partial class SitePayloadValidator
         }
         else if (template.Split("%s").Length != 2)
         {
-            errors.Add("titleTemplate", "قالب عنوان باید دقیقاً یک بار %s داشته باشد.");
+            errors.Add("titleTemplate", "api.validation.site-title-template");
         }
 
         var homeTitle = RequiredText(seo.HomeTitle, 70, "homeTitle", errors);
@@ -628,12 +628,12 @@ public static partial class SitePayloadValidator
             enamad = new EnamadBadge { Id = e.Id?.Trim() ?? string.Empty, Code = e.Code?.Trim() ?? string.Empty };
             if (!Digits().IsMatch(enamad.Id))
             {
-                errors.Add("enamad.id", "شناسه باید فقط رقم باشد (حداکثر ۱۰ رقم).");
+                errors.Add("enamad.id", "api.validation.site-badge-id");
             }
 
             if (!Code().IsMatch(enamad.Code))
             {
-                errors.Add("enamad.code", "کد باید ۱۰ تا ۶۴ حرف انگلیسی یا عدد باشد.");
+                errors.Add("enamad.code", "api.validation.site-badge-code");
             }
         }
 
@@ -648,17 +648,17 @@ public static partial class SitePayloadValidator
             };
             if (!Digits().IsMatch(samandehi.Id))
             {
-                errors.Add("samandehi.id", "شناسه باید فقط رقم باشد (حداکثر ۱۰ رقم).");
+                errors.Add("samandehi.id", "api.validation.site-badge-id");
             }
 
             if (!Code().IsMatch(samandehi.VerifyCode))
             {
-                errors.Add("samandehi.verifyCode", "کد باید ۱۰ تا ۶۴ حرف انگلیسی یا عدد باشد.");
+                errors.Add("samandehi.verifyCode", "api.validation.site-badge-code");
             }
 
             if (!Code().IsMatch(samandehi.LogoCode))
             {
-                errors.Add("samandehi.logoCode", "کد باید ۱۰ تا ۶۴ حرف انگلیسی یا عدد باشد.");
+                errors.Add("samandehi.logoCode", "api.validation.site-badge-code");
             }
         }
 

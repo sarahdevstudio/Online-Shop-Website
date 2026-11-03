@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Shop.Domain.Common;
 using Shop.Domain.Site;
 
 namespace Shop.Application.Site;
@@ -55,23 +56,21 @@ public static class Contrast
             var ratio = Ratio(foreground, background);
             var rounded = Math.Round(ratio, 2, MidpointRounding.AwayFromZero);
             var ok = rounded >= min;
-            var message = ok
-                ? $"{label}: {Format(ratio)} به ۱ (حداقل {Format(min)})"
-                : $"{label}: {Format(ratio)} به ۱ — حداقل {Format(min)}";
+            var message = Msg.Of(ok ? "api.site.contrast-pass" : "api.site.contrast-fail", ("label", label), ("ratio", Format(ratio)), ("min", Format(min)));
             results.Add(new ContrastResult(id, foreground, background, rounded, min, ok, message));
         }
 
-        Add("text-background", "متن روی پس‌زمینه", theme.Text, theme.Background, NormalText);
-        Add("text-surface", "متن روی سطح", theme.Text, theme.Surface, NormalText);
-        Add("primary-background", "رنگ اصلی (به‌عنوان متن) روی پس‌زمینه", theme.Primary, theme.Background, NormalText);
-        Add("primary-surface", "رنگ اصلی (به‌عنوان متن) روی سطح", theme.Primary, theme.Surface, NormalText);
-        Add("on-primary", "متن روی رنگ اصلی", OnColor(theme.Primary), theme.Primary, NormalText);
-        Add("on-secondary", "متن روی رنگ ثانویه", OnColor(theme.Secondary), theme.Secondary, NormalText);
-        Add("on-accent", "متن روی رنگ تأکید", OnColor(theme.Accent), theme.Accent, NormalText);
-        Add("success-background", "رنگ موفقیت روی پس‌زمینه", theme.Success, theme.Background, NormalText);
-        Add("warning-background", "رنگ هشدار روی پس‌زمینه", theme.Warning, theme.Background, NormalText);
-        Add("danger-background", "رنگ خطا روی پس‌زمینه", theme.Danger, theme.Background, NormalText);
-        Add("focus-background", "حلقهٔ تمرکز (رنگ اصلی) روی پس‌زمینه", theme.Primary, theme.Background, NonText);
+        Add("text-background", "api.site.contrast.text-background", theme.Text, theme.Background, NormalText);
+        Add("text-surface", "api.site.contrast.text-surface", theme.Text, theme.Surface, NormalText);
+        Add("primary-background", "api.site.contrast.primary-background", theme.Primary, theme.Background, NormalText);
+        Add("primary-surface", "api.site.contrast.primary-surface", theme.Primary, theme.Surface, NormalText);
+        Add("on-primary", "api.site.contrast.on-primary", OnColor(theme.Primary), theme.Primary, NormalText);
+        Add("on-secondary", "api.site.contrast.on-secondary", OnColor(theme.Secondary), theme.Secondary, NormalText);
+        Add("on-accent", "api.site.contrast.on-accent", OnColor(theme.Accent), theme.Accent, NormalText);
+        Add("success-background", "api.site.contrast.success-background", theme.Success, theme.Background, NormalText);
+        Add("warning-background", "api.site.contrast.warning-background", theme.Warning, theme.Background, NormalText);
+        Add("danger-background", "api.site.contrast.danger-background", theme.Danger, theme.Background, NormalText);
+        Add("focus-background", "api.site.contrast.focus-background", theme.Primary, theme.Background, NonText);
         return results;
     }
 
