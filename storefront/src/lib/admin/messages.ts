@@ -18,6 +18,7 @@ export const adminMessages = {
     brands: 'برندها',
     content: 'صفحات',
     blog: 'وبلاگ',
+    site: 'سایت',
     settings: 'تنظیمات',
     account: 'حساب من',
   },

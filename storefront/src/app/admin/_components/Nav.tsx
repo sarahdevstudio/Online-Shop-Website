@@ -13,6 +13,7 @@ const ITEMS = [
   { href: '/admin/brands', label: adminMessages.nav.brands },
   { href: '/admin/content', label: adminMessages.nav.content },
   { href: '/admin/blog', label: adminMessages.nav.blog },
+  { href: '/admin/site', label: adminMessages.nav.site },
   { href: '/admin/settings', label: adminMessages.nav.settings },
   { href: '/admin/account', label: adminMessages.nav.account },
 ];
