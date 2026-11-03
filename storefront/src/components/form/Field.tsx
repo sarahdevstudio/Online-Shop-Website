@@ -61,6 +61,7 @@ interface TextProps extends Shared {
   autoComplete?: HTMLInputAutoCompleteAttribute;
   maxLength?: number;
   placeholder?: string;
+  enterKeyHint?: 'search' | 'done' | 'go' | 'next' | 'send';
   defaultValue?: string | number | null;
   value?: string;
   onChange?: ChangeEventHandler<HTMLInputElement>;
@@ -68,7 +69,7 @@ interface TextProps extends Shared {
   compact?: boolean;
 }
 
-export function TextField({ name, label, hint, required, full, disabled, hideLabel, error: errorProp, type = 'text', ltr, inputMode, autoComplete, maxLength, placeholder, defaultValue, value, onChange, compact }: TextProps) {
+export function TextField({ name, label, hint, required, full, disabled, hideLabel, error: errorProp, type = 'text', ltr, inputMode, autoComplete, maxLength, placeholder, enterKeyHint, defaultValue, value, onChange, compact }: TextProps) {
   const { id, error, describedBy, invalid } = useFieldIds(name, Boolean(hint), errorProp);
   return (
     <div className={cls('ui-field', full && 'ui-field--full', compact && 'ui-field--compact')}>
@@ -83,6 +84,7 @@ export function TextField({ name, label, hint, required, full, disabled, hideLab
         autoComplete={autoComplete}
         maxLength={maxLength}
         placeholder={placeholder}
+        enterKeyHint={enterKeyHint}
         required={required}
         disabled={disabled}
         aria-invalid={invalid}

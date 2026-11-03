@@ -92,13 +92,23 @@
 
 .search {
   position: relative;
-  display: flex;
+  display: block;
+  min-inline-size: 0;
 }
 
-.search input {
+/* Pill look on top of the shared control (height, border, focus ring come from .ui-control). */
+.search :global(.ui-control) {
   padding-inline-end: calc(var(--control-height) + var(--space-1));
   border-radius: var(--radius-full);
   background: var(--color-surface-muted);
+}
+
+.search :global(.ui-control):focus-visible {
+  border-radius: var(--radius-full);
+}
+
+.search :global(.ui-control)::-webkit-search-cancel-button {
+  appearance: none;
 }
 
 .searchBtn {
@@ -117,6 +127,11 @@
 
 .searchBtn:hover {
   color: var(--color-primary);
+}
+
+.searchBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .primary {

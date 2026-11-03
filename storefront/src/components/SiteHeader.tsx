@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { Form, TextField } from '@/components/form';
 import { Icon } from './Icon';
 import { formatNumber } from '@/lib/format';
 import { messages } from '@/lib/messages';
@@ -70,23 +71,12 @@ export function SiteHeader({ brandName, navItems = [], cartCount = 0 }: SiteHead
           <span>{brandName}</span>
         </Link>
 
-        <form className={styles.search} role="search" onSubmit={onSubmit}>
-          <label className="ui-visually-hidden" htmlFor="header-search">
-            {messages.searchLabel}
-          </label>
-          <input
-            id="header-search"
-            className="ui-control"
-            type="search"
-            name="q"
-            autoComplete="off"
-            enterKeyHint="search"
-            placeholder={messages.searchPlaceholder}
-          />
+        <Form className={styles.search} role="search" onSubmit={onSubmit}>
+          <TextField name="q" label={messages.searchLabel} hideLabel type="search" autoComplete="off" enterKeyHint="search" placeholder={messages.searchPlaceholder} />
           <button type="submit" className={styles.searchBtn} aria-label={messages.searchSubmit}>
             <Icon name="search" />
           </button>
-        </form>
+        </Form>
 
         <div className={styles.actions}>
           <Link className={styles.iconBtn} href="/cart" aria-label={cartLabel}>
