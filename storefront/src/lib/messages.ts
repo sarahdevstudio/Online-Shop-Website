@@ -40,6 +40,7 @@ export const messages = {
   unavailableText: 'لطفاً چند دقیقه دیگر دوباره تلاش کنید.',
   retry: 'تلاش دوباره',
   filters: 'فیلترها',
+  productsHeading: 'محصولات',
   brand: 'برند',
   price: 'قیمت (تومان)',
   priceFrom: 'از',

@@ -27,6 +27,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         <p>{messages.emptyTitle}</p>
       ) : (
         <div className="ui-product-grid">
+          <h2 className="ui-visually-hidden">{messages.productsHeading}</h2>
           {result.items.map((p) => (
             <ProductCard key={p.slug} product={p} />
           ))}

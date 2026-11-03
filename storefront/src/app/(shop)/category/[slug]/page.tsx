@@ -122,6 +122,7 @@ export default async function CategoryPage(props: Props) {
             </div>
           ) : (
             <div className="ui-product-grid ui-product-grid--listing">
+              <h2 className="ui-visually-hidden">{messages.productsHeading}</h2>
               {result.items.map((p, i) => (
                 <ProductCard key={p.slug} product={p} linkQuery={linkQuery} priority={i < 4} />
               ))}
