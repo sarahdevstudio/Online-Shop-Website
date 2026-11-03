@@ -20,7 +20,7 @@ const ITEMS = [
 export function Nav() {
   const pathname = usePathname();
   return (
-    <nav aria-label={adminMessages.title} className={styles.nav}>
+    <nav aria-label={adminMessages.title} className={styles.navWrap}>
       <ul className={styles.nav}>
         {ITEMS.map((item) => {
           const current = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);

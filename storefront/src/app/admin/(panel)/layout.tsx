@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
 import { logoutAction } from '../actions';
 import { Nav } from '../_components/Nav';
-import { SubmitButton } from '../_components/FormBits';
+import { Form, SubmitButton } from '@/components/form';
 import styles from '../admin.module.css';
 
 /** Everything under /admin except the login page: signed-in admins only (checked here and again in every action). */
@@ -16,11 +16,11 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         <Nav />
         <div className={styles.who}>
           <bdi dir="ltr">{session.username}</bdi>
-          <form action={logoutAction}>
-            <SubmitButton variant="secondary" size="sm">
+          <Form action={logoutAction} inline>
+            <SubmitButton variant="secondary">
               {adminMessages.logout}
             </SubmitButton>
-          </form>
+          </Form>
         </div>
       </header>
       <main id="main" className={styles.content} tabIndex={-1}>

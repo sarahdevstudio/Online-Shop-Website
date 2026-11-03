@@ -1,22 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useFormStatus } from 'react-dom';
 import { Alert } from '@/components/Alert';
 import { Button } from '@/components/Button';
 import { adminMessages } from '@/lib/admin/messages';
 import type { FormState } from '@/lib/admin/form-state';
-import styles from '../admin.module.css';
-
-/** Submit button that shows a pending state while its form's action runs. */
-export function SubmitButton({ children, variant = 'primary', size }: { children: React.ReactNode; variant?: 'primary' | 'secondary' | 'danger' | 'ghost'; size?: 'sm' | 'md' | 'lg' }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" variant={variant} size={size} loading={pending}>
-      {children}
-    </Button>
-  );
-}
 
 /**
  * Result of a form action: success text, error text, or - for a 409 "data changed" - a banner with a Reload button and the
@@ -47,99 +35,8 @@ export function FormBanner({ state }: { state: FormState }) {
       </Alert>
     );
   }
+  // Field errors are listed by the form's own error summary; a banner would repeat its heading.
+  if (!state.ok && Object.keys(state.errors).length > 0) return null;
   if (state.message) return <Alert variant={state.ok ? 'success' : 'danger'}>{state.message}</Alert>;
   return null;
-}
-
-interface FieldProps {
-  name: string;
-  label: string;
-  state: FormState;
-  defaultValue?: string | number | null;
-  hint?: string;
-  type?: 'text' | 'number' | 'password' | 'email' | 'tel';
-  ltr?: boolean;
-  required?: boolean;
-  multiline?: boolean;
-  wide?: boolean;
-  inputMode?: 'numeric' | 'tel' | 'text';
-  autoComplete?: string;
-  maxLength?: number;
-}
-
-export function Field({ name, label, state, defaultValue, hint, type = 'text', ltr, required, multiline, wide, inputMode, autoComplete, maxLength }: FieldProps) {
-  const id = `f-${name}`;
-  const error = state.errors[name];
-  const common = {
-    id,
-    name,
-    defaultValue: defaultValue ?? '',
-    className: `ui-control ${ltr ? styles.ltr : ''}`,
-    required,
-    'aria-invalid': error ? true : undefined,
-    'aria-describedby': error ? `${id}-error` : hint ? `${id}-hint` : undefined,
-    autoComplete,
-    maxLength,
-  };
-  return (
-    <div className={`${styles.field} ${wide ? styles.wide : ''}`}>
-      <label htmlFor={id} className={styles.fieldLabel}>
-        {label}
-      </label>
-      {multiline ? <textarea {...common} rows={4} /> : <input {...common} type={type} inputMode={inputMode} />}
-      {hint && !error && (
-        <span id={`${id}-hint`} className={styles.hint}>
-          {hint}
-        </span>
-      )}
-      {error && (
-        <span id={`${id}-error`} className={styles.error}>
-          {error}
-        </span>
-      )}
-    </div>
-  );
-}
-
-export function CheckField({ name, label, defaultChecked }: { name: string; label: string; defaultChecked?: boolean }) {
-  return (
-    <label className={styles.checkRow}>
-      <input type="checkbox" name={name} defaultChecked={defaultChecked} /> {label}
-    </label>
-  );
-}
-
-interface SelectFieldProps {
-  name: string;
-  label: string;
-  state: FormState;
-  defaultValue?: string | number | null;
-  children: React.ReactNode;
-}
-
-export function SelectField({ name, label, state, defaultValue, children }: SelectFieldProps) {
-  const id = `f-${name}`;
-  const error = state.errors[name];
-  return (
-    <div className={styles.field}>
-      <label htmlFor={id} className={styles.fieldLabel}>
-        {label}
-      </label>
-      <select
-        id={id}
-        name={name}
-        className="ui-control"
-        defaultValue={defaultValue ?? ''}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-error` : undefined}
-      >
-        {children}
-      </select>
-      {error && (
-        <span id={`${id}-error`} className={styles.error}>
-          {error}
-        </span>
-      )}
-    </div>
-  );
 }
