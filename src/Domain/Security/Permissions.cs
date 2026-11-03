@@ -14,6 +14,7 @@ public static class Permissions
     public const string OrdersManage = "Orders.Manage";
     public const string ContentManage = "Content.Manage";
     public const string BlogManage = "Blog.Manage";
+    public const string SiteManage = "Site.Manage";
 
-    public static IReadOnlyList<string> All { get; } = [UserManage, SettingsManage, CatalogManage, OrdersManage, ContentManage, BlogManage];
+    public static IReadOnlyList<string> All { get; } = [UserManage, SettingsManage, CatalogManage, OrdersManage, ContentManage, BlogManage, SiteManage];
 }
