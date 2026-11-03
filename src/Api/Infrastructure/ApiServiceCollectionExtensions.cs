@@ -102,7 +102,7 @@ public static class ApiServiceCollectionExtensions
         services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
 
         services.AddValidatorsFromAssemblyContaining<RegisterCustomerRequestValidator>();
-        PersianValidation.Configure(); // built-in validator messages and property names in Persian
+        ValidationText.Configure(); // built-in validator messages and property names as translation keys
 
         // Enums travel as camelCase strings ("published"), never as numbers.
         services.ConfigureHttpJsonOptions(options =>
@@ -113,8 +113,8 @@ public static class ApiServiceCollectionExtensions
             {
                 context.ProblemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
                 // Responses the framework builds itself (unknown route, 405, ...) carry English titles; replace them.
-                if (PersianProblemText.ForStatus(context.ProblemDetails.Status) is { } title
-                    && !PersianProblemText.HasPersian(context.ProblemDetails.Title))
+                if (ProblemText.ForStatus(context.ProblemDetails.Status) is { } title
+                    && !ProblemText.HasPersian(context.ProblemDetails.Title))
                 {
                     context.ProblemDetails.Title = title;
                 }

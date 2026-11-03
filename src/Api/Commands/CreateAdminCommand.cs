@@ -112,7 +112,7 @@ public static class CreateAdminCommand
             scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(), username, password, TimeProvider.System, email);
         if (!result.IsSuccess)
         {
-            var details = result.Error!.ValidationErrors is { } errors ? string.Join(" ", errors.SelectMany(e => e.Value)) : result.Error.Message;
+            var details = result.Error!.ValidationErrors is { } errors ? string.Join(" ", errors.SelectMany(e => e.Value).Select(Shop.Application.Translations.Translate.Resolve)) : Shop.Application.Translations.Translate.Resolve(result.Error.MessageKey);
             Console.Error.WriteLine($"Could not create the admin: {details}");
             return 1;
         }

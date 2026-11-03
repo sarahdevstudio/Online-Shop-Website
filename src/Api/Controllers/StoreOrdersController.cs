@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Shop.Api.Infrastructure;
 using Shop.Application.Orders;
+using Shop.Domain.Common;
 
 namespace Shop.Api.Controllers;
 
@@ -25,7 +26,7 @@ public sealed class StoreOrdersController(IOrderService orders) : ApiControllerB
         if (!Guid.TryParse(Request.Headers[StoreEndpointsPolicies.IdempotencyKeyHeader].ToString(), out var key) || key == Guid.Empty)
         {
             return Http(Results.ValidationProblem(
-                new Dictionary<string, string[]> { [StoreEndpointsPolicies.IdempotencyKeyHeader] = ["A GUID idempotency key is required."] }));
+                Messages.Resolve(new Dictionary<string, string[]> { [StoreEndpointsPolicies.IdempotencyKeyHeader] = [Msg.Of("api.validation.idempotency-key-required")] })));
         }
 
         var cartToken = Request.Headers[StoreEndpointsPolicies.CartTokenHeader].FirstOrDefault();

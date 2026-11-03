@@ -28,7 +28,7 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
         var password = TestData.NewPassword();
         using var scope = Fixture.Factory.Services.CreateScope();
         var result = await AdminAccounts.CreateAdminAsync(scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(), email, password, TimeProvider.System);
-        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.True(result.IsSuccess, result.Error?.MessageKey);
         return (email, password);
     }
 

@@ -13,22 +13,22 @@ public enum ErrorType
 public sealed record Error(
     ErrorType Type,
     string Code,
-    string Message,
+    string MessageKey,
     IReadOnlyDictionary<string, string[]>? ValidationErrors = null,
     IReadOnlyDictionary<string, object?>? Extensions = null)
 {
     public static Error Validation(IReadOnlyDictionary<string, string[]> errors) =>
-        new(ErrorType.Validation, "validation_failed", "یک یا چند مقدار نامعتبر است.", errors);
+        new(ErrorType.Validation, "validation_failed", "api.error.validation-failed", errors);
 
-    public static Error Unauthorized(string code, string message) => new(ErrorType.Unauthorized, code, message);
-    public static Error Forbidden(string code, string message) => new(ErrorType.Forbidden, code, message);
-    public static Error NotFound(string code, string message) => new(ErrorType.NotFound, code, message);
-    public static Error Conflict(string code, string message) => new(ErrorType.Conflict, code, message);
-    public static Error TooManyRequests(string code, string message) => new(ErrorType.TooManyRequests, code, message);
+    public static Error Unauthorized(string code, string messageKey) => new(ErrorType.Unauthorized, code, messageKey);
+    public static Error Forbidden(string code, string messageKey) => new(ErrorType.Forbidden, code, messageKey);
+    public static Error NotFound(string code, string messageKey) => new(ErrorType.NotFound, code, messageKey);
+    public static Error Conflict(string code, string messageKey) => new(ErrorType.Conflict, code, messageKey);
+    public static Error TooManyRequests(string code, string messageKey) => new(ErrorType.TooManyRequests, code, messageKey);
 
     /// <summary>A conflict that carries machine-readable details (e.g. which cart lines are short on stock).</summary>
-    public static Error Conflict(string code, string message, IReadOnlyDictionary<string, object?> extensions) =>
-        new(ErrorType.Conflict, code, message, null, extensions);
+    public static Error Conflict(string code, string messageKey, IReadOnlyDictionary<string, object?> extensions) =>
+        new(ErrorType.Conflict, code, messageKey, null, extensions);
 }
 
 public class Result

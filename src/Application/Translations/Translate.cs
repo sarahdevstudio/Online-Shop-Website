@@ -40,8 +40,14 @@ public sealed partial class TranslationResolver(ITranslationSource? source, ILog
             return Get(UnexpectedKey);
         }
 
-        return Msg.TryParse(message, out var key, out var args) ? Format(Template(key), args) : message;
+        return Msg.TryParse(message, out var key, out var args) ? Format(Template(key), args.Select(a => (a.Name, Nested(a.Value)))) : message;
     }
+
+    /// <summary>An argument that is itself a known key (a field label, a contrast pair name) is translated too; any other value is kept.</summary>
+    private string Nested(string value) =>
+        Msg.IsEncoded(value) && !value.Contains('|') && Known(value) ? Template(value) : value;
+
+    private bool Known(string key) => source?.Lookup(key, _culture) is { Length: > 0 } || TranslationManifest.Defaults.ContainsKey(key);
 
     public string Template(string key)
     {

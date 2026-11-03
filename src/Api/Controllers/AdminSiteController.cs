@@ -29,8 +29,8 @@ public sealed class AdminSiteController(IAdminSiteService site, ISiteConfigServi
         if (state is not ("draft" or "published"))
         {
             return Http(Results.ValidationProblem(
-                new Dictionary<string, string[]> { ["state"] = ["مقدار باید draft یا published باشد."] },
-                title: PersianProblemText.BadRequest));
+                Messages.Resolve(new Dictionary<string, string[]> { ["state"] = ["api.validation.site-state-value"] }),
+                title: ProblemText.BadRequest));
         }
 
         return Http(Results.Ok(state == "draft" ? await site.CompiledDraftAsync(ct) : await published.GetPublishedAsync(ct)));
@@ -44,7 +44,7 @@ public sealed class AdminSiteController(IAdminSiteService site, ISiteConfigServi
     {
         if (file is null)
         {
-            return Http(Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: PersianProblemText.MalformedRequest));
+            return Http(Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: ProblemText.MalformedRequest));
         }
 
         await using var stream = file.OpenReadStream();

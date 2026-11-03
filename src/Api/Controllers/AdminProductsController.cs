@@ -64,7 +64,7 @@ public sealed class AdminProductsController(ICatalogAdminService catalog) : ApiC
     {
         if (file is null)
         {
-            return Http(Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: PersianProblemText.MalformedRequest));
+            return Http(Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: ProblemText.MalformedRequest));
         }
 
         await using var stream = file.OpenReadStream();

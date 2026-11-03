@@ -22,9 +22,9 @@ internal sealed class GlobalExceptionHandler(IProblemDetailsService problemDetai
 
         var (status, title) = exception switch
         {
-            BadHttpRequestException => (StatusCodes.Status400BadRequest, PersianProblemText.MalformedRequest),
-            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, PersianProblemText.ConcurrentUpdate),
-            _ => (StatusCodes.Status500InternalServerError, PersianProblemText.Unexpected),
+            BadHttpRequestException => (StatusCodes.Status400BadRequest, ProblemText.MalformedRequest),
+            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, ProblemText.ConcurrentUpdate),
+            _ => (StatusCodes.Status500InternalServerError, ProblemText.Unexpected),
         };
 
         if (status >= StatusCodes.Status500InternalServerError)

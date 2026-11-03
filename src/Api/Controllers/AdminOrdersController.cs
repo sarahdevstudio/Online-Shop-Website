@@ -1,3 +1,4 @@
+using Shop.Api.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shop.Application.Orders;
@@ -27,7 +28,7 @@ public sealed class AdminOrdersController(IAdminOrderService orders) : ApiContro
 
         if (!TryParseFilter<OrderStatus>(status, out var statusFilter) || !TryParseFilter<PaymentStatus>(paymentStatus, out var paymentFilter))
         {
-            return Http(Results.ValidationProblem(new Dictionary<string, string[]> { ["filter"] = ["وضعیت یا وضعیت پرداخت نامعتبر است."] }));
+            return Http(Results.ValidationProblem(Messages.Resolve(new Dictionary<string, string[]> { ["filter"] = ["api.validation.order-filter"] })));
         }
 
         return Http(Results.Ok(await orders.ListAsync(statusFilter, paymentFilter, q, pageValue ?? 1, ct)));

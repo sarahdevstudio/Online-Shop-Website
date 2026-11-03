@@ -1,4 +1,5 @@
 using Shop.Application.Common;
+using Shop.Application.Translations;
 
 namespace Shop.Api.Infrastructure;
 
@@ -6,6 +7,7 @@ internal static class ResultExtensions
 {
     public static IResult ToProblem(this Error error)
     {
+        var message = Translate.Resolve(error.MessageKey);
         var extensions = new Dictionary<string, object?> { ["code"] = error.Code };
         if (error.Extensions is not null)
         {
@@ -18,15 +20,15 @@ internal static class ResultExtensions
         return error.Type switch
         {
             ErrorType.Validation => Results.ValidationProblem(
-                error.ValidationErrors ?? new Dictionary<string, string[]>(),
-                title: error.Message,
+                Messages.Resolve(error.ValidationErrors),
+                title: message,
                 extensions: extensions),
-            ErrorType.Unauthorized => Results.Problem(error.Message, statusCode: StatusCodes.Status401Unauthorized, title: PersianProblemText.Unauthorized, extensions: extensions),
-            ErrorType.Forbidden => Results.Problem(error.Message, statusCode: StatusCodes.Status403Forbidden, title: PersianProblemText.Forbidden, extensions: extensions),
-            ErrorType.NotFound => Results.Problem(error.Message, statusCode: StatusCodes.Status404NotFound, title: PersianProblemText.NotFound, extensions: extensions),
-            ErrorType.Conflict => Results.Problem(error.Message, statusCode: StatusCodes.Status409Conflict, title: PersianProblemText.Conflict, extensions: extensions),
-            ErrorType.TooManyRequests => Results.Problem(error.Message, statusCode: StatusCodes.Status429TooManyRequests, title: PersianProblemText.TooManyRequests, extensions: extensions),
-            _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError, title: PersianProblemText.Unexpected),
+            ErrorType.Unauthorized => Results.Problem(message, statusCode: StatusCodes.Status401Unauthorized, title: ProblemText.Unauthorized, extensions: extensions),
+            ErrorType.Forbidden => Results.Problem(message, statusCode: StatusCodes.Status403Forbidden, title: ProblemText.Forbidden, extensions: extensions),
+            ErrorType.NotFound => Results.Problem(message, statusCode: StatusCodes.Status404NotFound, title: ProblemText.NotFound, extensions: extensions),
+            ErrorType.Conflict => Results.Problem(message, statusCode: StatusCodes.Status409Conflict, title: ProblemText.Conflict, extensions: extensions),
+            ErrorType.TooManyRequests => Results.Problem(message, statusCode: StatusCodes.Status429TooManyRequests, title: ProblemText.TooManyRequests, extensions: extensions),
+            _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError, title: ProblemText.Unexpected),
         };
     }
 
@@ -35,4 +37,10 @@ internal static class ResultExtensions
 
     public static IResult ToHttpResult(this Result result, Func<IResult> onSuccess) =>
         result.IsSuccess ? onSuccess() : result.Error!.ToProblem();
+}
+/// <summary>Turns the message keys carried in validation dictionaries into text, once, at the API boundary.</summary>
+internal static class Messages
+{
+    public static Dictionary<string, string[]> Resolve(IEnumerable<KeyValuePair<string, string[]>>? errors) =>
+        (errors ?? []).ToDictionary(e => e.Key, e => e.Value.Select(Translate.Resolve).ToArray(), StringComparer.Ordinal);
 }
