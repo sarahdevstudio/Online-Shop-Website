@@ -37,9 +37,12 @@ export function BlogEditor({ post }: { post?: AdminBlogPost }) {
         <Field name="excerpt" label={t.excerpt} state={state} defaultValue={post?.excerpt} required wide multiline maxLength={300} />
       </div>
 
-      <label className={styles.field}>
-        <span className={styles.fieldLabel}>{t.body}</span>
+      <div className={`${styles.field} ${styles.wide}`}>
+        <label htmlFor="blog-body" className={styles.fieldLabel}>
+          {t.body}
+        </label>
         <textarea
+          id="blog-body"
           className="ui-control"
           name="body"
           rows={22}
@@ -47,10 +50,15 @@ export function BlogEditor({ post }: { post?: AdminBlogPost }) {
           value={body}
           onChange={(event) => setBody(event.target.value)}
           aria-invalid={state.errors.body ? true : undefined}
+          aria-describedby={state.errors.body ? 'blog-body-error' : undefined}
           style={{ fontFamily: 'ui-monospace, monospace' }}
         />
-        {state.errors.body && <span className={styles.error}>{state.errors.body}</span>}
-      </label>
+        {state.errors.body && (
+          <span id="blog-body-error" className={styles.error}>
+            {state.errors.body}
+          </span>
+        )}
+      </div>
 
       <section className={styles.field} aria-label={t.preview}>
         <span className={styles.fieldLabel}>{t.preview}</span>

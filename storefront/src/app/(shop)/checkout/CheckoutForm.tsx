@@ -79,23 +79,27 @@ export function CheckoutForm({ idempotencyKey, expectedTotal, methods }: Checkou
 
       {state.formError && <Alert variant="danger">{state.formError}</Alert>}
 
-      <fieldset className={styles.methods}>
+      <fieldset className={styles.methods} aria-describedby={errors.paymentMethod ? 'checkout-payment-error' : undefined}>
         <legend className="ui-heading-4">{messages.paymentMethod}</legend>
         {methods.includes('cardToCard') && (
           <label className={styles.method}>
-            <input type="radio" name="paymentMethod" value="cardToCard" defaultChecked={selected === 'cardToCard'} required />
+            <input type="radio" name="paymentMethod" value="cardToCard" defaultChecked={selected === 'cardToCard'} required aria-describedby={errors.paymentMethod ? 'checkout-payment-error' : undefined} />
             <span className={styles.methodTitle}>{messages.cardToCard}</span>
             <span className={styles.hint}>{messages.cardToCardHint}</span>
           </label>
         )}
         {methods.includes('cashOnDelivery') && (
           <label className={styles.method}>
-            <input type="radio" name="paymentMethod" value="cashOnDelivery" defaultChecked={selected === 'cashOnDelivery'} required />
+            <input type="radio" name="paymentMethod" value="cashOnDelivery" defaultChecked={selected === 'cashOnDelivery'} required aria-describedby={errors.paymentMethod ? 'checkout-payment-error' : undefined} />
             <span className={styles.methodTitle}>{messages.cashOnDelivery}</span>
             <span className={styles.hint}>{messages.cashOnDeliveryHint}</span>
           </label>
         )}
-        {errors.paymentMethod && <span className={styles.error}>{errors.paymentMethod}</span>}
+        {errors.paymentMethod && (
+          <span id="checkout-payment-error" className={styles.error}>
+            {errors.paymentMethod}
+          </span>
+        )}
       </fieldset>
 
       <fieldset className={styles.methods}>

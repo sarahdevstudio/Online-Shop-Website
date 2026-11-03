@@ -108,14 +108,18 @@ export function ImagesEditor({ product }: { product: AdminProduct }) {
         </ul>
       )}
       <form onSubmit={upload} className={styles.row} encType="multipart/form-data">
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>{t.upload}</span>
-          <input className="ui-control" type="file" name="file" accept="image/jpeg,image/png,image/webp" required />
-        </label>
-        <label className={styles.field}>
-          <span className={styles.fieldLabel}>{t.alt}</span>
-          <input className="ui-control" type="text" name="alt" maxLength={200} />
-        </label>
+        <div className={styles.field}>
+          <label htmlFor="img-file" className={styles.fieldLabel}>
+            {t.upload}
+          </label>
+          <input id="img-file" className="ui-control" type="file" name="file" accept="image/jpeg,image/png,image/webp" required />
+        </div>
+        <div className={styles.field}>
+          <label htmlFor="img-alt" className={styles.fieldLabel}>
+            {t.alt}
+          </label>
+          <input id="img-alt" className="ui-control" type="text" name="alt" maxLength={200} />
+        </div>
         <Button type="submit" loading={busy}>
           {busy ? t.uploading : t.upload}
         </Button>

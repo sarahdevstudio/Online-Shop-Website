@@ -4,7 +4,7 @@ import { useActionState } from 'react';
 import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminCategory } from '@/lib/admin/types';
-import { CheckField, Field, FormBanner, SubmitButton } from '../../_components/FormBits';
+import { CheckField, Field, FormBanner, SelectField, SubmitButton } from '../../_components/FormBits';
 import { deleteCategoryAction, saveCategoryAction } from './actions';
 import styles from '../../admin.module.css';
 
@@ -23,17 +23,14 @@ export function CategoryForm({ category, roots }: { category?: AdminCategory; ro
       ) : (
         <Field name="slug" label={adminMessages.products.slug} hint={adminMessages.products.slugHint} state={state} ltr required />
       )}
-      <label className={styles.field}>
-        <span className={styles.fieldLabel}>{adminMessages.taxonomy.parent}</span>
-        <select className="ui-control" name="parentId" defaultValue={category?.parentId ?? ''}>
-          <option value="">{adminMessages.taxonomy.root}</option>
-          {parents.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <SelectField name="parentId" label={adminMessages.taxonomy.parent} state={state} defaultValue={category?.parentId ?? ''}>
+        <option value="">{adminMessages.taxonomy.root}</option>
+        {parents.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
+      </SelectField>
       <Field name="sortOrder" label={adminMessages.products.sortOrder} state={state} type="number" defaultValue={category?.sortOrder ?? 0} />
       <Field name="description" label={adminMessages.products.description} state={state} defaultValue={category?.description} multiline wide />
       <CheckField name="isActive" label={adminMessages.active} defaultChecked={category?.isActive ?? true} />

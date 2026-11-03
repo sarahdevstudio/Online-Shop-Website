@@ -14,14 +14,18 @@ export function LoginForm() {
   return (
     <form action={action} className={styles.loginForm}>
       {state.error && <Alert variant="danger">{state.error}</Alert>}
-      <label className={styles.field}>
-        <span>{adminMessages.username}</span>
-        <input className="ui-control" name="username" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} dir="ltr" maxLength={256} required />
-      </label>
-      <label className={styles.field}>
-        <span>{adminMessages.password}</span>
-        <input className="ui-control" name="password" type="password" autoComplete="current-password" dir="ltr" required />
-      </label>
+      <div className={styles.field}>
+        <label htmlFor="login-username" className={styles.fieldLabel}>
+          {adminMessages.username}
+        </label>
+        <input id="login-username" className="ui-control" name="username" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} dir="ltr" maxLength={256} required />
+      </div>
+      <div className={styles.field}>
+        <label htmlFor="login-password" className={styles.fieldLabel}>
+          {adminMessages.password}
+        </label>
+        <input id="login-password" className="ui-control" name="password" type="password" autoComplete="current-password" dir="ltr" required />
+      </div>
       <Button type="submit" loading={pending} block>
         {adminMessages.login}
       </Button>

@@ -108,3 +108,38 @@ export function CheckField({ name, label, defaultChecked }: { name: string; labe
     </label>
   );
 }
+
+interface SelectFieldProps {
+  name: string;
+  label: string;
+  state: FormState;
+  defaultValue?: string | number | null;
+  children: React.ReactNode;
+}
+
+export function SelectField({ name, label, state, defaultValue, children }: SelectFieldProps) {
+  const id = `f-${name}`;
+  const error = state.errors[name];
+  return (
+    <div className={styles.field}>
+      <label htmlFor={id} className={styles.fieldLabel}>
+        {label}
+      </label>
+      <select
+        id={id}
+        name={name}
+        className="ui-control"
+        defaultValue={defaultValue ?? ''}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
+      >
+        {children}
+      </select>
+      {error && (
+        <span id={`${id}-error`} className={styles.error}>
+          {error}
+        </span>
+      )}
+    </div>
+  );
+}

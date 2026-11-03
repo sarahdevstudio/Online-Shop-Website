@@ -37,9 +37,12 @@ export function ContentEditor({ page }: { page: AdminContentPage }) {
         <Field name="title" label={t.pageTitle} state={state} defaultValue={page.title} required wide />
       </div>
 
-      <label className={styles.field}>
-        <span className={styles.fieldLabel}>{t.body}</span>
+      <div className={`${styles.field} ${styles.wide}`}>
+        <label htmlFor="content-body" className={styles.fieldLabel}>
+          {t.body}
+        </label>
         <textarea
+          id="content-body"
           className="ui-control"
           name="body"
           rows={22}
@@ -47,10 +50,15 @@ export function ContentEditor({ page }: { page: AdminContentPage }) {
           value={body}
           onChange={(event) => setBody(event.target.value)}
           aria-invalid={state.errors.body ? true : undefined}
+          aria-describedby={state.errors.body ? 'content-body-error' : undefined}
           style={{ fontFamily: 'ui-monospace, monospace' }}
         />
-        {state.errors.body && <span className={styles.error}>{state.errors.body}</span>}
-      </label>
+        {state.errors.body && (
+          <span id="content-body-error" className={styles.error}>
+            {state.errors.body}
+          </span>
+        )}
+      </div>
 
       <section className={styles.field} aria-label={t.preview}>
         <span className={styles.fieldLabel}>{t.preview}</span>

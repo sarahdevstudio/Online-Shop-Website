@@ -47,8 +47,8 @@ function AdjustForm({ productId, variantId }: { productId: number; variantId: nu
       <input type="hidden" name="variantId" value={variantId} />
       <Field name="delta" label={t.adjust} hint={t.adjustHint} state={state} ltr inputMode="numeric" />
       <Field name="reason" label={t.reason} state={state} />
-      <SubmitButton variant="secondary">{t.apply}</SubmitButton>
       <FormBanner state={state} />
+      <SubmitButton variant="secondary">{t.apply}</SubmitButton>
     </form>
   );
 }
