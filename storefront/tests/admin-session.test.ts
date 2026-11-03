@@ -126,7 +126,7 @@ describe('image upload limits', () => {
 
   it('turns API rejections into clear Persian messages', () => {
     expect(uploadErrorMessage(413, null)).toContain('۵ مگابایت');
-    expect(uploadErrorMessage(400, { file: ['حجم تصویر باید بین ۱ بایت و 5242880 بایت باشد.'] })).toContain('۵ مگابایت');
+    expect(uploadErrorMessage(400, { file: ['حجم تصویر باید بین ۱ بایت و 5242880 بایت باشد.'] })).toContain('بایت');
     expect(uploadErrorMessage(400, { file: ['فقط تصویرهای JPEG، PNG و WebP پذیرفته می‌شوند.'] })).toContain('JPEG');
     expect(uploadErrorMessage(500, null)).toContain('بارگذاری تصویر انجام نشد');
   });

@@ -1,3 +1,4 @@
+import { persianOr } from '../persian-only';
 import { adminMessages } from './messages';
 
 /** The API's `Media:MaxImageBytes` default (5 MB). The API is the authority; these only give fast, clear feedback. */
@@ -10,11 +11,11 @@ export function requestTooLarge(contentLength: number | null): boolean {
   return contentLength !== null && contentLength > MAX_IMAGE_BYTES + MULTIPART_OVERHEAD_BYTES;
 }
 
-/** A clear Persian message for a rejected upload (API validation on `file`, or a 413). */
+/** The message for a rejected upload: the API's text for the file (validation), or ours for a 413 / anything else. */
 export function uploadErrorMessage(status: number, errors: Record<string, string[]> | null): string {
   if (status === 413) return adminMessages.products.imageTooBig;
-  const file = (errors?.file ?? errors?.File ?? []).join(' ');
-  if (status === 400 && /بایت/.test(file)) return adminMessages.products.imageTooBig;
-  if (status === 400 && /JPEG/.test(file)) return adminMessages.products.imageBadType;
+  // The API's own message for the file (size, type...) is the accurate one and is editable in the translation editor.
+  const file = (errors?.file ?? errors?.File ?? [])[0];
+  if (status === 400 && file) return persianOr(file, adminMessages.products.imageFailed);
   return adminMessages.products.imageFailed;
 }

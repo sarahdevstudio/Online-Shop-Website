@@ -22,7 +22,7 @@ function SeoFields({ doc }: { doc: AdminSiteDocument<SeoPayload> }) {
   const [homeTitle, setHomeTitle] = useState(payload.homeTitle);
   const [description, setDescription] = useState(payload.defaultDescription);
   const og = payload.defaultOgMediaId ? doc.media[String(payload.defaultOgMediaId)] : undefined;
-  const example = template.includes('%s') ? template.replace('%s', 'کابل برق') : '';
+  const example = template.includes('%s') ? template.replace('%s', t.titleSample) : '';
 
   return (
     <>

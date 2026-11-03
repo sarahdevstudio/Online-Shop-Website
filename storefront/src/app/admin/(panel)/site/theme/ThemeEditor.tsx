@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { FormBlock, FormGrid, FormSection, SelectField, TextField } from '@/components/form';
-import { contrastReport, isHexColor, onColor, type ContrastItem } from '@/lib/contrast';
+import { contrastReport } from '@/lib/admin/contrast-report';
+import { isHexColor, onColor, type ContrastItem } from '@/lib/contrast';
 import { siteMessages } from '@/lib/admin/site-messages';
 import type { AdminSiteDocument, SiteMediaInfo, ThemePayload } from '@/lib/admin/site-types';
 import { formatNumber } from '@/lib/format';

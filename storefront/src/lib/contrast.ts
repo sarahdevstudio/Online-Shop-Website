@@ -79,47 +79,6 @@ export function persianRatio(ratio: number): string {
   return text.replace(/\d/g, (d) => PERSIAN_DIGITS[Number(d)]).replace('.', '٫');
 }
 
-interface PairSpec {
-  id: string;
-  title: string;
-  foreground: (theme: ThemeColors) => string;
-  background: (theme: ThemeColors) => string;
-  min: number;
-}
-
-const PAIRS: readonly PairSpec[] = [
-  { id: 'text-background', title: 'متن روی پس‌زمینه', foreground: (t) => t.text, background: (t) => t.background, min: 4.5 },
-  { id: 'text-surface', title: 'متن روی سطح', foreground: (t) => t.text, background: (t) => t.surface, min: 4.5 },
-  { id: 'primary-background', title: 'رنگ اصلی (به‌عنوان متن) روی پس‌زمینه', foreground: (t) => t.primary, background: (t) => t.background, min: 4.5 },
-  { id: 'primary-surface', title: 'رنگ اصلی (به‌عنوان متن) روی سطح', foreground: (t) => t.primary, background: (t) => t.surface, min: 4.5 },
-  { id: 'on-primary', title: 'متن روی رنگ اصلی', foreground: (t) => onColor(t.primary), background: (t) => t.primary, min: 4.5 },
-  { id: 'on-secondary', title: 'متن روی رنگ ثانویه', foreground: (t) => onColor(t.secondary), background: (t) => t.secondary, min: 4.5 },
-  { id: 'on-accent', title: 'متن روی رنگ تأکیدی', foreground: (t) => onColor(t.accent), background: (t) => t.accent, min: 4.5 },
-  { id: 'success-background', title: 'رنگ موفقیت (متن) روی پس‌زمینه', foreground: (t) => t.success, background: (t) => t.background, min: 4.5 },
-  { id: 'warning-background', title: 'رنگ هشدار (متن) روی پس‌زمینه', foreground: (t) => t.warning, background: (t) => t.background, min: 4.5 },
-  { id: 'danger-background', title: 'رنگ خطا (متن) روی پس‌زمینه', foreground: (t) => t.danger, background: (t) => t.background, min: 4.5 },
-  { id: 'focus-ring', title: 'حلقهٔ فوکوس (رنگ اصلی) روی پس‌زمینه', foreground: (t) => t.primary, background: (t) => t.background, min: 3 },
-];
-
-/** The WCAG AA report for a palette whose colors are all valid `#rrggbb`. */
-export function contrastReport(theme: ThemeColors): ContrastItem[] {
-  return PAIRS.map((pair) => {
-    const foreground = pair.foreground(theme);
-    const background = pair.background(theme);
-    const ratio = contrastRatio(foreground, background);
-    const ok = ratio >= pair.min;
-    return {
-      id: pair.id,
-      foreground,
-      background,
-      ratio: Math.floor(ratio * 100) / 100,
-      min: pair.min,
-      ok,
-      message: `${pair.title}: ${persianRatio(ratio)} به ۱ — حداقل ${persianRatio(pair.min)}`,
-    };
-  });
-}
-
 /** `color` moved toward `toward` just far enough to reach `min` against every background (used for derived tokens). */
 export function ensureContrast(color: string, toward: string, backgrounds: readonly string[], min: number): string {
   for (let step = 0; step <= 20; step += 1) {

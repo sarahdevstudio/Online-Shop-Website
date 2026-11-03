@@ -31,9 +31,10 @@ describe('admin error text', () => {
     expect(state.message).toBe('تنوع محصول پیدا نشد.');
   });
 
-  it('recognises the Persian upload messages from the API', () => {
-    expect(uploadErrorMessage(400, { file: ['حجم تصویر باید بین ۱ بایت و 5242880 بایت باشد.'] })).toBe(adminMessages.products.imageTooBig);
-    expect(uploadErrorMessage(400, { file: ['فقط تصویرهای JPEG، PNG و WebP پذیرفته می‌شوند.'] })).toBe(adminMessages.products.imageBadType);
+  it('shows the API\'s own Persian message for a rejected file, and ours for the rest', () => {
+    expect(uploadErrorMessage(400, { file: ['حجم تصویر باید بین ۱ بایت و 5242880 بایت باشد.'] })).toBe('حجم تصویر باید بین ۱ بایت و 5242880 بایت باشد.');
+    expect(uploadErrorMessage(400, { file: ['The file is bad.'] })).toBe(adminMessages.products.imageFailed);
+    expect(uploadErrorMessage(413, null)).toBe(adminMessages.products.imageTooBig);
     expect(uploadErrorMessage(500, null)).toBe(adminMessages.products.imageFailed);
   });
 });

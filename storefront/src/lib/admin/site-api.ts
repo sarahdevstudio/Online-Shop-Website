@@ -41,7 +41,7 @@ export function siteProblemState(problem: AdminProblem, submitted: Record<string
   const state = problemState(problem, submitted);
   const contrast = problem.errors?.contrast;
   if (contrast && contrast.length > 0) {
-    return { ...state, message: siteMessages.messages.publishBlocked, errors: { ...state.errors, contrast: contrast.join('؛ ') } };
+    return { ...state, message: siteMessages.messages.publishBlocked, errors: { ...state.errors, contrast: contrast.join(siteMessages.messages.contrastSeparator) } };
   }
   return state;
 }

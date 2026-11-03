@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { contrastRatio, contrastReport, ensureContrast, isHexColor, mix, onColor, persianRatio } from '../src/lib/contrast';
+import { contrastReport } from '../src/lib/admin/contrast-report';
+import { contrastRatio, ensureContrast, isHexColor, mix, onColor, persianRatio } from '../src/lib/contrast';
 
 const SEED = {
   primary: '#5b0057',

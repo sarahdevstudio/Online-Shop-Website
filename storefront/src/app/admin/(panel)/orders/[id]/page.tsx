@@ -44,7 +44,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
             {order.fullName} — <span className={styles.ltr}>{order.mobile}</span>
           </p>
           <p>
-            {order.province}، {order.city}، {order.address}
+            {[order.province, order.city, order.address].join(adminMessages.listSeparator)}
           </p>
           <p>
             {messages.postalCode}: <span className={styles.ltr}>{order.postalCode}</span>
