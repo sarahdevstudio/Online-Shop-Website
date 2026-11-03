@@ -10,6 +10,7 @@ using Shop.Domain.Settings;
 using Shop.Infrastructure.Catalog;
 using Shop.Infrastructure.Content;
 using Shop.Infrastructure.Identity;
+using Shop.Infrastructure.Site;
 
 namespace Shop.Infrastructure.Persistence;
 
@@ -46,6 +47,7 @@ public sealed class DatabaseInitializer(
     IOptions<SeedOptions> seedOptions,
     IOptions<StoreDefaultsOptions> storeDefaults,
     CatalogSeeder catalogSeeder,
+    SiteSeeder siteSeeder,
     IHostEnvironment environment,
     TimeProvider clock,
     ILogger<DatabaseInitializer> logger)
@@ -68,6 +70,9 @@ public sealed class DatabaseInitializer(
         {
             await catalogSeeder.SeedDevelopmentDataAsync(ct);
         }
+
+        // After the sample catalog, so the home page's category tiles can use the categories that exist.
+        await siteSeeder.EnsureAsync(ct);
     }
 
     /// <summary>The first start writes <c>StoreDefaults</c> into the database; later starts never touch the row.</summary>

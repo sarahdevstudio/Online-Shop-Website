@@ -88,6 +88,7 @@ public static class DependencyInjection
         services.Configure<DatabaseOptions>(configuration.GetSection(DatabaseOptions.SectionName));
         services.Configure<SeedOptions>(configuration.GetSection(SeedOptions.SectionName));
         services.AddScoped<CatalogSeeder>();
+        services.AddScoped<SiteSeeder>();
         services.AddScoped<DatabaseInitializer>();
 
         if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
