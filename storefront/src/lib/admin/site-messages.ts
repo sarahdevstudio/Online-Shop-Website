@@ -114,6 +114,8 @@ export const siteMessages = {
     fontHint: 'فقط قلم‌های آزاد و فارسی که همراه سایت بسته‌بندی شده‌اند.',
     fonts: { vazirmatn: 'وزیرمتن (پیش‌فرض)', estedad: 'استعداد', shabnam: 'شبنم', sahel: 'ساحل' },
     fontSample: 'نمونهٔ متن: گالری لوستر و روشنایی',
+    fontSamples: 'نمونهٔ قلم‌ها',
+    serverReport: (n: string) => `نتیجهٔ بررسی سرور برای آخرین ذخیره: ${n} ترکیب ناخوانا.`,
     radius: 'گردی گوشه‌ها',
     radii: { none: 'بدون گردی', sm: 'کم', md: 'متوسط', lg: 'زیاد' },
     brand: 'نشان‌ها',

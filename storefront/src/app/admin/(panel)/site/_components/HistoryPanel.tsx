@@ -18,7 +18,7 @@ export function HistoryPanel({ kind, history }: { kind: SiteKind; history: reado
       {history.length === 0 ? (
         <p className={styles.muted}>{t.empty}</p>
       ) : (
-        <div className={styles.wrap} tabIndex={0} role="region" aria-label={adminMessages.scrollableTable}>
+        <div className={styles.wrap} tabIndex={0} role="region" aria-label={`${t.title} — ${adminMessages.scrollableTable}`}>
           <table className={styles.table}>
             <caption className="ui-visually-hidden">{t.title}</caption>
             <thead>

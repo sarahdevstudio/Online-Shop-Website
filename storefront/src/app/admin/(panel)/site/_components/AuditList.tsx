@@ -12,7 +12,7 @@ const t = siteMessages.audit;
 export function AuditList({ items, showKind = true }: { items: readonly SiteAuditItem[]; showKind?: boolean }) {
   if (items.length === 0) return <p className={styles.muted}>{t.empty}</p>;
   return (
-    <div className={styles.wrap} tabIndex={0} role="region" aria-label={adminMessages.scrollableTable}>
+    <div className={styles.wrap} tabIndex={0} role="region" aria-label={`${t.title} — ${adminMessages.scrollableTable}`}>
       <table className={styles.table}>
         <caption className="ui-visually-hidden">{t.title}</caption>
         <thead>
