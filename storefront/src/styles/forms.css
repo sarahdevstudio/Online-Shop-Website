@@ -1,0 +1,289 @@
+/*
+ * Shared form system (components/form). Every form on the site - storefront and admin - is built from these classes:
+ * one spacing scale, label above the control, 1 column on phones / 2 on desktop, one place for errors and actions.
+ * Logical properties only (RTL).
+ */
+
+.ui-form {
+  display: grid;
+  gap: var(--space-6);
+  align-content: start;
+  min-inline-size: 0;
+}
+
+/* Compact one-row form (filters, quantity, stock adjustment). */
+.ui-form--inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+}
+
+.ui-form--inline .ui-field {
+  flex: 1 1 11rem;
+}
+
+.ui-form--inline .ui-field--compact {
+  flex: 0 0 auto;
+  inline-size: 6.5rem;
+}
+
+.ui-form button {
+  min-block-size: var(--control-height);
+}
+
+/* ---------- sections ---------- */
+
+.ui-form-section {
+  display: grid;
+  gap: var(--space-4);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ui-form-section--card {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+@media (min-width: 768px) {
+  .ui-form-section--card {
+    padding: var(--space-6);
+  }
+}
+
+.ui-form-section__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-snug);
+}
+
+.ui-form-section__hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* ---------- grid: 1 column on phones, 2 on desktop; `full` fields span every column ---------- */
+
+.ui-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4) var(--space-6);
+  align-items: start;
+}
+
+.ui-form-grid--pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+@media (min-width: 768px) {
+  .ui-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ui-form-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.ui-field {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  min-inline-size: 0;
+}
+
+.ui-field--full {
+  grid-column: 1 / -1;
+}
+
+.ui-label {
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-snug);
+}
+
+.ui-required {
+  margin-inline-start: var(--space-1);
+  color: var(--color-danger);
+}
+
+.ui-hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.ui-error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Number-like fields (prices, SKU, slug, card, phone, postal code) are typed left-to-right but sit on the RTL start edge. */
+.ui-control[dir='ltr'] {
+  text-align: right; /* rtl-ok: ltr-direction field pinned to the RTL start edge */
+}
+
+.ui-control[dir='ltr']::placeholder {
+  text-align: right; /* rtl-ok */
+}
+
+.ui-control--code {
+  font-family: ui-monospace, monospace;
+}
+
+/* ---------- checkbox / radio rows ---------- */
+
+.ui-check-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--control-height);
+  cursor: pointer;
+}
+
+input.ui-check:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.ui-choice-group {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ui-choice-group > legend:not(.ui-visually-hidden) {
+  float: inline-start;
+  inline-size: 100%;
+  padding: 0;
+  margin-block-end: var(--space-2);
+  font-weight: var(--font-weight-medium);
+}
+
+.ui-choice-group > legend:not(.ui-visually-hidden) + * {
+  clear: both;
+}
+
+.ui-choice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+  min-block-size: var(--control-height);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.ui-choice:hover {
+  border-color: var(--color-text-muted);
+}
+
+.ui-choice:has(input:checked) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.ui-choice:has(input:focus-visible) {
+  box-shadow: var(--focus-ring);
+}
+
+.ui-choice > input {
+  grid-row: 1 / span 2;
+  margin-block-start: 0.125rem;
+}
+
+.ui-choice__title {
+  font-weight: var(--font-weight-medium);
+}
+
+.ui-choice__desc {
+  grid-column: 2;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* ---------- actions: primary first, secondary next, destructive last (far end); stacked full width on phones ---------- */
+
+.ui-form-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+.ui-form-actions > * {
+  inline-size: 100%;
+}
+
+@media (min-width: 768px) {
+  .ui-form-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .ui-form-actions > * {
+    inline-size: auto;
+  }
+
+  .ui-form-actions--stretch > * {
+    inline-size: 100%;
+  }
+
+  .ui-form-actions__end {
+    margin-inline-start: auto;
+  }
+}
+
+/* ---------- error summary ---------- */
+
+.ui-form-summary {
+  padding: var(--space-4);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-soft);
+  color: var(--color-text);
+}
+
+.ui-form-summary:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.ui-form-summary__title {
+  margin: 0 0 var(--space-2);
+  font-weight: var(--font-weight-bold);
+}
+
+.ui-form-summary ul {
+  margin: 0;
+  padding-inline-start: var(--space-5);
+  display: grid;
+  gap: var(--space-1);
+}
+
+.ui-form-summary a {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-medium);
+}
+
+.ui-form-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
