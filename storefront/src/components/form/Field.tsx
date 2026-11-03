@@ -134,15 +134,18 @@ export function TextAreaField({ name, label, hint, required, full = true, disabl
 
 interface SelectProps extends Shared {
   defaultValue?: string | number | null;
+  /** Controlled use (editors that keep the value in state); then `defaultValue` is not used. */
+  value?: string | number;
+  onChange?: ChangeEventHandler<HTMLSelectElement>;
   children: ReactNode;
 }
 
-export function SelectField({ name, label, hint, required, full, disabled, hideLabel, error: errorProp, defaultValue, children }: SelectProps) {
+export function SelectField({ name, label, hint, required, full, disabled, hideLabel, error: errorProp, defaultValue, value, onChange, children }: SelectProps) {
   const { id, error, describedBy, invalid } = useFieldIds(name, Boolean(hint), errorProp);
   return (
     <div className={cls('ui-field', full && 'ui-field--full')}>
       <Label id={id} label={label} required={required} hidden={hideLabel} />
-      <select id={id} name={name} className="ui-control" defaultValue={defaultValue ?? ''} required={required} disabled={disabled} aria-invalid={invalid} aria-describedby={describedBy}>
+      <select id={id} name={name} className="ui-control" {...(value !== undefined ? { value, onChange } : { defaultValue: defaultValue ?? '', onChange })} required={required} disabled={disabled} aria-invalid={invalid} aria-describedby={describedBy}>
         {children}
       </select>
       <FieldMessages id={id} hint={hint} error={error} />
@@ -155,18 +158,21 @@ interface CheckProps {
   label: string;
   hint?: string;
   defaultChecked?: boolean;
+  /** Controlled use; then `defaultChecked` is not used. */
+  checked?: boolean;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
   value?: string;
   disabled?: boolean;
   full?: boolean;
   error?: string;
 }
 
-export function CheckField({ name, label, hint, defaultChecked, value, disabled, full, error: errorProp }: CheckProps) {
+export function CheckField({ name, label, hint, defaultChecked, checked, onChange, value, disabled, full, error: errorProp }: CheckProps) {
   const { id, error, describedBy, invalid } = useFieldIds(name, Boolean(hint), errorProp);
   return (
     <div className={cls('ui-field', full && 'ui-field--full')}>
       <label className="ui-check-row">
-        <input id={id} type="checkbox" name={name} value={value} className="ui-check" defaultChecked={defaultChecked} disabled={disabled} aria-invalid={invalid} aria-describedby={describedBy} />
+        <input id={id} type="checkbox" name={name} value={value} className="ui-check" {...(checked !== undefined ? { checked } : { defaultChecked })} onChange={onChange} disabled={disabled} aria-invalid={invalid} aria-describedby={describedBy} />
         <span>{label}</span>
       </label>
       <FieldMessages id={id} hint={hint} error={error} />
