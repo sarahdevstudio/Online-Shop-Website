@@ -1,0 +1,39 @@
+{
+  "version": "seed0001",
+  "theme": {
+    "primary": "#5b0057", "secondary": "#76007c", "accent": "#d8c831", "background": "#ffffff", "surface": "#f2f2f2", "text": "#1a1a1a",
+    "success": "#1b7f3b", "warning": "#8a5a00", "danger": "#b3261e",
+    "font": "vazirmatn", "radius": "sm",
+    "logo": { "url": "/media/site/logo.png", "alt": "قصر روشنایی", "width": 300, "height": 70 },
+    "favicon": { "url": "/media/site/favicon.png", "width": 512, "height": 512 }
+  },
+  "home": {
+    "blocks": [
+      { "id": "11111111-1111-1111-1111-111111111111", "type": "hero", "data": { "autoplaySeconds": 0, "slides": [
+        { "image": null, "alt": "", "title": "ترکیبی از کلاسیک و مدرن", "text": "شکوه و زیبایی با لوسترها قصر روشنایی", "linkLabel": "مشاهده محصولات", "link": "/search?q=%D9%84%D8%A7%D9%85%D9%BE" } ] } },
+      { "id": "22222222-2222-2222-2222-222222222222", "type": "productRow", "data": { "title": "جدیدترین محصولات", "source": "newest", "limit": 8, "categorySlug": null, "productSlugs": [], "viewAllHref": null } },
+      { "id": "33333333-3333-3333-3333-333333333333", "type": "categoryTiles", "data": { "items": [
+        { "label": "لوستر", "slug": "chandeliers", "imageUrl": null }, { "label": "چراغ دیواری", "slug": "wall-lights", "imageUrl": null } ] } },
+      { "id": "44444444-4444-4444-4444-444444444444", "type": "text", "data": { "heading": "تعهدات قصر روشنایی", "body": "**ضمانت کیفیت** — ضمانت حداقل یک‌ساله و ۳ سال خدمات پس از فروش\n\n**نصب رایگان** — در شهرهایی که شعبه دارند\n\n**ارسال رایگان** — برای سفارش‌های بالای ۳ میلیون تومان در شهرهای دارای شعبه" } }
+    ]
+  },
+  "chrome": {
+    "announcement": { "enabled": false, "text": "", "link": null, "style": "primary", "dismissible": true },
+    "headerMenu": [
+      { "label": "خانه", "link": "/", "allCategories": false, "children": [] },
+      { "label": "فروشگاه", "link": "/", "allCategories": true, "children": [] },
+      { "label": "درباره ما", "link": "/about", "allCategories": false, "children": [] },
+      { "label": "تماس", "link": "/contact", "allCategories": false, "children": [] }
+    ],
+    "footer": { "about": "گالری قصر روشنایی؛ از سال ۱۳۸۵ پیشرو در واردات لوسترهای مدرن و کلاسیک.", "columns": [] },
+    "social": { "twitter": "https://x.com/e_ghasr", "pinterest": "https://www.pinterest.com/ghasr_e_roushanaei", "aparat": "https://www.aparat.com/ghasr_e_roushanaei" }
+  },
+  "seo": {
+    "siteName": "قصر روشنایی",
+    "titleTemplate": "%s | قصر روشنایی",
+    "homeTitle": "فروشگاه قصر روشنایی – لوستر و لوازم روشنایی",
+    "defaultDescription": "گالری قصر روشنایی از سال ۱۳۸۵ پیشرو در واردات لوسترهای مدرن و کلاسیک؛ ضمانت واقعی و خدمات پس از فروش.",
+    "defaultOgImage": null
+  },
+  "badges": { "enamad": null, "samandehi": null }
+}
