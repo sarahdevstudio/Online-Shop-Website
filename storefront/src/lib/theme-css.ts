@@ -146,6 +146,18 @@ const RADII: Record<RadiusId, readonly [string, string, string]> = {
 const WHITE = '#ffffff';
 const BLACK = '#000000';
 
+/**
+ * A pale background for text in `color` (badges, soft buttons): a tint of the color itself, made paler until the color stays
+ * readable (4.5:1) on it. A fixed 90% tint left some valid palettes (success #1b7f3b) at 4.42:1.
+ */
+function softTint(color: string, start: number): string {
+  for (let amount = start; amount <= 0.97; amount += 0.01) {
+    const soft = mix(color, WHITE, amount);
+    if (contrastRatio(color, soft) >= 4.5) return soft;
+  }
+  return mix(color, WHITE, 0.97);
+}
+
 /** The CSS custom properties for a theme, as an ordered name → value map (fixed formulas, no free text). */
 export function themeTokens(input: unknown): Record<string, string> {
   const t = sanitizeTheme(input);
@@ -176,7 +188,7 @@ export function themeTokens(input: unknown): Record<string, string> {
     '--color-primary-hover': mix(t.primary, BLACK, 0.2),
     '--color-primary-active': mix(t.primary, BLACK, 0.35),
     '--color-primary-contrast': onColor(t.primary),
-    '--color-primary-soft': mix(t.primary, WHITE, 0.9),
+    '--color-primary-soft': softTint(t.primary, 0.9),
     '--color-secondary': t.secondary,
     '--color-secondary-contrast': onColor(t.secondary),
     '--color-accent': t.accent,
@@ -185,12 +197,12 @@ export function themeTokens(input: unknown): Record<string, string> {
     '--color-danger': t.danger,
     '--color-danger-hover': mix(t.danger, BLACK, 0.2),
     '--color-danger-contrast': onColor(t.danger),
-    '--color-danger-soft': mix(t.danger, WHITE, 0.92),
+    '--color-danger-soft': softTint(t.danger, 0.92),
     '--color-success': t.success,
     '--color-success-contrast': onColor(t.success),
-    '--color-success-soft': mix(t.success, WHITE, 0.9),
+    '--color-success-soft': softTint(t.success, 0.9),
     '--color-warning': t.warning,
-    '--color-warning-soft': mix(t.warning, WHITE, 0.9),
+    '--color-warning-soft': softTint(t.warning, 0.9),
 
     '--color-focus': t.primary,
   };
