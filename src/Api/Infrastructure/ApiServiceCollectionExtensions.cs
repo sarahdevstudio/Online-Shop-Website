@@ -138,24 +138,31 @@ public static class ApiServiceCollectionExtensions
                 options.InvalidModelStateResponseFactory = _ => new Microsoft.AspNetCore.Mvc.StatusCodeResult(StatusCodes.Status400BadRequest);
             });
 
-        services.AddOpenApi(options => options.AddOperationTransformer((operation, context, _) =>
+        services.AddOpenApi(options =>
         {
-            // The document has always described JSON bodies as required and as application/json only; MVC adds
-            // application/*+json and text/json and drops "required" because empty bodies are let through to the validators.
-            if (context.Description.ActionDescriptor is Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor
-                && operation.RequestBody is Microsoft.OpenApi.OpenApiRequestBody { Content: { } content } body
-                && content.ContainsKey("application/json"))
+            options.AddOperationTransformer((operation, context, _) =>
             {
-                foreach (var mediaType in content.Keys.Where(key => key != "application/json").ToList())
+                // The document has always described JSON bodies as required and as application/json only; MVC adds
+                // application/*+json and text/json and drops "required" because empty bodies are let through to the validators.
+                if (context.Description.ActionDescriptor is Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor
+                    && operation.RequestBody is Microsoft.OpenApi.OpenApiRequestBody { Content: { } content } body
+                    && content.ContainsKey("application/json"))
                 {
-                    content.Remove(mediaType);
+                    foreach (var mediaType in content.Keys.Where(key => key != "application/json").ToList())
+                    {
+                        content.Remove(mediaType);
+                    }
+
+                    body.Required = true;
                 }
 
-                body.Required = true;
-            }
+                return Task.CompletedTask;
+            });
 
-            return Task.CompletedTask;
-        }));
+            // Every /api/v1 response is wrapped in ResponseModel<T> by ResponseEnvelopeMiddleware; this transformer
+            // makes the OpenAPI document reflect what clients actually receive.
+            options.AddDocumentTransformer<ResponseEnvelopeOpenApiTransformer>();
+        });
         services.AddHealthChecks().AddDbContextCheck<ShopDbContext>("database", tags: ["ready"]);
 
         services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
