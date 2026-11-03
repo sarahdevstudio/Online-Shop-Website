@@ -1,0 +1,53 @@
+.bar {
+  background: var(--bar-bg);
+  color: var(--bar-fg);
+}
+.primary {
+  --bar-bg: var(--color-primary);
+  --bar-fg: var(--color-primary-contrast);
+}
+.accent {
+  --bar-bg: var(--color-accent, var(--color-primary));
+  --bar-fg: var(--color-accent-contrast, var(--color-primary-contrast));
+}
+.neutral {
+  --bar-bg: var(--color-surface-muted);
+  --bar-fg: var(--color-text);
+}
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-block-size: var(--control-height);
+}
+.text {
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+.text a {
+  color: inherit;
+  text-decoration: underline;
+}
+.close {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--control-height);
+  block-size: var(--control-height);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.close:hover {
+  background: rgb(0 0 0 / 0.12);
+}
+.close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -4px;
+}

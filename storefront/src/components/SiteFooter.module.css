@@ -39,6 +39,7 @@
   color: var(--color-primary);
 }
 .groups {
+  align-content: start;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-6);
@@ -73,10 +74,26 @@
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr);
   }
   .groups {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   }
   .badges {
     grid-column: 1 / -1;
   }
 }
   
+.social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-block-start: var(--space-3);
+}
+.social a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--control-height-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+.social a:hover {
+  color: var(--color-primary);
+}

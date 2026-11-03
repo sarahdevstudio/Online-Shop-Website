@@ -20,12 +20,14 @@ interface SiteFooterProps {
   hours?: string;
   /** Instagram handle without the @. */
   instagram?: string;
+  /** Social profiles from the site configuration. */
+  social?: readonly { label: string; href: string }[];
   copyright: string;
   /** Trust marks (e.g. e-Namad) supplied by the shop owner. */
   badges?: ReactNode;
 }
 
-export function SiteFooter({ brandName, about, groups = [], phone, email, address, hours, instagram, copyright, badges }: SiteFooterProps) {
+export function SiteFooter({ brandName, about, groups = [], phone, email, address, hours, instagram, social = [], copyright, badges }: SiteFooterProps) {
   return (
     <footer className={styles.footer}>
       <div className={`ui-container ${styles.grid}`}>
@@ -55,6 +57,17 @@ export function SiteFooter({ brandName, about, groups = [], phone, email, addres
               </a>
             )}
           </address>
+          {social.length > 0 && (
+            <ul className={styles.social} aria-label={messages.followUs}>
+              {social.map((item) => (
+                <li key={item.href}>
+                  <a href={item.href} rel="noopener noreferrer nofollow" target="_blank">
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <nav className={styles.groups} aria-label={messages.footerNavigation}>

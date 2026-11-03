@@ -108,7 +108,7 @@
 }
 
 .ui-skip-link {
-  position: absolute;
+  position: fixed;
   inset-block-start: var(--space-2);
   inset-inline-start: var(--space-2);
   z-index: var(--z-skip-link);
