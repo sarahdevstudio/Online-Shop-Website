@@ -211,7 +211,7 @@ internal sealed class AdminSiteService(
             return DraftNotFound;
         }
 
-        if (!draft.RowVersion.SequenceEqual(request.RowVersion))
+        if (request.RowVersion is null || !draft.RowVersion.SequenceEqual(request.RowVersion))
         {
             return Conflict;
         }
@@ -246,7 +246,7 @@ internal sealed class AdminSiteService(
             return DraftNotFound;
         }
 
-        if (!draft.RowVersion.SequenceEqual(request.RowVersion))
+        if (request.RowVersion is null || !draft.RowVersion.SequenceEqual(request.RowVersion))
         {
             return Conflict;
         }

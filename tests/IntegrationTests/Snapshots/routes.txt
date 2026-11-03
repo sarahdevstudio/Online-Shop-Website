@@ -20,6 +20,11 @@ GET /api/v1/admin/products | auth: Catalog.Manage | - | rate: - | -
 GET /api/v1/admin/products/{id:int} | auth: Catalog.Manage | - | rate: - | -
 GET /api/v1/admin/settings | auth: Settings.Manage | - | rate: - | -
 GET /api/v1/admin/settings/audit | auth: Settings.Manage | - | rate: - | -
+GET /api/v1/admin/site | auth: Site.Manage | - | rate: - | -
+GET /api/v1/admin/site/audit | auth: Site.Manage | - | rate: - | -
+GET /api/v1/admin/site/compiled | auth: Site.Manage | - | rate: - | -
+GET /api/v1/admin/site/{kind} | auth: Site.Manage | - | rate: - | -
+GET /api/v1/admin/site/{kind}/versions/{version:int} | auth: Site.Manage | - | rate: - | -
 GET /api/v1/admin/variants/{id:int}/stock-history | auth: Catalog.Manage | - | rate: - | -
 GET /api/v1/auth/csrf | auth:  | anonymous | rate: - | -
 GET /api/v1/auth/me | auth: authenticated | - | rate: - | -
@@ -33,6 +38,7 @@ GET /api/v1/catalog/pages | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/pages/{slug} | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/products | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/products/{slug} | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/site | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/sitemap | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/store-info | auth:  | anonymous | rate: - | -
 GET /api/v1/customer/profile | auth: Customer | - | rate: - | -
@@ -49,6 +55,10 @@ POST /api/v1/admin/orders/{id:int}/status | auth: Orders.Manage | - | rate: - | 
 POST /api/v1/admin/products | auth: Catalog.Manage | - | rate: - | -
 POST /api/v1/admin/products/{id:int}/images | auth: Catalog.Manage | - | rate: - | -
 POST /api/v1/admin/products/{id:int}/variants | auth: Catalog.Manage | - | rate: - | -
+POST /api/v1/admin/site/images | auth: Site.Manage | - | rate: - | -
+POST /api/v1/admin/site/{kind}/discard | auth: Site.Manage | - | rate: - | -
+POST /api/v1/admin/site/{kind}/publish | auth: Site.Manage | - | rate: - | -
+POST /api/v1/admin/site/{kind}/restore/{version:int} | auth: Site.Manage | - | rate: - | -
 POST /api/v1/admin/variants/{id:int}/stock-adjust | auth: Catalog.Manage | - | rate: - | -
 POST /api/v1/auth/change-password | auth: authenticated | - | rate: auth | -
 POST /api/v1/auth/login | auth:  | anonymous | rate: auth | -
@@ -65,5 +75,6 @@ PUT /api/v1/admin/products/{id:int} | auth: Catalog.Manage | - | rate: - | -
 PUT /api/v1/admin/products/{id:int}/attributes | auth: Catalog.Manage | - | rate: - | -
 PUT /api/v1/admin/products/{id:int}/images/order | auth: Catalog.Manage | - | rate: - | -
 PUT /api/v1/admin/settings | auth: Settings.Manage | - | rate: - | -
+PUT /api/v1/admin/site/{kind}/draft | auth: Site.Manage | - | rate: - | -
 PUT /api/v1/admin/variants/{id:int} | auth: Catalog.Manage | - | rate: - | -
 PUT /api/v1/store/cart/items/{variantId:int} | auth:  | anonymous | rate: store-cart | storefront
