@@ -11,7 +11,7 @@
 
 :root {
   /* ---------- Typography ---------- */
-  --font-sans: 'Vazirmatn Variable', 'Vazirmatn', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+  --font-sans: 'Vazirmatn', system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
 
   /* 13px is the floor: Persian letter forms lose legibility below it. */
   --font-size-xs: 0.8125rem;

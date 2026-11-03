@@ -3,8 +3,13 @@ import { ProductCard } from '@/components/ProductCard';
 import { getCategoryTree, getProducts } from '@/lib/catalog';
 import { messages } from '@/lib/messages';
 import { pageMetadata, site } from '@/lib/seo';
+import { getSiteConfig } from '@/lib/site-config';
 
-export const metadata = pageMetadata({ title: `${site.name} | ${site.description}`, description: site.description, path: '/' });
+/** The home title is used as is (not run through the title template). */
+export async function generateMetadata() {
+  const { seo } = await getSiteConfig();
+  return { ...pageMetadata({ title: seo.homeTitle, description: seo.defaultDescription, path: '/' }), title: { absolute: seo.homeTitle } };
+}
 
 const NEWEST_COUNT = 8;
 
