@@ -6,6 +6,11 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\translations\fa-IR.json" LogicalName="Shop.Application.Translations.fa-IR.json" />
   </ItemGroup>
 
   <PropertyGroup>
