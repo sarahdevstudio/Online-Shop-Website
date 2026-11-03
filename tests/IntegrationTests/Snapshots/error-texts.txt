@@ -1,0 +1,124 @@
+not-found-route: 404 code= message=پیدا نشد.
+admin-anonymous: 401 code= message=ورود لازم است.
+admin-empty-category: 400 code= message=یک یا چند مقدار نامعتبر است.
+    Name: این مقدار لازم است و حداکثر 100 نویسه می‌تواند باشد.
+admin-bad-category-slug: 400 code= message=یک یا چند مقدار نامعتبر است.
+    Slug: فقط حروف کوچک انگلیسی و عدد، با خط تیره بین بخش‌ها، حداکثر 100 نویسه.
+admin-category-unknown-parent: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    parentId: دستهٔ والد وجود ندارد.
+admin-category-404: 404 code=category_not_found message=مورد درخواستی پیدا نشد.
+admin-empty-brand: 400 code= message=یک یا چند مقدار نامعتبر است.
+    Name: این مقدار لازم است و حداکثر 100 نویسه می‌تواند باشد.
+admin-brand-404: 404 code=brand_not_found message=مورد درخواستی پیدا نشد.
+admin-empty-product: 400 code= message=یک یا چند مقدار نامعتبر است.
+    CategoryId: 'دسته' باید بیشتر از '0' باشد.
+    Name: این مقدار لازم است و حداکثر 200 نویسه می‌تواند باشد.
+admin-product-no-variants: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    variants: حداقل یک تنوع لازم است.
+admin-product-bad-variant: 400 code= message=یک یا چند مقدار نامعتبر است.
+    Variants[0].Price: 'قیمت' باید بین 1 و 1000000000000 باشد. اما مقدار وارد شده (0) در این محدوده نیست.
+    Variants[0].Sku: فقط حروف انگلیسی، عدد و . _ - ، حداکثر 64 نویسه.
+    Variants[0].Stock: 'موجودی' باید بین 0 و 1000000 باشد. اما مقدار وارد شده (-1) در این محدوده نیست.
+admin-variant-404: 404 code=variant_not_found message=مورد درخواستی پیدا نشد.
+admin-stock-adjust-bad: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    delta: تغییر موجودی باید عددی صحیح، غیرصفر و حداکثر 1000000 باشد.
+admin-order-404: 404 code=order_not_found message=سفارش پیدا نشد.
+admin-order-bad-filter: 400 code= message=درخواست نامعتبر است.
+    filter: وضعیت یا وضعیت پرداخت نامعتبر است.
+admin-product-bad-status: 400 code= message=درخواست نامعتبر است.
+admin-blog-empty: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    body: متن مقاله لازم است و حداکثر 100000 نویسه می‌تواند باشد.
+    excerpt: خلاصه لازم است و حداکثر 300 نویسه می‌تواند باشد.
+    title: عنوان باید بین ۲ تا 150 نویسه باشد.
+admin-blog-bad: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    body: متن مقاله لازم است و حداکثر 100000 نویسه می‌تواند باشد.
+    excerpt: خلاصه لازم است و حداکثر 300 نویسه می‌تواند باشد.
+    slug: نشانی باید فقط شامل حروف کوچک انگلیسی و عدد با خط تیره بین بخش‌ها باشد (حداکثر 100 نویسه).
+    title: عنوان باید بین ۲ تا 150 نویسه باشد.
+admin-blog-404: 404 code=post_not_found message=مقاله پیدا نشد.
+admin-content-404: 404 code=page_not_found message=صفحه پیدا نشد.
+admin-content-bad: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    body: متن صفحه لازم است و حداکثر 50000 نویسه می‌تواند باشد.
+    title: عنوان باید بین ۲ تا 100 نویسه باشد.
+admin-settings-bad: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    bankName: نام بانک حداکثر 50 نویسه باشد.
+    cardHolderName: نام صاحب کارت حداکثر 100 نویسه باشد.
+    cardNumber: شماره کارت باید ۱۶ رقم و معتبر باشد.
+    freeShippingThreshold: آستانه ارسال رایگان باید خالی یا عدد صحیح و نامنفی باشد.
+    instagramHandle: شناسه اینستاگرام فقط شامل حروف انگلیسی، عدد، نقطه و زیرخط باشد (مثال: myshop).
+    maxQuantityPerLine: حداکثر تعداد در هر ردیف باید بین ۱ تا 100 باشد.
+    shippingFlatFee: هزینه ارسال باید عدد صحیح و نامنفی باشد.
+    storeAddress: نشانی حداکثر 300 نویسه باشد.
+    storePhone: شماره تماس حداکثر 30 نویسه باشد.
+    workingHours: ساعات کاری حداکثر 100 نویسه باشد.
+admin-settings-wrong-password: 200 code= message=
+admin-site-bad-kind: 404 code=site_kind_not_found message=این بخش پیدا نشد.
+admin-site-seo-invalid: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    homeTitle: این مقدار الزامی است.
+    siteName: نام سایت باید بین ۲ تا ۶۰ نویسه باشد.
+    titleTemplate: قالب عنوان باید دقیقاً یک بار %s داشته باشد.
+admin-site-badges-invalid: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    enamad.code: کد باید ۱۰ تا ۶۴ حرف انگلیسی یا عدد باشد.
+    enamad.id: شناسه باید فقط رقم باشد (حداکثر ۱۰ رقم).
+    samandehi.logoCode: کد باید ۱۰ تا ۶۴ حرف انگلیسی یا عدد باشد.
+    samandehi.verifyCode: کد باید ۱۰ تا ۶۴ حرف انگلیسی یا عدد باشد.
+admin-site-theme-invalid: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    font: قلم انتخاب‌شده مجاز نیست.
+    primary: رنگ باید به شکل #rrggbb باشد.
+    radius: گوشه‌گردی انتخاب‌شده مجاز نیست.
+admin-site-chrome-invalid: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    announcement.link: نشانی باید مسیری داخلی مانند /about یا نشانی کامل https:// باشد.
+    announcement.style: سبک نوار اعلان مجاز نیست.
+    announcement.text: این مقدار الزامی است.
+    headerMenu[0].label: این مقدار الزامی است.
+    headerMenu[0].link: نشانی باید مسیری داخلی مانند /about یا نشانی کامل https:// باشد.
+    social.telegram: شناسه یا نشانی این شبکه معتبر نیست.
+admin-site-home-invalid: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    blocks[0].data.autoplaySeconds: زمان تعویض خودکار باید ۰ (خاموش) یا بین ۴ تا ۱۲ ثانیه باشد.
+    blocks[0].data.slides: تعداد اسلایدها باید بین ۱ تا ۶ باشد.
+    blocks[1].data.categoryId: دسته پیدا نشد.
+    blocks[1].data.limit: تعداد محصولات باید بین ۴ تا ۱۲ باشد.
+    blocks[1].data.title: این مقدار الزامی است.
+admin-site-discard-none: 404 code=draft_not_found message=پیش‌نویسی وجود ندارد.
+login-empty: 400 code= message=یک یا چند مقدار نامعتبر است.
+    Password: وارد کردن 'رمز عبور' ضروری است.
+    Username: وارد کردن 'نام کاربری' ضروری است.
+login-wrong: 401 code=invalid_credentials message=نام کاربری یا رمز عبور درست نیست.
+register-empty: 400 code= message=یک یا چند مقدار نامعتبر است.
+    Email: وارد کردن 'ایمیل' ضروری است.
+    FullName: وارد کردن 'نام و نام خانوادگی' ضروری است.
+    Password: وارد کردن 'رمز عبور' ضروری است.
+register-weak: 400 code= message=یک یا چند مقدار نامعتبر است.
+    Password: 'رمز عبور' باید بزرگتر یا برابر با 10 کاراکتر باشد. شما تعداد 3 کاراکتر را وارد کردید
+change-password-weak: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    newPassword: رمز عبور باید حداقل 12 نویسه باشد.
+change-password-wrong: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    currentPassword: رمز عبور فعلی درست نیست.
+list-bad-sort: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    sort: ترتیب نمایش نامعتبر است.
+list-bad-bool: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    inStock: مقدار باید «بله» یا «خیر» باشد.
+list-bad-price-range: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    minPrice: حداقل قیمت نباید از حداکثر قیمت بیشتر باشد.
+list-long-q: 400 code=validation_failed message=یک یا چند مقدار نامعتبر است.
+    q: حداکثر 100 نویسه.
+category-404: 404 code=category_not_found message=دسته پیدا نشد.
+product-404: 404 code=product_not_found message=محصول پیدا نشد.
+cart-add-empty: 400 code= message=یک یا چند مقدار نامعتبر است.
+    Quantity: 'تعداد' باید بین 1 و 1000 باشد. اما مقدار وارد شده (0) در این محدوده نیست.
+    VariantId: 'تنوع' باید بیشتر از '0' باشد.
+cart-add-unknown: 404 code=variant_not_found message=این محصول پیدا نشد.
+order-empty: 400 code= message=یک یا چند مقدار نامعتبر است.
+    Address: نشانی کامل را وارد کنید (حداقل ۱۰ نویسه).
+    City: شهر را وارد کنید.
+    FullName: نام و نام خانوادگی را وارد کنید.
+    Mobile: شماره موبایل معتبر نیست (مثال: ۰۹۱۲۳۴۵۶۷۸۹).
+    PostalCode: کد پستی باید ۱۰ رقم باشد.
+    Province: استان را وارد کنید.
+order-empty-cart: 409 code=cart_empty message=سبد خرید شما خالی است.
+order-bad-fields: 400 code= message=درخواست نامعتبر است.
+order-lookup-404: 404 code=order_not_found message=سفارش پیدا نشد.
+transfer-ref-bad: 400 code= message=یک یا چند مقدار نامعتبر است.
+    CardLast4: ۴ رقم آخر کارت را وارد کنید.
+    Time: زمان انتقال را وارد کنید.
+    Tracking: شماره پیگیری را وارد کنید.
