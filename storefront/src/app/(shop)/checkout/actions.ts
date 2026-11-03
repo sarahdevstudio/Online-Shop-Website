@@ -23,7 +23,7 @@ export async function placeOrderAction(_previous: CheckoutState, formData: FormD
     return fail(messages.checkoutFailed);
   }
   if (values.paymentMethod !== 'cardToCard' && values.paymentMethod !== 'cashOnDelivery') {
-    return fail(messages.checkoutFixErrors, { paymentMethod: 'روش پرداخت را انتخاب کنید.' });
+    return fail(messages.checkoutFixErrors, { paymentMethod: messages.paymentMethodRequired });
   }
 
   const jar = await cookies();

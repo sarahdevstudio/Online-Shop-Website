@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { apiGet } from './api';
+import { messages } from './messages';
 
 /** The fixed info pages (see the API's ContentSlugs). */
 export const INFO_SLUGS = ['about', 'contact', 'terms', 'returns', 'privacy'] as const;
@@ -10,13 +11,7 @@ export function isInfoSlug(value: string): value is InfoSlug {
 }
 
 /** Link text used when the API can't be reached (the footer must never break a page). */
-export const DEFAULT_TITLES: Record<InfoSlug, string> = {
-  about: 'دربارهٔ ما',
-  contact: 'تماس با ما',
-  terms: 'شرایط و قوانین',
-  returns: 'مرجوعی و بازگشت کالا',
-  privacy: 'حریم خصوصی',
-};
+export const DEFAULT_TITLES = messages.infoTitles as Record<InfoSlug, string>;
 
 export interface ContentPageDto {
   slug: string;

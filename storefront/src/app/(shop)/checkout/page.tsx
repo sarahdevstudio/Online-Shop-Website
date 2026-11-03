@@ -8,7 +8,9 @@ import type { PaymentMethod } from '@/lib/store-types';
 import { CheckoutForm } from './CheckoutForm';
 import styles from './checkout.module.css';
 
-export const metadata = pageMetadata({ title: 'ثبت سفارش', description: 'ثبت سفارش', path: '/checkout', noindex: true });
+export async function generateMetadata() {
+  return pageMetadata({ title: messages.checkout, description: messages.checkout, path: '/checkout', noindex: true });
+}
 
 export default async function CheckoutPage() {
   const cart = await getCart();

@@ -40,7 +40,7 @@ export function activeChips(basePath: string, state: ListingState, allFacets: Fa
   return chips;
 }
 
-const SORT_OPTIONS: { sort: Sort | null; label: string }[] = [
+const sortOptions = (): { sort: Sort | null; label: string }[] => [
   { sort: null, label: messages.sortNewest },
   { sort: 'price-asc', label: messages.sortPriceAsc },
   { sort: 'price-desc', label: messages.sortPriceDesc },
@@ -56,7 +56,7 @@ export function ListingToolbar({ basePath, state, allFacets, total }: { basePath
         <nav aria-label={messages.sort} className={styles.sort}>
           <span className="ui-text-muted">{messages.sort}:</span>
           <ul className={styles.sortList}>
-            {SORT_OPTIONS.map((option) => {
+            {sortOptions().map((option) => {
               const current = state.sort === option.sort;
               return (
                 <li key={option.label}>

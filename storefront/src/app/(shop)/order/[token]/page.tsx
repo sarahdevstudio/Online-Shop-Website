@@ -9,11 +9,9 @@ import styles from './order.module.css';
 
 // The token is the credential. No canonical / Open Graph URL (they would repeat it), never indexed, never cached, and
 // the Referrer-Policy header (next.config.ts) keeps it from leaking to other sites.
-export const metadata: Metadata = {
-  title: 'سفارش شما',
-  robots: { index: false, follow: false },
-  referrer: 'no-referrer',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: messages.orderPageTitle, robots: { index: false, follow: false }, referrer: 'no-referrer' };
+}
 
 const groupCard = (number: string) => number.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
 
@@ -150,7 +148,7 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
               {order.fullName} — <span className={styles.ltr}>{order.mobile}</span>
             </p>
             <p>
-              {order.province}، {order.city}، {order.address}
+              {[order.province, order.city, order.address].join(messages.listSeparator)}
             </p>
             <p>
               {messages.postalCode}: <span className={styles.ltr}>{order.postalCode}</span>

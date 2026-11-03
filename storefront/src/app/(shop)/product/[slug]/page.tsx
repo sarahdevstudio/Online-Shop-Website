@@ -43,7 +43,7 @@ function specRows(product: ProductDetailDto, variant: VariantDto | null): SpecRo
   });
   const specs = product.specs.map((spec) => ({ label: spec.name, value: spec.unit ? `${spec.value} ${spec.unit}` : spec.value }));
   return [
-    ...(product.brand ? [{ label: 'برند', value: product.brand.name }] : []),
+    ...(product.brand ? [{ label: messages.brandLabel, value: product.brand.name }] : []),
     ...axisRows,
     ...specs,
     ...(variant ? [{ label: messages.sku, value: variant.sku }] : []),

@@ -1,9 +1,14 @@
 import type { Metadata } from 'next';
+import { messages } from './messages';
 
 /** Single source of truth for site-wide SEO values. Override per environment with env vars. */
 export const site = {
-  name: 'فروشگاه',
-  description: 'خرید آنلاین با بهترین قیمت و ارسال سریع',
+  get name() {
+    return messages.defaultSiteName;
+  },
+  get description() {
+    return messages.defaultSiteDescription;
+  },
   /** Absolute public origin, no trailing slash. Needed for canonical URLs, sitemap and JSON-LD. */
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, ''),
   locale: 'fa_IR',

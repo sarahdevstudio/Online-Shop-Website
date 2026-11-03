@@ -6,7 +6,9 @@ import { isPageInRange, pageOneRedirect, parsePageParam, type SearchParams } fro
 import { messages } from '@/lib/messages';
 import { pageMetadata } from '@/lib/seo';
 
-export const metadata = pageMetadata({ title: 'جستجو', description: 'جستجو در محصولات', path: '/search', noindex: true });
+export async function generateMetadata() {
+  return pageMetadata({ title: messages.searchTitle, description: messages.searchDescription, path: '/search', noindex: true });
+}
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const query = await searchParams;
@@ -22,7 +24,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="ui-container ui-section ui-stack">
-      <h1 className="ui-heading-2">جستجو{q && `: ${q}`}</h1>
+      <h1 className="ui-heading-2">{q ? messages.searchHeading(q) : messages.searchTitle}</h1>
       {result.items.length === 0 ? (
         <p>{messages.emptyTitle}</p>
       ) : (

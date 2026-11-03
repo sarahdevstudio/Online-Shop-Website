@@ -20,7 +20,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return pageMetadata({
     siteName: defaults.siteName,
     image: defaults.image,
-    title: page && page > 1 ? `${messages.blogTitle} (صفحه ${page})` : messages.blogTitle,
+    title: page && page > 1 ? messages.blogPageTitle(messages.blogTitle, String(page)) : messages.blogTitle,
     description: messages.blogDescription,
     path: page && page > 1 ? `/blog?page=${page}` : '/blog',
   });

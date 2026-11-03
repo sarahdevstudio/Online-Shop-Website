@@ -1,3 +1,5 @@
+import { messages } from './messages';
+
 const LOCALE = 'fa-IR';
 
 const integerFormat = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
@@ -10,7 +12,7 @@ export function formatNumber(value: number): string {
 
 /** Price in Toman with Persian digits and separators: 1250000 -> "۱٬۲۵۰٬۰۰۰ تومان" */
 export function formatToman(value: number): string {
-  return `${integerFormat.format(value)} تومان`;
+  return `${integerFormat.format(value)} ${messages.currencyUnit}`;
 }
 
 /** 0.2 -> ۲۰٪ */

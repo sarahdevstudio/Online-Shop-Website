@@ -12,7 +12,9 @@ import type { CartLineDto } from '@/lib/store-types';
 import { removeItemAction, updateQuantityAction } from './actions';
 import styles from './cart.module.css';
 
-export const metadata = pageMetadata({ title: 'سبد خرید', description: 'سبد خرید', path: '/cart', noindex: true });
+export async function generateMetadata() {
+  return pageMetadata({ title: messages.cart, description: messages.cart, path: '/cart', noindex: true });
+}
 
 function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -44,7 +46,7 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
           <p>{messages.cartErrors[errorKey]}</p>
           {shortNames.length > 0 && (
             <p>
-              {messages.shortItems} {shortNames.join('، ')}
+              {messages.shortItems} {shortNames.join(messages.listSeparator)}
             </p>
           )}
         </Alert>

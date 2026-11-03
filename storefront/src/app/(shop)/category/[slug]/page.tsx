@@ -70,7 +70,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   return pageMetadata({
     siteName: defaults.siteName,
     image: defaults.image,
-    title: result.page > 1 ? `${category.name} - صفحه ${formatNumber(result.page)}` : category.name,
+    title: result.page > 1 ? messages.listingPageTitle(category.name, formatNumber(result.page)) : category.name,
     description: category.description || category.name,
     path: listingHref(basePath, state),
     ...listingIndexing(state),
