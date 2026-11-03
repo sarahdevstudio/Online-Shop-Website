@@ -67,13 +67,13 @@ public sealed class ContentPage
         var t = PersianText.Normalize(title);
         if (t.Length is < 2 or > TitleMaxLength)
         {
-            errors["title"] = [$"عنوان باید بین ۲ تا {TitleMaxLength} نویسه باشد."];
+            errors["title"] = [Msg.Of("api.validation.content-title-length", ("max", TitleMaxLength))];
         }
 
         var b = PersianText.NormalizeLetters(body);
         if (b.Length == 0 || b.Length > BodyMaxLength)
         {
-            errors["body"] = [$"متن صفحه لازم است و حداکثر {BodyMaxLength} نویسه می‌تواند باشد."];
+            errors["body"] = [Msg.Of("api.validation.content-body-required", ("max", BodyMaxLength))];
         }
 
         return errors;

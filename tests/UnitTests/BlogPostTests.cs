@@ -71,6 +71,6 @@ public class BlogPostTests
         var errors = BlogPost.Validate("ok", new string('ا', BlogPost.TitleMaxLength + 1), new string('ا', BlogPost.ExcerptMaxLength + 1), new string('ا', BlogPost.BodyMaxLength + 1));
 
         Assert.Equal(["title", "excerpt", "body"], errors.Keys.OrderBy(k => k == "title" ? 0 : k == "excerpt" ? 1 : 2));
-        Assert.All(errors.Values.SelectMany(v => v), m => Assert.DoesNotContain(m, c => char.IsAsciiLetter(c)));
+        Assert.All(errors.Values.SelectMany(v => v).Select(Shop.Application.Translations.Translate.Resolve), m => Assert.DoesNotContain(m, c => char.IsAsciiLetter(c)));
     }
 }

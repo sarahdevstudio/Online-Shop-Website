@@ -61,25 +61,25 @@ public sealed class BlogPost
         var errors = new Dictionary<string, string[]>();
         if (slug is not null && !SlugRules.IsValid(slug))
         {
-            errors["slug"] = [$"نشانی باید فقط شامل حروف کوچک انگلیسی و عدد با خط تیره بین بخش‌ها باشد (حداکثر {SlugRules.MaxLength} نویسه)."];
+            errors["slug"] = [Msg.Of("api.validation.blog-slug", ("max", SlugRules.MaxLength))];
         }
 
         var t = PersianText.Normalize(title);
         if (t.Length is < 2 or > TitleMaxLength)
         {
-            errors["title"] = [$"عنوان باید بین ۲ تا {TitleMaxLength} نویسه باشد."];
+            errors["title"] = [Msg.Of("api.validation.blog-title-length", ("max", TitleMaxLength))];
         }
 
         var e = PersianText.Normalize(excerpt);
         if (e.Length is 0 or > ExcerptMaxLength)
         {
-            errors["excerpt"] = [$"خلاصه لازم است و حداکثر {ExcerptMaxLength} نویسه می‌تواند باشد."];
+            errors["excerpt"] = [Msg.Of("api.validation.blog-excerpt-required", ("max", ExcerptMaxLength))];
         }
 
         var b = PersianText.NormalizeLetters(body);
         if (b.Length == 0 || b.Length > BodyMaxLength)
         {
-            errors["body"] = [$"متن مقاله لازم است و حداکثر {BodyMaxLength} نویسه می‌تواند باشد."];
+            errors["body"] = [Msg.Of("api.validation.blog-body-required", ("max", BodyMaxLength))];
         }
 
         return errors;

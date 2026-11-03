@@ -61,58 +61,58 @@ public static class StoreSettingsRules
 
         if (input.ShippingFlatFee is < 0 or > MaxAmount)
         {
-            errors["shippingFlatFee"] = ["هزینه ارسال باید عدد صحیح و نامنفی باشد."];
+            errors["shippingFlatFee"] = ["api.validation.settings-shipping-fee"];
         }
 
         if (input.FreeShippingThreshold is < 0 or > MaxAmount)
         {
-            errors["freeShippingThreshold"] = ["آستانه ارسال رایگان باید خالی یا عدد صحیح و نامنفی باشد."];
+            errors["freeShippingThreshold"] = ["api.validation.settings-free-shipping"];
         }
 
         if (input.MaxQuantityPerLine is < 1 or > MaxQuantityLimit)
         {
-            errors["maxQuantityPerLine"] = [$"حداکثر تعداد در هر ردیف باید بین ۱ تا {MaxQuantityLimit} باشد."];
+            errors["maxQuantityPerLine"] = [Msg.Of("api.validation.settings-max-quantity", ("max", MaxQuantityLimit))];
         }
 
         var cardInput = (input.CardNumber ?? string.Empty).Trim();
         var cardDigits = cardInput.Length == 0 ? string.Empty : CardNumbers.Normalize(cardInput);
         if (cardDigits is null || (cardDigits.Length > 0 && !CardNumbers.PassesLuhn(cardDigits)))
         {
-            errors["cardNumber"] = ["شماره کارت باید ۱۶ رقم و معتبر باشد."];
+            errors["cardNumber"] = ["api.validation.settings-card-number"];
         }
         else if (cardDigits.Length > 0 && CardNumbers.IsPlaceholder(cardDigits))
         {
-            errors["cardNumber"] = ["این شماره کارت نمونه است؛ شماره کارت واقعی را وارد کنید."];
+            errors["cardNumber"] = ["api.validation.settings-card-sample"];
         }
 
         var holder = PersianText.Normalize(input.CardHolderName);
         if (holder.Length > HolderMaxLength)
         {
-            errors["cardHolderName"] = [$"نام صاحب کارت حداکثر {HolderMaxLength} نویسه باشد."];
+            errors["cardHolderName"] = [Msg.Of("api.validation.settings-card-holder-max", ("max", HolderMaxLength))];
         }
 
         var bank = PersianText.Normalize(input.BankName);
         if (bank.Length > BankMaxLength)
         {
-            errors["bankName"] = [$"نام بانک حداکثر {BankMaxLength} نویسه باشد."];
+            errors["bankName"] = [Msg.Of("api.validation.settings-bank-max", ("max", BankMaxLength))];
         }
 
         if (input.CardToCardEnabled)
         {
             if (!errors.ContainsKey("cardNumber") && string.IsNullOrEmpty(cardDigits))
             {
-                errors["cardNumber"] = ["برای فعال‌سازی کارت‌به‌کارت، شماره کارت لازم است."];
+                errors["cardNumber"] = ["api.validation.settings-card-required"];
             }
 
             if (!errors.ContainsKey("cardHolderName") && !IsUsableHolder(holder))
             {
-                errors["cardHolderName"] = ["برای فعال‌سازی کارت‌به‌کارت، نام صاحب کارت لازم است (نه نام نمونه)."];
+                errors["cardHolderName"] = ["api.validation.settings-card-holder-required"];
             }
         }
 
         if (!input.CardToCardEnabled && !input.CashOnDeliveryEnabled)
         {
-            errors["paymentMethods"] = ["حداقل یکی از روش‌های پرداخت باید فعال باشد."];
+            errors["paymentMethods"] = ["api.validation.settings-payment-method-required"];
         }
 
         var phone = Digits.ToLatin(PersianText.Normalize(input.StorePhone));
@@ -121,22 +121,22 @@ public static class StoreSettingsRules
         var instagram = NormalizeInstagram(input.InstagramHandle);
         if (phone.Length > PhoneMaxLength)
         {
-            errors["storePhone"] = [$"شماره تماس حداکثر {PhoneMaxLength} نویسه باشد."];
+            errors["storePhone"] = [Msg.Of("api.validation.settings-phone-max", ("max", PhoneMaxLength))];
         }
 
         if (address.Length > AddressMaxLength)
         {
-            errors["storeAddress"] = [$"نشانی حداکثر {AddressMaxLength} نویسه باشد."];
+            errors["storeAddress"] = [Msg.Of("api.validation.settings-address-max", ("max", AddressMaxLength))];
         }
 
         if (hours.Length > HoursMaxLength)
         {
-            errors["workingHours"] = [$"ساعات کاری حداکثر {HoursMaxLength} نویسه باشد."];
+            errors["workingHours"] = [Msg.Of("api.validation.settings-hours-max", ("max", HoursMaxLength))];
         }
 
         if (instagram is null)
         {
-            errors["instagramHandle"] = ["شناسه اینستاگرام فقط شامل حروف انگلیسی، عدد، نقطه و زیرخط باشد (مثال: myshop)."];
+            errors["instagramHandle"] = ["api.validation.settings-instagram"];
         }
 
         if (errors.Count > 0)
