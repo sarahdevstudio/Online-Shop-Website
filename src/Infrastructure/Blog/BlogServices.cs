@@ -27,7 +27,7 @@ internal sealed class BlogService(ShopDbContext db) : IBlogService
         var post = await db.BlogPosts.AsNoTracking().Where(p => p.IsPublished && p.Slug == slug)
             .Select(p => new BlogPostDto(p.Slug, p.Title, p.Excerpt, p.Body, p.PublishedAtUtc!.Value, p.UpdatedAtUtc))
             .SingleOrDefaultAsync(ct);
-        return post is null ? Error.NotFound("post_not_found", "مقاله پیدا نشد.") : post;
+        return post is null ? Error.NotFound("post_not_found", "api.error.post-not-found") : post;
     }
 
     public async Task<IReadOnlyList<BlogSitemapEntryDto>> SitemapAsync(CancellationToken ct) =>
@@ -78,7 +78,7 @@ internal sealed class AdminBlogService(ShopDbContext db, ICurrentUser currentUse
         }
         catch (DbUpdateException ex) when (DbErrors.IsUniqueViolation(ex, SlugIndex))
         {
-            return Error.Conflict("slug_taken", "این نشانی قبلاً برای مقالهٔ دیگری استفاده شده است.");
+            return Error.Conflict("slug_taken", "api.error.blog-slug-taken");
         }
 
         return (await LoadAsync(post.Id, ct))!;
@@ -186,8 +186,8 @@ internal sealed class AdminBlogService(ShopDbContext db, ICurrentUser currentUse
                     p.Id, p.Slug, p.Title, p.Excerpt, p.Body, p.IsPublished, p.PublishedAtUtc, p.UpdatedAtUtc, u.UserName, p.RowVersion))
             .SingleOrDefaultAsync(ct);
 
-    private static Error NotFound() => Error.NotFound("post_not_found", "مقاله پیدا نشد.");
+    private static Error NotFound() => Error.NotFound("post_not_found", "api.error.post-not-found");
 
     private static Error Conflict() =>
-        Error.Conflict("concurrent_update", "این مقاله هم‌زمان توسط شخص دیگری تغییر کرد. صفحه را دوباره بارگذاری کنید.");
+        Error.Conflict("concurrent_update", "api.error.post-concurrent-update");
 }

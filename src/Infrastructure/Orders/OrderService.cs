@@ -4,6 +4,7 @@ using Shop.Application.Catalog;
 using Shop.Application.Common;
 using Shop.Application.Orders;
 using Shop.Application.Settings;
+using Shop.Application.Translations;
 using Shop.Domain.Common;
 using Shop.Domain.Orders;
 using Shop.Domain.Settings;
@@ -25,12 +26,12 @@ internal sealed class OrderService(
         var store = await settings.GetAsync(ct);
         if (!store.IsOffered(request.PaymentMethod))
         {
-            return Error.Validation(new Dictionary<string, string[]> { ["paymentMethod"] = ["روش پرداخت انتخاب‌شده فعال نیست."] });
+            return Error.Validation(new Dictionary<string, string[]> { ["paymentMethod"] = ["api.error.order-payment-method-inactive"] });
         }
 
         if (!IranianMobile.TryNormalize(request.Mobile, out var mobile) || !PostalCodes.TryNormalize(request.PostalCode, out var postalCode))
         {
-            return Error.Validation(new Dictionary<string, string[]> { ["mobile"] = ["شماره موبایل یا کد پستی معتبر نیست."] });
+            return Error.Validation(new Dictionary<string, string[]> { ["mobile"] = ["api.error.order-mobile-or-postal-invalid"] });
         }
 
         var ip = string.IsNullOrWhiteSpace(context.ClientIp) ? UnknownIp : context.ClientIp;
@@ -46,7 +47,7 @@ internal sealed class OrderService(
             var existing = await ReplayAsync(context.IdempotencyKey, ct);
             return existing is not null
                 ? existing
-                : Error.Conflict("concurrent_update", "سفارش هم‌زمان ثبت شد. دوباره تلاش کنید.");
+                : Error.Conflict("concurrent_update", "api.error.order-placed-concurrently");
         }
     }
 
@@ -67,7 +68,7 @@ internal sealed class OrderService(
         var cart = await CartStore.FindAsync(db, context.CartToken, clock, ct);
         if (cart is null || cart.Items.Count == 0)
         {
-            return Error.Conflict("cart_empty", "سبد خرید شما خالی است.");
+            return Error.Conflict("cart_empty", "api.error.cart-empty");
         }
 
         if (ip != UnknownIp)
@@ -99,7 +100,7 @@ internal sealed class OrderService(
         {
             return Error.Conflict(
                 "price_changed",
-                "قیمت یا هزینه ارسال تغییر کرده است. سبد خرید را دوباره بررسی کنید.",
+                "api.error.order-price-changed",
                 new Dictionary<string, object?> { ["total"] = subtotal + shipping, ["expectedTotal"] = request.ExpectedTotal });
         }
 
@@ -148,7 +149,7 @@ internal sealed class OrderService(
     public async Task<Result<OrderDto>> GetAsync(string accessToken, CancellationToken ct)
     {
         var order = await FindByTokenAsync(accessToken, track: false, ct);
-        return order is null ? Error.NotFound("order_not_found", "سفارش پیدا نشد.") : OrderMapper.ToDto(order);
+        return order is null ? Error.NotFound("order_not_found", "api.error.order-not-found") : OrderMapper.ToDto(order);
     }
 
     public async Task<Result<OrderDto>> SubmitTransferReferenceAsync(string accessToken, TransferReferenceRequest request, CancellationToken ct)
@@ -156,7 +157,7 @@ internal sealed class OrderService(
         var order = await FindByTokenAsync(accessToken, track: true, ct);
         if (order is null)
         {
-            return Error.NotFound("order_not_found", "سفارش پیدا نشد.");
+            return Error.NotFound("order_not_found", "api.error.order-not-found");
         }
 
         var tracking = PersianText.Normalize(Digits.ToLatin(request.Tracking));
@@ -164,7 +165,7 @@ internal sealed class OrderService(
         var last4 = Digits.ToLatin(request.CardLast4);
         if (!order.TrySetTransferReference(tracking, time, last4, clock.GetUtcNow().UtcDateTime))
         {
-            return Error.Conflict("not_awaiting_payment", "این سفارش در انتظار پرداخت کارت‌به‌کارت نیست.");
+            return Error.Conflict("not_awaiting_payment", "api.error.order-not-awaiting-transfer");
         }
 
         try
@@ -173,7 +174,7 @@ internal sealed class OrderService(
         }
         catch (DbUpdateConcurrencyException)
         {
-            return Error.Conflict("concurrent_update", "سفارش هم‌زمان تغییر کرد. صفحه را تازه کنید.");
+            return Error.Conflict("concurrent_update", "api.error.order-concurrent-update-short");
         }
 
         return OrderMapper.ToDto(order);
@@ -217,7 +218,7 @@ internal sealed class OrderService(
 
         return Error.Conflict(
             "unpaid_limit",
-            $"شما هم‌اکنون {PersianDigits(limit)} سفارش پرداخت‌نشده دارید. برای ثبت سفارش جدید، ابتدا سفارش‌های قبلی را پرداخت یا لغو کنید.",
+            Msg.Of("api.error.unpaid-limit", ("limit", PersianDigits(limit))),
             new Dictionary<string, object?> { ["limit"] = limit });
     }
 
@@ -229,7 +230,7 @@ internal sealed class OrderService(
         {
             if (!infos.TryGetValue(line.VariantId, out var info))
             {
-                result.Add(new StockShortageDto(line.VariantId, "؟", null, line.Quantity, 0));
+                result.Add(new StockShortageDto(line.VariantId, Translate.Get("api.order.unknown-product"), null, line.Quantity, 0));
             }
             else if (line.Quantity > info.MaxQuantity(maxPerLine))
             {
@@ -243,7 +244,7 @@ internal sealed class OrderService(
     private static Error StockError(List<StockShortageDto> shortages) =>
         Error.Conflict(
             "stock_insufficient",
-            "موجودی برخی کالاها کافی نیست. سفارش ثبت نشد.",
+            "api.error.stock-insufficient",
             new Dictionary<string, object?> { ["lines"] = shortages });
 
     private Task LockAsync(string resource, CancellationToken ct) =>

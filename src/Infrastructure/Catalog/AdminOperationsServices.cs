@@ -6,6 +6,7 @@ using Shop.Domain.Catalog;
 using Shop.Domain.Inventory;
 using Shop.Domain.Orders;
 using Shop.Infrastructure.Persistence;
+using Shop.Domain.Common;
 
 namespace Shop.Infrastructure.Catalog;
 
@@ -17,7 +18,7 @@ internal sealed class StockAdminService(ShopDbContext db, ICurrentUser currentUs
     {
         if (request.Delta == 0 || Math.Abs((long)request.Delta) > MaxDelta)
         {
-            return Error.Validation(new Dictionary<string, string[]> { ["delta"] = [$"تغییر موجودی باید عددی صحیح، غیرصفر و حداکثر {MaxDelta} باشد."] });
+            return Error.Validation(new Dictionary<string, string[]> { ["delta"] = [Msg.Of("api.validation.stock-delta", ("max", MaxDelta))] });
         }
 
         await using var tx = await db.Database.BeginTransactionAsync(ct);
@@ -44,8 +45,8 @@ internal sealed class StockAdminService(ShopDbContext db, ICurrentUser currentUs
             {
                 await reader.CloseAsync();
                 return await db.ProductVariants.AnyAsync(v => v.Id == variantId, ct)
-                    ? Error.Conflict("stock_out_of_range", "موجودی نمی‌تواند کمتر از صفر (یا بیشتر از حد مجاز) شود.")
-                    : Error.NotFound("variant_not_found", "تنوع محصول پیدا نشد.");
+                    ? Error.Conflict("stock_out_of_range", "api.validation.stock-range")
+                    : Error.NotFound("variant_not_found", "api.error.variant-not-found");
             }
 
             stockAfter = reader.GetInt32(0);
@@ -63,7 +64,7 @@ internal sealed class StockAdminService(ShopDbContext db, ICurrentUser currentUs
     {
         if (!await db.ProductVariants.AnyAsync(v => v.Id == variantId, ct))
         {
-            return Error.NotFound("variant_not_found", "تنوع محصول پیدا نشد.");
+            return Error.NotFound("variant_not_found", "api.error.variant-not-found");
         }
 
         var rows = await (

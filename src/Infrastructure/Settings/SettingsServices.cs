@@ -126,7 +126,7 @@ internal sealed class AdminSettingsService(
         }
         catch (DbUpdateConcurrencyException)
         {
-            return Error.Conflict("concurrent_update", "تنظیمات هم‌زمان توسط شخص دیگری تغییر کرد. صفحه را تازه کنید.");
+            return Error.Conflict("concurrent_update", "api.error.settings-concurrent-update");
         }
 
         settings.Invalidate();
@@ -155,7 +155,7 @@ internal sealed class AdminSettingsService(
 
         db.SettingsAuditLogs.Add(SettingsAuditLog.Create(currentUser.UserId, "reauthFailed", null, string.Join(",", fields), now));
         await db.SaveChangesAsync(ct);
-        return Error.Forbidden("step_up_failed", "برای این تغییر، رمز عبور فعلی خود را درست وارد کنید.");
+        return Error.Forbidden("step_up_failed", "api.error.current-password-required");
     }
 
     public async Task<PagedList<SettingsAuditEntryDto>> GetAuditAsync(int page, CancellationToken ct)

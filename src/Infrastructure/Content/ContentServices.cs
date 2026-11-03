@@ -16,7 +16,7 @@ internal sealed class ContentService(ShopDbContext db) : IContentService
     {
         var page = await db.ContentPages.AsNoTracking().Where(p => p.Slug == slug)
             .Select(p => new ContentPageDto(p.Slug, p.Title, p.Body, p.UpdatedAtUtc)).SingleOrDefaultAsync(ct);
-        return page is null ? Error.NotFound("page_not_found", "صفحه پیدا نشد.") : page;
+        return page is null ? Error.NotFound("page_not_found", "api.error.page-not-found") : page;
     }
 }
 
@@ -73,7 +73,7 @@ internal sealed class AdminContentService(ShopDbContext db, ICurrentUser current
             }
             catch (DbUpdateConcurrencyException)
             {
-                return Error.Conflict("concurrent_update", "این صفحه هم‌زمان توسط شخص دیگری تغییر کرد. صفحه را دوباره بارگذاری کنید.");
+                return Error.Conflict("concurrent_update", "api.error.page-concurrent-update");
             }
         }
         else
@@ -82,7 +82,7 @@ internal sealed class AdminContentService(ShopDbContext db, ICurrentUser current
             var current = await db.ContentPages.AsNoTracking().Where(p => p.Slug == slug).Select(p => p.RowVersion).SingleAsync(ct);
             if (!current.SequenceEqual(request.RowVersion))
             {
-                return Error.Conflict("concurrent_update", "این صفحه هم‌زمان توسط شخص دیگری تغییر کرد. صفحه را دوباره بارگذاری کنید.");
+                return Error.Conflict("concurrent_update", "api.error.page-concurrent-update");
             }
         }
 
@@ -124,5 +124,5 @@ internal sealed class AdminContentService(ShopDbContext db, ICurrentUser current
                 row.UpdatedAtUtc, row.Username, row.RowVersion);
     }
 
-    private static Error NotFound() => Error.NotFound("page_not_found", "صفحه پیدا نشد.");
+    private static Error NotFound() => Error.NotFound("page_not_found", "api.error.page-not-found");
 }

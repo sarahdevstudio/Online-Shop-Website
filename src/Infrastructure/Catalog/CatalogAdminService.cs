@@ -14,8 +14,8 @@ internal sealed class CatalogAdminService(
 {
     public const int AdminPageSize = 50;
 
-    private static readonly Error SlugTaken = Error.Conflict("slug_taken", "این شناسهٔ آدرس قبلاً استفاده شده است.");
-    private static readonly Error SkuTaken = Error.Conflict("sku_taken", "این کد کالا قبلاً استفاده شده است.");
+    private static readonly Error SlugTaken = Error.Conflict("slug_taken", "api.error.slug-taken");
+    private static readonly Error SkuTaken = Error.Conflict("sku_taken", "api.error.sku-taken");
 
     // ---- categories ----
 
@@ -75,7 +75,7 @@ internal sealed class CatalogAdminService(
 
         if (await db.Categories.AnyAsync(c => c.ParentId == id, ct) || await db.Products.AnyAsync(p => p.CategoryId == id, ct))
         {
-            return Result.Failure(Error.Conflict("category_not_empty", "این دسته هنوز زیردسته یا محصول دارد."));
+            return Result.Failure(Error.Conflict("category_not_empty", "api.error.category-not-empty"));
         }
 
         db.Categories.Remove(category);
@@ -93,23 +93,23 @@ internal sealed class CatalogAdminService(
 
         if (parentId == categoryId)
         {
-            return Invalid("parentId", "یک دسته نمی‌تواند والد خودش باشد.");
+            return Invalid("parentId", "api.validation.category-own-parent");
         }
 
         var parent = await db.Categories.AsNoTracking().SingleOrDefaultAsync(c => c.Id == parentId, ct);
         if (parent is null)
         {
-            return Invalid("parentId", "دستهٔ والد وجود ندارد.");
+            return Invalid("parentId", "api.validation.category-parent-missing");
         }
 
         if (parent.ParentId is not null)
         {
-            return Invalid("parentId", "دسته‌ها حداکثر دو سطح دارند: والد باید یک دستهٔ اصلی باشد.");
+            return Invalid("parentId", "api.validation.category-depth");
         }
 
         if (categoryId is not null && await db.Categories.AnyAsync(c => c.ParentId == categoryId, ct))
         {
-            return Invalid("parentId", "دسته‌ای که زیردسته دارد را نمی‌توان زیر دستهٔ دیگری گذاشت.");
+            return Invalid("parentId", "api.validation.category-has-children");
         }
 
         return null;
@@ -181,7 +181,7 @@ internal sealed class CatalogAdminService(
 
         if (await db.Products.AnyAsync(p => p.BrandId == id, ct))
         {
-            return Result.Failure(Error.Conflict("brand_in_use", "هنوز محصولاتی با این برند وجود دارد."));
+            return Result.Failure(Error.Conflict("brand_in_use", "api.error.brand-in-use"));
         }
 
         db.Brands.Remove(brand);
@@ -189,7 +189,7 @@ internal sealed class CatalogAdminService(
         return Result.Success();
     }
 
-    private static Error BrandNameTaken => Error.Conflict("name_taken", "برندی با این نام از قبل وجود دارد.");
+    private static Error BrandNameTaken => Error.Conflict("name_taken", "api.error.brand-name-taken");
 
     // ---- attributes ----
 
@@ -209,10 +209,10 @@ internal sealed class CatalogAdminService(
 
         if (attribute.Type != AttributeType.Option)
         {
-            return Invalid("attributeId", "فقط ویژگی‌های گزینه‌ای می‌توانند گزینه داشته باشند.");
+            return Invalid("attributeId", "api.validation.attribute-options-only");
         }
 
-        var taken = Error.Conflict("option_slug_taken", "این ویژگی از قبل گزینه‌ای با این شناسه دارد.");
+        var taken = Error.Conflict("option_slug_taken", "api.error.option-slug-taken");
         if (attribute.Options.Any(o => o.Slug == request.Slug))
         {
             return taken;
@@ -270,13 +270,13 @@ internal sealed class CatalogAdminService(
 
         if (request.Variants is not { Count: > 0 } variants)
         {
-            return Invalid("variants", "حداقل یک تنوع لازم است.");
+            return Invalid("variants", "api.validation.variants-required");
         }
 
         var skus = variants.Select(v => v.Sku).ToList();
         if (skus.Distinct(StringComparer.OrdinalIgnoreCase).Count() != skus.Count)
         {
-            return Invalid("variants", "کد کالاها نباید تکراری باشند.");
+            return Invalid("variants", "api.validation.variants-sku-unique");
         }
 
         var references = await ValidateReferencesAsync(request, ct);
@@ -400,11 +400,11 @@ internal sealed class CatalogAdminService(
 
         if (request.Values.GroupBy(v => (v.AttributeId, v.VariantId)).Any(g => g.Count() > 1))
         {
-            errors["values"] = ["هر ویژگی فقط یک بار برای محصول و یک بار برای هر تنوع می‌تواند ثبت شود."];
+            errors["values"] = ["api.validation.values-unique"];
         }
         else if (request.Values.GroupBy(v => v.AttributeId).Any(g => g.Any(v => v.VariantId is null) && g.Any(v => v.VariantId is not null)))
         {
-            errors["values"] = ["هر ویژگی یا مشخصهٔ محصول است یا محور تنوع، نه هر دو."];
+            errors["values"] = ["api.validation.values-axis-or-spec"];
         }
 
         if (errors.Count > 0)
@@ -434,7 +434,7 @@ internal sealed class CatalogAdminService(
         var maxBytes = mediaOptions.Value.MaxImageBytes;
         if (upload.Length is <= 0 || upload.Length > maxBytes)
         {
-            return Invalid("file", $"حجم تصویر باید بین ۱ بایت و {maxBytes} بایت باشد.");
+            return Invalid("file", Msg.Of("api.validation.image-size", ("maxBytes", maxBytes)));
         }
 
         using var buffer = new MemoryStream();
@@ -442,14 +442,14 @@ internal sealed class CatalogAdminService(
         if (buffer.Length > maxBytes)
         {
             // The declared length is the client's claim; the bytes actually read are what counts.
-            return Invalid("file", $"حجم تصویر باید بین ۱ بایت و {maxBytes} بایت باشد.");
+            return Invalid("file", Msg.Of("api.validation.image-size", ("maxBytes", maxBytes)));
         }
         // Trust the bytes, not the file name or the client's content type. Anything else (SVG, GIF, HTML, ...) is refused;
         // the stored name is a server-generated GUID with the extension of the detected format.
         var extension = DetectImageExtension(buffer.GetBuffer().AsSpan(0, (int)buffer.Length));
         if (extension is null)
         {
-            return Invalid("file", "فقط تصویرهای JPEG، PNG و WebP پذیرفته می‌شوند.");
+            return Invalid("file", "api.validation.image-type-short");
         }
 
         if (!string.IsNullOrWhiteSpace(upload.Alt) && PersianText.Normalize(upload.Alt).Length > ProductImage.AltMaxLength)
@@ -486,7 +486,7 @@ internal sealed class CatalogAdminService(
 
         if (!product.Images.Select(i => i.Id).ToHashSet().SetEquals(request.ImageIds) || product.Images.Count != request.ImageIds.Count)
         {
-            return Invalid("imageIds", "باید هر تصویر محصول دقیقاً یک بار در فهرست بیاید.");
+            return Invalid("imageIds", "api.validation.image-ids-once");
         }
 
         for (var i = 0; i < request.ImageIds.Count; i++)
@@ -528,7 +528,7 @@ internal sealed class CatalogAdminService(
     {
         if (!await db.Categories.AnyAsync(c => c.Id == request.CategoryId, ct))
         {
-            return (Invalid("categoryId", "دسته وجود ندارد."), null);
+            return (Invalid("categoryId", "api.validation.product-category-missing"), null);
         }
 
         if (request.BrandId is null)
@@ -537,7 +537,7 @@ internal sealed class CatalogAdminService(
         }
 
         var brandName = await db.Brands.Where(b => b.Id == request.BrandId).Select(b => b.Name).SingleOrDefaultAsync(ct);
-        return brandName is null ? (Invalid("brandId", "برند وجود ندارد."), null) : (null, brandName);
+        return brandName is null ? (Invalid("brandId", "api.validation.product-brand-missing"), null) : (null, brandName);
     }
 
     private Task<Product?> LoadProductAsync(int id, bool tracking, CancellationToken ct)
@@ -566,7 +566,7 @@ internal sealed class CatalogAdminService(
     private static Error Invalid(string field, string message) =>
         Error.Validation(new Dictionary<string, string[]> { [field] = [message] });
 
-    private static Error NotFound(string what) => Error.NotFound($"{what}_not_found", "مورد درخواستی پیدا نشد.");
+    private static Error NotFound(string what) => Error.NotFound($"{what}_not_found", "api.error.requested-item-not-found");
 
     private static AdminCategoryDto ToDto(Category c) => new(c.Id, c.Slug, c.Name, c.ParentId, c.Description, c.SortOrder, c.IsActive);
 

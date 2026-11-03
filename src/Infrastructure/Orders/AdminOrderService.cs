@@ -61,7 +61,7 @@ internal sealed class AdminOrderService(
     public Task<Result<AdminOrderDto>> SetStatusAsync(int id, OrderStatus status, CancellationToken ct) =>
         status is OrderStatus.Confirmed or OrderStatus.Shipped or OrderStatus.Delivered
             ? ChangeAsync(id, (order, now) => order.TryAdvance(status, currentUser.UserId, now), restoreStock: false, ct)
-            : Task.FromResult<Result<AdminOrderDto>>(Error.Conflict("status_not_allowed", "این تغییر وضعیت مجاز نیست."));
+            : Task.FromResult<Result<AdminOrderDto>>(Error.Conflict("status_not_allowed", "api.error.order-status-change-not-allowed"));
 
     public Task<Result<AdminOrderDto>> CancelAsync(int id, CancellationToken ct) =>
         ChangeAsync(id, (order, now) => order.TryCancel(currentUser.UserId, now), restoreStock: true, ct);
@@ -82,7 +82,7 @@ internal sealed class AdminOrderService(
 
         if (!transition(order, clock.GetUtcNow().UtcDateTime))
         {
-            return Error.Conflict("transition_not_allowed", $"تغییر وضعیت از «{order.Status}» مجاز نیست.");
+            return Error.Conflict("transition_not_allowed", Msg.Of("api.error.order-status-change-from", ("status", order.Status)));
         }
 
         try
@@ -100,7 +100,7 @@ internal sealed class AdminOrderService(
         }
         catch (DbUpdateConcurrencyException)
         {
-            return Error.Conflict("concurrent_update", "سفارش هم‌زمان تغییر کرد. صفحه را تازه کنید.");
+            return Error.Conflict("concurrent_update", "api.error.order-concurrent-update");
         }
 
         return ToDto(order);
@@ -124,5 +124,5 @@ internal sealed class AdminOrderService(
         order.StatusLog.OrderBy(l => l.AtUtc).ThenBy(l => l.Id)
             .Select(l => new OrderStatusLogDto(l.FromStatus, l.ToStatus, l.AdminUserId, l.AtUtc)).ToList());
 
-    private static Error NotFound() => Error.NotFound("order_not_found", "سفارش پیدا نشد.");
+    private static Error NotFound() => Error.NotFound("order_not_found", "api.error.order-not-found");
 }

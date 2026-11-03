@@ -7,6 +7,8 @@ using Shop.Application.Site;
 using Shop.Domain.Site;
 using Shop.Infrastructure.Catalog;
 using Shop.Infrastructure.Persistence;
+using Shop.Application.Translations;
+using Shop.Domain.Common;
 
 namespace Shop.Infrastructure.Site;
 
@@ -21,10 +23,10 @@ internal sealed class AdminSiteService(
 {
     private const int AuditPageSize = 30;
 
-    private static readonly Error KindNotFound = Error.NotFound("site_kind_not_found", "این بخش پیدا نشد.");
-    private static readonly Error DraftNotFound = Error.NotFound("draft_not_found", "پیش‌نویسی وجود ندارد.");
-    private static readonly Error VersionNotFound = Error.NotFound("version_not_found", "این نسخه پیدا نشد.");
-    private static readonly Error Conflict = Error.Conflict("concurrent_update", "این بخش هم‌زمان توسط شخص دیگری تغییر کرد. صفحه را دوباره بارگذاری کنید.");
+    private static readonly Error KindNotFound = Error.NotFound("site_kind_not_found", "api.error.site-kind-not-found");
+    private static readonly Error DraftNotFound = Error.NotFound("draft_not_found", "api.error.site-draft-missing");
+    private static readonly Error VersionNotFound = Error.NotFound("version_not_found", "api.error.site-version-not-found");
+    private static readonly Error Conflict = Error.Conflict("concurrent_update", "api.error.site-concurrent-update");
 
     private static Error Invalid(string key, string message) =>
         Error.Validation(new Dictionary<string, string[]> { [key] = [message] });
@@ -93,7 +95,7 @@ internal sealed class AdminSiteService(
             && Contrast.IsHex(theme.Background) && Contrast.IsHex(theme.Surface) && Contrast.IsHex(theme.Text)
             && Contrast.IsHex(theme.Success) && Contrast.IsHex(theme.Warning) && Contrast.IsHex(theme.Danger))
         {
-            report = new SiteReportDto(Contrast.Check(theme));
+            report = new SiteReportDto(Contrast.Check(theme).Select(r => r with { Message = Translate.Resolve(r.Message) }).ToList());
         }
 
         return new SiteKindDto(
@@ -307,7 +309,7 @@ internal sealed class AdminSiteService(
         var typed = SiteJson.TryDeserialize(kind, draft.Payload);
         if (typed is null)
         {
-            return Invalid("payload", "ساختار اطلاعات نامعتبر است.");
+            return Invalid("payload", "api.validation.site-payload-structure");
         }
 
         var references = await LoadReferencesAsync(SitePayloadValidator.CollectReferences(typed), ct);
@@ -383,7 +385,7 @@ internal sealed class AdminSiteService(
         {
             if (!SiteNames.TryParseKind(kind, out var parsed))
             {
-                return Invalid("kind", "بخش نامعتبر است.");
+                return Invalid("kind", "api.validation.site-kind-invalid");
             }
 
             filter = parsed;
@@ -411,11 +413,11 @@ internal sealed class AdminSiteService(
         var purpose = upload.Purpose?.Trim().ToLowerInvariant() ?? string.Empty;
         if (!SiteValues.MediaPurposes.Contains(purpose))
         {
-            return Invalid("purpose", "کاربرد تصویر نامعتبر است.");
+            return Invalid("purpose", "api.validation.site-image-purpose");
         }
 
         var maxBytes = mediaOptions.Value.MaxImageBytes;
-        const string sizeMessage = "حجم تصویر باید بین ۱ بایت و ۵ مگابایت باشد.";
+        const string sizeMessage = "api.validation.site-image-size";
         if (upload.Length is <= 0 || upload.Length > maxBytes)
         {
             return Invalid("file", sizeMessage);
@@ -432,26 +434,26 @@ internal sealed class AdminSiteService(
         var info = ImageProbe.Probe(buffer.GetBuffer().AsSpan(0, (int)buffer.Length));
         if (info is null)
         {
-            return Invalid("file", "فقط تصویرهای JPEG، PNG و WebP پذیرفته می‌شوند.");
+            return Invalid("file", "api.validation.image-type");
         }
 
         if (purpose == "favicon")
         {
             if (info.ContentType != "image/png")
             {
-                return Invalid("file", "نمادک باید تصویر PNG باشد.");
+                return Invalid("file", "api.validation.site-favicon-png");
             }
 
             if (info.Width != info.Height || info.Width < 192)
             {
-                return Invalid("file", "نمادک باید مربع و حداقل ۱۹۲×۱۹۲ پیکسل باشد.");
+                return Invalid("file", "api.validation.site-favicon-square");
             }
         }
 
         var alt = PersianTextNormalize(upload.Alt);
         if (alt.Length > SiteMedia.AltMaxLength)
         {
-            return Invalid("alt", $"حداکثر {SiteMedia.AltMaxLength} نویسه مجاز است.");
+            return Invalid("alt", Msg.Of("api.validation.alt-max", ("max", SiteMedia.AltMaxLength)));
         }
 
         buffer.Position = 0;
@@ -491,7 +493,7 @@ internal sealed class AdminSiteService(
     {
         if (payload.ValueKind != JsonValueKind.Object || SiteJson.TryDeserialize(kind, payload) is not { } typed)
         {
-            return new Validated(null, Invalid("payload", "ساختار اطلاعات نامعتبر است."));
+            return new Validated(null, Invalid("payload", "api.validation.site-payload-structure"));
         }
 
         var references = await LoadReferencesAsync(SitePayloadValidator.CollectReferences(typed), ct);
@@ -503,7 +505,7 @@ internal sealed class AdminSiteService(
 
         var json = SiteJson.Serialize(result.Payload);
         return json.Length > SiteConfigVersion.PayloadMaxLength
-            ? new Validated(null, Invalid("payload", "حجم اطلاعات بیش از حد مجاز است."))
+            ? new Validated(null, Invalid("payload", "api.validation.site-payload-too-large"))
             : new Validated(json, null);
     }
 

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Shop.Application.Common;
 using Shop.Domain.Security;
 using Shop.Infrastructure.Identity;
+using Shop.Domain.Common;
 
 namespace Shop.Infrastructure.Accounts;
 
@@ -25,13 +26,13 @@ public static class AdminAccounts
         {
             return Result.Failure(Error.Validation(new Dictionary<string, string[]>
             {
-                ["username"] = [$"نام کاربری باید {UsernameMinLength} تا {UsernameMaxLength} نویسه و فقط شامل حروف انگلیسی، عدد و . _ - @ باشد."],
+                ["username"] = [Msg.Of("api.validation.username-format", ("min", UsernameMinLength), ("max", UsernameMaxLength))],
             }));
         }
 
         if (email is not null && (email.Length > 256 || !email.Contains('@') || email.Contains(' ')))
         {
-            return Result.Failure(Error.Validation(new Dictionary<string, string[]> { ["email"] = ["ایمیل معتبر وارد کنید."] }));
+            return Result.Failure(Error.Validation(new Dictionary<string, string[]> { ["email"] = ["api.validation.email-valid"] }));
         }
 
         if (AdminPasswordRules.Weakness(password, username) is { } weakness)
@@ -41,7 +42,7 @@ public static class AdminAccounts
 
         if (await users.FindByNameAsync(username) is not null)
         {
-            return Result.Failure(Error.Conflict("username_taken", "حسابی با این نام کاربری از قبل وجود دارد."));
+            return Result.Failure(Error.Conflict("username_taken", "api.error.admin-username-exists"));
         }
 
         var user = new ApplicationUser
@@ -66,7 +67,7 @@ public static class AdminAccounts
         if (!role.Succeeded)
         {
             await users.DeleteAsync(user);
-            return Result.Failure(Error.Conflict("role_missing", "نقش مدیر هنوز ساخته نشده است؛ یک‌بار API را اجرا کنید تا ساخته شود."));
+            return Result.Failure(Error.Conflict("role_missing", "api.error.admin-role-missing"));
         }
 
         return Result.Success();

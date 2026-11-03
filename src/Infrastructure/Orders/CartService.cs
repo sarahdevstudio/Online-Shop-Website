@@ -53,12 +53,12 @@ internal sealed class CartService(
         var infos = await VariantInfoLoader.LoadAsync(db, [request.VariantId], ct);
         if (!infos.TryGetValue(request.VariantId, out var info))
         {
-            return Error.NotFound("variant_not_found", "این محصول پیدا نشد.");
+            return Error.NotFound("variant_not_found", "api.error.cart-product-not-found");
         }
 
         if (!info.Purchasable)
         {
-            return Error.Conflict("variant_unavailable", "این محصول در حال حاضر موجود نیست.");
+            return Error.Conflict("variant_unavailable", "api.error.cart-product-unavailable");
         }
 
         var now = clock.GetUtcNow().UtcDateTime;
@@ -78,7 +78,7 @@ internal sealed class CartService(
         var line = cart.Items.FirstOrDefault(i => i.VariantId == request.VariantId);
         if (line is null && cart.Items.Count >= Options.MaxCartLines)
         {
-            return Error.Conflict("cart_full", "سبد خرید پر است.");
+            return Error.Conflict("cart_full", "api.error.cart-full");
         }
 
         var max = info.MaxQuantity((await settings.GetAsync(ct)).MaxQuantityPerLine);
@@ -100,7 +100,7 @@ internal sealed class CartService(
         }
         catch (DbUpdateException ex) when (DbErrors.IsUniqueViolation(ex, "UX_CartItems_CartId_VariantId"))
         {
-            return Error.Conflict("concurrent_update", "سبد خرید هم‌زمان تغییر کرد. دوباره تلاش کنید.");
+            return Error.Conflict("concurrent_update", "api.error.cart-concurrent-update");
         }
 
         return new CartMutationDto(newToken, await BuildAsync(cart, ct), Clamped: wanted > quantity);
@@ -126,7 +126,7 @@ internal sealed class CartService(
             var info = (await VariantInfoLoader.LoadAsync(db, [variantId], ct)).GetValueOrDefault(variantId);
             if (info is null || !info.Purchasable)
             {
-                return Error.Conflict("variant_unavailable", "این محصول در حال حاضر موجود نیست.");
+                return Error.Conflict("variant_unavailable", "api.error.cart-product-unavailable");
             }
 
             var max = info.MaxQuantity((await settings.GetAsync(ct)).MaxQuantityPerLine);
