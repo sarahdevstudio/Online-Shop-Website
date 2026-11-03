@@ -80,6 +80,19 @@ public sealed partial class TranslationResolver(ITranslationSource? source, ILog
     /// <summary>The named placeholders of a text, for the editor's "same placeholders" rule.</summary>
     public static IReadOnlySet<string> PlaceholdersOf(string text) =>
         Placeholder().Matches(text).Select(m => m.Groups[1].Value).ToHashSet(StringComparer.Ordinal);
+
+    /// <summary>
+    /// Key → current text for every key that starts with one of <paramref name="allowed"/> (and with <paramref name="prefix"/> when
+    /// given). The caller names the allowed prefixes, so a client can never read an area it is not meant to see.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Bundle(IReadOnlyCollection<string> allowed, string? prefix)
+    {
+        var wanted = string.IsNullOrWhiteSpace(prefix) ? null : prefix.Trim();
+        return TranslationManifest.Defaults.Keys
+            .Where(k => allowed.Any(a => k.StartsWith(a, StringComparison.Ordinal)) && (wanted is null || k.StartsWith(wanted, StringComparison.Ordinal)))
+            .OrderBy(k => k, StringComparer.Ordinal)
+            .ToDictionary(k => k, Template, StringComparer.Ordinal);
+    }
 }
 
 /// <summary>

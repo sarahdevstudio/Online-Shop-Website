@@ -91,6 +91,7 @@ public static class DependencyInjection
         services.AddScoped<SiteSeeder>();
         services.AddScoped<Shop.Infrastructure.Translations.TranslationSeeder>();
         services.AddSingleton<Shop.Infrastructure.Translations.TranslationCache>();
+        services.AddScoped<Shop.Application.Translations.IAdminTranslationService, Shop.Infrastructure.Translations.AdminTranslationService>();
         services.AddHostedService<Shop.Infrastructure.Translations.TranslationRefreshService>();
         services.AddScoped<DatabaseInitializer>();
 

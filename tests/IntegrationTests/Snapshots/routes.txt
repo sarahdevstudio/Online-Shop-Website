@@ -25,6 +25,11 @@ GET /api/v1/admin/site/audit | auth: Site.Manage | - | rate: - | -
 GET /api/v1/admin/site/compiled | auth: Site.Manage | - | rate: - | -
 GET /api/v1/admin/site/{kind} | auth: Site.Manage | - | rate: - | -
 GET /api/v1/admin/site/{kind}/versions/{version:int} | auth: Site.Manage | - | rate: - | -
+GET /api/v1/admin/translations | auth: Translations.Manage | - | rate: - | -
+GET /api/v1/admin/translations/areas | auth: Translations.Manage | - | rate: - | -
+GET /api/v1/admin/translations/bundle | auth: roles:Admin | - | rate: - | -
+GET /api/v1/admin/translations/{id:int} | auth: Translations.Manage | - | rate: - | -
+GET /api/v1/admin/translations/{id:int}/audit | auth: Translations.Manage | - | rate: - | -
 GET /api/v1/admin/variants/{id:int}/stock-history | auth: Catalog.Manage | - | rate: - | -
 GET /api/v1/auth/csrf | auth:  | anonymous | rate: - | -
 GET /api/v1/auth/me | auth: authenticated | - | rate: - | -
@@ -41,6 +46,7 @@ GET /api/v1/catalog/products/{slug} | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/site | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/sitemap | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/store-info | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/translations | auth:  | anonymous | rate: - | -
 GET /api/v1/customer/profile | auth: Customer | - | rate: - | -
 GET /api/v1/store/cart | auth:  | anonymous | rate: store-cart | storefront
 GET /api/v1/store/cart/count | auth:  | anonymous | rate: store-cart | storefront
@@ -59,6 +65,7 @@ POST /api/v1/admin/site/images | auth: Site.Manage | - | rate: - | -
 POST /api/v1/admin/site/{kind}/discard | auth: Site.Manage | - | rate: - | -
 POST /api/v1/admin/site/{kind}/publish | auth: Site.Manage | - | rate: - | -
 POST /api/v1/admin/site/{kind}/restore/{version:int} | auth: Site.Manage | - | rate: - | -
+POST /api/v1/admin/translations/{id:int}/reset | auth: Translations.Manage | - | rate: - | -
 POST /api/v1/admin/variants/{id:int}/stock-adjust | auth: Catalog.Manage | - | rate: - | -
 POST /api/v1/auth/change-password | auth: authenticated | - | rate: auth | -
 POST /api/v1/auth/login | auth:  | anonymous | rate: auth | -
@@ -76,5 +83,6 @@ PUT /api/v1/admin/products/{id:int}/attributes | auth: Catalog.Manage | - | rate
 PUT /api/v1/admin/products/{id:int}/images/order | auth: Catalog.Manage | - | rate: - | -
 PUT /api/v1/admin/settings | auth: Settings.Manage | - | rate: - | -
 PUT /api/v1/admin/site/{kind}/draft | auth: Site.Manage | - | rate: - | -
+PUT /api/v1/admin/translations/{id:int} | auth: Translations.Manage | - | rate: - | -
 PUT /api/v1/admin/variants/{id:int} | auth: Catalog.Manage | - | rate: - | -
 PUT /api/v1/store/cart/items/{variantId:int} | auth:  | anonymous | rate: store-cart | storefront
