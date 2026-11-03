@@ -33,3 +33,37 @@
 .dl dd { margin: 0; overflow-wrap: anywhere; }
 .section { display: grid; gap: var(--space-3); min-inline-size: 0; align-content: start; }
 .samples { display: grid; gap: var(--space-2); list-style: none; margin: 0; padding: 0; }
+
+.blockList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+.blockCard {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+.blockHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+.blockTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.addRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+}
