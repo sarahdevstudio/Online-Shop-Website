@@ -83,6 +83,8 @@ Back up **both**, together, from the same moment:
 - **The SQL Server database** (full backup daily, log backups if you need point-in-time recovery).
 - **The media folder** (`Media__RootPath`): uploaded product images live only there and are referenced from the database. A database restore without the matching media folder leaves broken images.
 
+Site customization (docs/10) adds no extra folder to back up: the logo, favicon and home-page images are stored in the same media folder under `site/` (`Media__RootPath/site`), and the draft / published configuration lives in the database.
+
 Keep copies off the server. **Test a restore** (database + media into a scratch environment, then browse a product page) before launch and after changes to the setup. Not covered by the app: refunds of paid orders are manual (the admin panel warns when cancelling a paid order).
 
 ## 4. Reverse proxy requirements
@@ -180,3 +182,15 @@ Set `TRUSTED_PROXY_HOPS=1`. Run `create-admin` as the `shop` user with the same 
 2. Deploy the new API build and apply migrations (`Database__MigrateOnStartup=true` for that start). Migrations only add; they never touch your edited settings or content pages.
 3. Build and deploy the storefront (set the three build-time variables again).
 4. Run the smoke checklist.
+
+## 10. Site customization (theme, home page, header/footer, SEO, trust badges)
+
+Managed by admins with the `Site.Manage` permission under `/admin/site`; nothing to configure by hand.
+
+- **Migration and first start.** One new migration creates the site tables. On the first API start the seeder publishes version 1 of every part (palette, logo and favicon from the company's emblem, home blocks, menu, SEO names). Store settings (phone, address, hours, Instagram, shipping threshold) are untouched. The `Site.Manage` permission is added to the roles at startup; sign in again after the upgrade.
+- **Caching.** The API caches the compiled configuration for 30 seconds and the storefront for 60 seconds; publishing or restoring also drops the storefront cache of the instance that handled the click. Other storefront instances catch up within 60 seconds.
+- **Fonts.** Vazirmatn (default), Estedad, Shabnam and Sahel are served from `storefront/public/fonts` (WOFF2, licences next to the files). No external font host is used.
+- **Favicon sizes.** The storefront derives the 32/180/192 px icons from the uploaded favicon with `sharp`, which `npm install` pulls in; run it on the target OS/architecture.
+- **Preview.** Preview uses a sealed `site_preview` cookie (same secret as the admin session) and always answers `Cache-Control: no-store`; it never reaches visitors. «خروج از پیش‌نمایش» clears it.
+- **Trust badges.** E-Namad and Samandehi are built from IDs only, with a fixed template; no HTML or script from an admin is ever rendered. The URL templates were derived from the issuers' public embed code and have not been verified against live issuer pages: check the badges once after the first publish.
+- **History.** The last 20 published versions of each part are kept; restoring puts a version into the draft (optionally publishing it).

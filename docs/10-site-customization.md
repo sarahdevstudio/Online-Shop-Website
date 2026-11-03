@@ -1,6 +1,6 @@
 # 10 — Admin-customizable site (design)
 
-Status: **design only, nothing implemented.** Prepared after reading the company's previous site (https://ghr-co.com/, Task 2 findings below). Follows the conventions of `06-catalog-design.md`, `07-checkout-design.md` and `08-admin-design.md`; nothing here weakens a rule from those documents.
+Status: **implemented (Series 3), awaiting review.** Admin editors for all five parts, draft → preview → publish with history and restore, Site.Manage, audit and 409 handling are in place; deployment notes are in `docs/09-deployment.md` §10. The text below is the original design. Prepared after reading the company's previous site (https://ghr-co.com/, Task 2 findings below). Follows the conventions of `06-catalog-design.md`, `07-checkout-design.md` and `08-admin-design.md`; nothing here weakens a rule from those documents.
 
 ## 1. Goal and non-goals
 
