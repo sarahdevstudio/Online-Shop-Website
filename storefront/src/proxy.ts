@@ -31,9 +31,11 @@ function adminGate(request: NextRequest): NextResponse {
 /**
  * A permanently deleted category or post answers 410, not 404 (docs/11 C-3). A Next page cannot choose its status, so the
  * proxy asks the API (an in-memory lookup there) about public-looking paths and, for a deleted one, rewrites to the /gone page
- * with status 410. Answers are kept for 30 s per worker; any failure means "not gone": the catch-all page then answers 404.
+ * with status 410. Answers are kept briefly per worker; any failure means "not gone": the catch-all page then answers 404.
  */
-const GONE_TTL_MS = 30_000;
+// Short for "not gone" (an entity may be deleted any second and must turn into a 410 quickly), long for "gone" (permanent).
+const NOT_GONE_TTL_MS = 3_000;
+const GONE_TTL_MS = 60_000;
 const GONE_CACHE_MAX = 1000;
 const goneCache = new Map<string, { gone: boolean; at: number }>();
 
@@ -41,7 +43,7 @@ async function isGone(pathname: string): Promise<boolean> {
   if (!isResolvablePath(pathname) || isReservedPath(pathname)) return false;
   const now = Date.now();
   const hit = goneCache.get(pathname);
-  if (hit && now - hit.at < GONE_TTL_MS) return hit.gone;
+  if (hit && now - hit.at < (hit.gone ? GONE_TTL_MS : NOT_GONE_TTL_MS)) return hit.gone;
   const base = process.env.API_BASE_URL ?? (process.env.NODE_ENV === 'development' ? 'http://localhost:5167' : '');
   if (!base) return false;
   try {

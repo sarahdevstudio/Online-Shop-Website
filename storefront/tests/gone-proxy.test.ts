@@ -64,4 +64,23 @@ describe('410 for permanently deleted paths (decision C-3)', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it('forgets "not gone" within seconds, so a just-deleted post turns into a 410 quickly (and keeps "gone" for longer)', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-11-04T10:00:00Z'));
+      fetchMock.mockResolvedValueOnce(answer('blogPost'));
+      expect((await proxy(request('/blog/about-to-go'))).status).toBe(200);
+
+      vi.setSystemTime(new Date('2026-11-04T10:00:04Z')); // 4 s later: the post was deleted meanwhile
+      fetchMock.mockResolvedValueOnce(answer('gone'));
+      expect((await proxy(request('/blog/about-to-go'))).status).toBe(410);
+
+      vi.setSystemTime(new Date('2026-11-04T10:00:30Z')); // "gone" is permanent: no new call within a minute
+      expect((await proxy(request('/blog/about-to-go'))).status).toBe(410);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

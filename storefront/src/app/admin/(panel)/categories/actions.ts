@@ -5,7 +5,7 @@ import { adminFetch } from '@/lib/admin/api';
 import { failState, okState, problemState, submittedFrom, type FormState } from '@/lib/admin/form-state';
 import { checked, id as readId, text, whole } from '@/lib/admin/form-input';
 import { adminMessages } from '@/lib/admin/messages';
-import { applyPathChange } from '@/lib/admin/route-actions';
+import { applyPathChange, refreshPublicPaths } from '@/lib/admin/route-actions';
 
 export async function saveCategoryAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const id = readId(formData);
@@ -26,6 +26,7 @@ export async function saveCategoryAction(_previous: FormState, formData: FormDat
   }
   const result = await adminFetch<unknown>(id === null ? 'POST' : 'PUT', id === null ? '/admin/categories' : `/admin/categories/${id}`, { body });
   if (!result.ok) return problemState(result.problem, submitted);
+  refreshPublicPaths();
   revalidatePath('/admin/categories');
   return okState(adminMessages.saved);
 }
@@ -35,6 +36,7 @@ export async function deleteCategoryAction(_previous: FormState, formData: FormD
   if (id === null) return failState(adminMessages.failed);
   const result = await adminFetch<unknown>('DELETE', `/admin/categories/${id}`);
   if (!result.ok) return problemState(result.problem);
+  refreshPublicPaths(); // the deleted category's paths answer 410 from now on
   revalidatePath('/admin/categories');
   return okState(adminMessages.taxonomy.deleted);
 }

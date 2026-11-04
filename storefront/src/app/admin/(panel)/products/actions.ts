@@ -6,7 +6,7 @@ import { adminFetch } from '@/lib/admin/api';
 import { failState, okState, problemState, submittedFrom, type FormState } from '@/lib/admin/form-state';
 import { checked, id as readId, text, whole } from '@/lib/admin/form-input';
 import { adminMessages } from '@/lib/admin/messages';
-import { applyPathChange } from '@/lib/admin/route-actions';
+import { applyPathChange, refreshPublicPaths } from '@/lib/admin/route-actions';
 import type { AdminAttribute, AdminProduct } from '@/lib/admin/types';
 
 const STATUSES = ['draft', 'published', 'archived'];
@@ -50,6 +50,7 @@ export async function createProductAction(_previous: FormState, formData: FormDa
   }
   const result = await adminFetch<AdminProduct>('POST', '/admin/products', { body: { ...productBody(formData), slug: text(formData, 'slug'), path: text(formData, 'path') || null, variants } });
   if (!result.ok) return problemState(result.problem, submitted);
+  refreshPublicPaths(); // the new product's path now resolves (an earlier miss must not stay cached)
   redirect(`/admin/products/${result.body.id}`);
 }
 

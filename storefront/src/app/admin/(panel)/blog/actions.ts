@@ -6,11 +6,12 @@ import { adminFetch } from '@/lib/admin/api';
 import { checked, id as readId, text } from '@/lib/admin/form-input';
 import { failState, okState, problemState, submittedFrom, type FormState } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
-import { applyPathChange } from '@/lib/admin/route-actions';
+import { applyPathChange, refreshPublicPaths } from '@/lib/admin/route-actions';
 import type { AdminBlogPost } from '@/lib/admin/types';
 
 /** What the storefront shows is cached for up to a minute; this refreshes the route caches right away. */
 function refreshPublicPages(slug: string) {
+  refreshPublicPaths(); // a new, changed or deleted post changes what the paths resolve to (and 404 → 410)
   revalidatePath('/blog');
   revalidatePath(`/blog/${slug}`);
   revalidatePath('/sitemap.xml');
