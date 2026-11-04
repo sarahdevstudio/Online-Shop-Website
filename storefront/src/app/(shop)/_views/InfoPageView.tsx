@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import { JsonLd } from '@/components/JsonLd';
 import { getContentPage, type InfoSlug } from '@/lib/content';
 import { messages } from '@/lib/messages';
@@ -31,6 +32,7 @@ export async function InfoPageView({ slug }: Props) {
 
   return (
     <div className="ui-container ui-section ui-stack">
+      <Breadcrumb items={[{ label: messages.home, href: '/' }, { label: page.title }]} />
       <h1 className="ui-heading-2">{page.title}</h1>
       {/* Safe by construction: raw HTML is disabled and links are filtered (see lib/markdown.ts). */}
       <div className={`ui-prose ${styles.body}`} dangerouslySetInnerHTML={{ __html: renderMarkdown(page.body) }} />

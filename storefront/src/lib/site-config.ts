@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { GA4_ID, SEARCH_CONSOLE_TOKEN } from './seo-patterns';
 import { connection } from 'next/server';
 import { apiBaseUrl } from './api';
 import { fetchDraftDocument, readPreviewAuth } from './site-preview';
@@ -329,8 +330,6 @@ function parseSeo(raw: unknown): SiteSeo {
   };
 }
 
-export const SEARCH_CONSOLE_TOKEN = /^[A-Za-z0-9_-]{20,100}$/;
-export const GA4_ID = /^G-[A-Z0-9]{6,12}$/;
 
 const ID = /^[0-9]{1,10}$/;
 const CODE = /^[A-Za-z0-9]{10,64}$/;

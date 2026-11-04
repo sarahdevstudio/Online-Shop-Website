@@ -1,5 +1,5 @@
 import type { CspExtra } from './csp';
-import { GA4_ID } from './site-config';
+import { GA4_ID } from './seo-patterns';
 
 /**
  * Whether the policy must name Google Tag Manager / Analytics: only while a GA4 id is configured. The proxy asks on every page

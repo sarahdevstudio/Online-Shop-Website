@@ -6,7 +6,7 @@ import { getBlogPost } from '@/lib/blog';
 import { formatJalaliDate } from '@/lib/format';
 import { renderMarkdown } from '@/lib/markdown';
 import { messages } from '@/lib/messages';
-import { absoluteUrl, breadcrumbJsonLd, pageMetadata, site, withSeoOverrides } from '@/lib/seo';
+import { absoluteUrl, pageMetadata, site, withSeoOverrides } from '@/lib/seo';
 import { getEntitySeo } from '@/lib/entity-seo';
 import { seoDefaults } from '@/lib/site-config';
 import styles from '../blog/blog.module.css';
@@ -42,7 +42,6 @@ export async function BlogPostView({ slug }: Props) {
           publisher: { '@type': 'Organization', name: site.name, url: site.url },
         }}
       />
-      <JsonLd data={breadcrumbJsonLd([{ label: messages.home, href: '/' }, { label: messages.blog, href: '/blog' }, { label: post.title, href: path }])} />
       <Breadcrumb items={crumbs} />
       <h1 className="ui-heading-2">{post.title}</h1>
       <time className={styles.date} dateTime={post.publishedAtUtc}>

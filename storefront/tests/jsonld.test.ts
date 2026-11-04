@@ -48,3 +48,23 @@ describe('JSON-LD of each page type matches the schema.org shapes', () => {
     expect(validateJsonLd({ '@context': 'https://schema.org', '@type': 'Mystery' })[0]).toContain('no validator');
   });
 });
+
+import { faqJsonLd, withSeoOverrides } from '../src/lib/seo';
+import { EMPTY_SEO } from '../src/lib/entity-seo';
+
+describe('FAQ structured data and SEO overrides', () => {
+  it('FAQPage has one Question with an acceptedAnswer per item, and none at all without items', () => {
+    valid(faqJsonLd([{ question: 'ضمانت دارد؟', answer: 'بله.' }, { question: 'سرپیچ؟', answer: 'E27' }]));
+    expect(faqJsonLd([])).toBeNull();
+    const broken = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [{ '@type': 'Question', name: 'q' }] };
+    expect(validateJsonLd(broken).join(' ')).toContain('acceptedAnswer is required');
+  });
+
+  it('a filled override replaces the generated value; empty ones change nothing; noindex keeps links followed', () => {
+    const base = { title: 'عنوان خودکار', description: 'توضیح خودکار', image: 'http://x/default.png' };
+    expect(withSeoOverrides(base, EMPTY_SEO)).toEqual({ ...base, noindex: undefined });
+    const over = withSeoOverrides(base, { ...EMPTY_SEO, title: 'عنوان سئو', description: 'توضیح سئو', ogImageUrl: '/media/site/a.png', noIndex: true });
+    expect(over).toMatchObject({ title: 'عنوان سئو', description: 'توضیح سئو', image: 'http://localhost:3000/media/site/a.png', noindex: 'follow' });
+    expect(withSeoOverrides({ ...base, noindex: true as const }, { ...EMPTY_SEO, noIndex: true }).noindex).toBe(true); // an already stricter page stays stricter
+  });
+});

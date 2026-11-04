@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { GA4_ID } from '@/lib/site-config';
+import { GA4_ID } from '@/lib/seo-patterns';
 
 declare global {
   interface Window {
@@ -12,10 +12,13 @@ declare global {
 
 /**
  * Google Analytics 4, only when the owner entered a measurement id (the layout does not render this component otherwise). The
- * tag is NOT loaded with the page: it starts after the visitor's first interaction, or after the browser has been idle for a few
- * seconds, whichever comes first, so it never competes with the content (docs/14, docs/17). The script is added by this nonce-
+ * tag is NOT loaded with the page: it starts after the visitor's first interaction, or, if they only read, a few seconds after the
+ * page has finished loading and the browser is idle, whichever comes first, so it never competes with the content (docs/14, docs/17). The script is added by this nonce-
  * trusted code and `www.googletagmanager.com` is named in the CSP only while an id is configured (see lib/csp.ts).
  */
+/** Quiet time after the page has loaded before the tag starts on its own. */
+const IDLE_DELAY_MS = 4000;
+
 export function Analytics({ id }: { id: string }) {
   useEffect(() => {
     if (!GA4_ID.test(id)) return;
@@ -39,11 +42,23 @@ export function Analytics({ id }: { id: string }) {
     };
 
     for (const name of events) window.addEventListener(name, start, { passive: true, once: true });
-    const idle = typeof window.requestIdleCallback === 'function' ? window.requestIdleCallback(start, { timeout: 8000 }) : window.setTimeout(start, 8000);
+    // No interaction: wait for the load event plus a few seconds (a quiet page is "idle" the moment it is hydrated, which is too early).
+    let timer: number | undefined;
+    let idle: number | undefined;
+    const schedule = () => {
+      timer = window.setTimeout(() => {
+        if (typeof window.requestIdleCallback === 'function') idle = window.requestIdleCallback(start, { timeout: 5000 });
+        else start();
+      }, IDLE_DELAY_MS);
+    };
+    if (document.readyState === 'complete') schedule();
+    else window.addEventListener('load', schedule, { once: true });
+
     return () => {
       for (const name of events) window.removeEventListener(name, start);
-      if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idle as number);
-      else window.clearTimeout(idle as number);
+      window.removeEventListener('load', schedule);
+      if (timer !== undefined) window.clearTimeout(timer);
+      if (idle !== undefined && typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idle);
     };
   }, [id]);
 
