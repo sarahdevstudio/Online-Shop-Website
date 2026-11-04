@@ -257,6 +257,17 @@ export const siteEditorMessages = {
     get targetHint() { return t('admin.site-editor.link.target-hint'); },
     currentPath: (path: string) => tf('admin.site-editor.link.current-path', { path }),
     deleted: (label: string) => tf('admin.site-editor.link.deleted', { label }),
+    hidden: (label: string, state: string) => tf('admin.site-editor.link.hidden', { label, state }),
+    states: {
+      get draft() { return t('admin.site-editor.link.states.draft'); },
+      get inactive() { return t('admin.site-editor.link.states.inactive'); },
+      get archived() { return t('admin.site-editor.link.states.archived'); },
+    },
+    stateBadges: {
+      get draft() { return t('admin.site-editor.link.state-badge.draft'); },
+      get inactive() { return t('admin.site-editor.link.state-badge.inactive'); },
+      get archived() { return t('admin.site-editor.link.state-badge.archived'); },
+    },
     get deletedUnknown() { return t('admin.site-editor.link.deleted-unknown'); },
     get notChosen() { return t('admin.site-editor.link.not-chosen'); },
   },

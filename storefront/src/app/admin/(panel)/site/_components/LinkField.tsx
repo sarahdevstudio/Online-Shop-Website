@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ComboField, SelectField, TextField } from '@/components/form';
 import { customValue, entityValue, kindOf, LINK_KINDS, targetKey, targetStatus, withKind, type LinkKind, type LinkValue } from '@/lib/admin/link-model';
 import { siteEditorMessages } from '@/lib/admin/site-messages';
@@ -39,6 +39,7 @@ export function LinkField({ name, label, value, onChange, known, required }: Pro
   // A kind chosen but not yet filled in ("product", nothing picked) has no entity, so it is kept here.
   const [chosenKind, setChosenKind] = useState<LinkKind>(kind);
   const [picked, setPicked] = useState<Record<string, LinkTarget>>({});
+  const foundRef = useRef<Record<string, LinkTarget>>({}); // the last search results, so a pick keeps the target's path and state
   const shownKind = value.entity ? kind : chosenKind;
   const status = targetStatus(value.entity, { ...known, ...picked });
 
@@ -71,11 +72,17 @@ export function LinkField({ name, label, value, onChange, known, required }: Pro
           formatCount={(n) => formatNumber(n)}
           search={async (query) => {
             const found = await searchLinkTargets(shownKind, query);
-            return found.map((target) => ({ value: targetKey(target), label: target.label, detail: target.path ?? undefined }));
+            for (const target of found) foundRef.current[targetKey(target)] = target;
+            return found.map((target) => ({
+              value: targetKey(target),
+              label: target.label,
+              detail: [target.path, target.state in t.stateBadges ? t.stateBadges[target.state as keyof typeof t.stateBadges] : null].filter(Boolean).join(' · ') || undefined,
+            }));
           }}
           onSelect={(option) => {
             const [type, id] = option.value.split(':');
-            const target: LinkTarget = { type: type as LinkTarget['type'], id: Number(id), label: option.label, path: option.detail ?? null, exists: true };
+            const found = foundRef.current[option.value];
+            const target: LinkTarget = found ?? { type: type as LinkTarget['type'], id: Number(id), label: option.label, path: null, exists: true, state: 'published' };
             setPicked((p) => ({ ...p, [option.value]: target }));
             onChange(entityValue(target));
           }}
@@ -84,6 +91,11 @@ export function LinkField({ name, label, value, onChange, known, required }: Pro
       {status?.deleted && (
         <p className="ui-error" role="status">
           {status.label ? t.deleted(status.label) : t.deletedUnknown}
+        </p>
+      )}
+      {status && !status.deleted && (status.state === 'draft' || status.state === 'inactive' || status.state === 'archived') && (
+        <p className="ui-error" role="status">
+          {t.hidden(status.label, status.state === 'draft' ? t.states.draft : status.state === 'inactive' ? t.states.inactive : t.states.archived)}
         </p>
       )}
     </>

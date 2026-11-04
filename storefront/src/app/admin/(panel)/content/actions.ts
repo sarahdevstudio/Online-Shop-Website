@@ -5,7 +5,7 @@ import { adminFetch } from '@/lib/admin/api';
 import { failState, okState, problemState, submittedFrom, type FormState } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
 import { id as readId } from '@/lib/admin/form-input';
-import { applyPathChange } from '@/lib/admin/route-actions';
+import { applyPathChange, refreshSiteLinks } from '@/lib/admin/route-actions';
 import { isInfoSlug } from '@/lib/content';
 
 /**
@@ -31,6 +31,7 @@ export async function saveContentAction(_previous: FormState, formData: FormData
   const result = await adminFetch<unknown>('PUT', `/admin/content-pages/${slug}`, { body });
   if (!result.ok) return problemState(result.problem, submitted);
 
+  refreshSiteLinks(); // the draft marker may have been added or removed: links to this page appear or disappear
   revalidatePath(`/admin/content/${slug}`);
   revalidatePath('/admin/content');
   return okState(adminMessages.saved);

@@ -6,7 +6,7 @@ import { adminFetch } from '@/lib/admin/api';
 import { failState, okState, problemState, submittedFrom, type FormState } from '@/lib/admin/form-state';
 import { checked, id as readId, text, whole } from '@/lib/admin/form-input';
 import { adminMessages } from '@/lib/admin/messages';
-import { applyPathChange, refreshPublicPaths } from '@/lib/admin/route-actions';
+import { applyPathChange, refreshPublicPaths, refreshSiteLinks } from '@/lib/admin/route-actions';
 import type { AdminAttribute, AdminProduct } from '@/lib/admin/types';
 
 const STATUSES = ['draft', 'published', 'archived'];
@@ -63,6 +63,7 @@ export async function updateProductAction(_previous: FormState, formData: FormDa
   if (!path.ok) return path.state;
   const result = await adminFetch<AdminProduct>('PUT', `/admin/products/${productId}`, { body: { ...productBody(formData), slug: null, variants: null } });
   if (!result.ok) return problemState(result.problem, submitted);
+  refreshSiteLinks(); // the status may have changed: menu and footer links to this product appear or disappear
   revalidatePath(`/admin/products/${productId}`);
   return okState(adminMessages.saved);
 }

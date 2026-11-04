@@ -24,6 +24,11 @@ export interface PathChangeDeps {
   refresh: () => void;
 }
 
+/** A link on the site shows only while its target is published, so publishing or hiding a product or an info page refreshes the site document. */
+export function refreshSiteLinks() {
+  updateTag(SITE_CACHE_TAG);
+}
+
 export function refreshPublicPaths() {
   updateTag(ROUTES_TAG);
   updateTag(CATALOG_TAG);

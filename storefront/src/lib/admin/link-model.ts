@@ -1,4 +1,4 @@
-import { LINK_ENTITY_TYPES, type LinkEntity, type LinkEntityType, type LinkTarget } from './site-types';
+import { LINK_ENTITY_TYPES, type LinkEntity, type LinkEntityType, type LinkState, type LinkTarget } from './site-types';
 
 /**
  * The editor-side model of a site link: either a typed URL ("custom", the fallback) or a reference to an entity of the shop
@@ -21,7 +21,7 @@ export const targetKey = (entity: Pick<LinkEntity, 'type' | 'id'>) => `${entity.
 export const kindOf = (value: LinkValue): LinkKind => value.entity?.type ?? 'custom';
 
 /** The value to store after choosing an entity: the typed URL is dropped (the entity wins on the server too). */
-export const entityValue = (target: Pick<LinkTarget, 'type' | 'id'>): LinkValue => ({ link: null, entity: { type: target.type, id: target.id } });
+export const entityValue = (target: Pick<LinkTarget, 'type' | 'id'> & { label?: string }): LinkValue => ({ link: null, entity: { type: target.type, id: target.id, label: target.label || null } });
 
 export const customValue = (link: string | null): LinkValue => ({ link, entity: null });
 
@@ -41,10 +41,20 @@ export function optionalLink(value: LinkValue): { link: string | null; entity: L
   return { link: link ? link : null, entity: null };
 }
 
-/** The hint under a stored entity link: where it leads now, or why it does not show. */
-export function targetStatus(entity: LinkEntity | null, known: Readonly<Record<string, LinkTarget>> | undefined): { label: string; path: string | null; deleted: boolean } | null {
+/**
+ * The hint under a stored entity link: where it leads now, or why it does not show (deleted, or not published). A deleted
+ * target is named from the label stored with the reference.
+ */
+export function targetStatus(
+  entity: LinkEntity | null,
+  known: Readonly<Record<string, LinkTarget>> | undefined,
+): { label: string; path: string | null; deleted: boolean; state: LinkState } | null {
   if (!entity) return null;
   const target = known?.[targetKey(entity)];
-  if (!target) return { label: '', path: null, deleted: false };
-  return { label: target.label, path: target.path, deleted: !target.exists };
+  if (!target) return { label: entity.label ?? '', path: null, deleted: false, state: 'published' };
+  const deleted = !target.exists;
+  return { label: deleted ? entity.label || target.label : target.label, path: target.path, deleted, state: deleted ? 'deleted' : target.state };
 }
+
+/** Whether the site hides the link right now (deleted, or the target is not published). */
+export const isHidden = (status: { state: LinkState } | null): boolean => status !== null && status.state !== 'published';

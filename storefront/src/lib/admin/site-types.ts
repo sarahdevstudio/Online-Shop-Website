@@ -51,6 +51,8 @@ export interface BadgesPayload {
 export interface LinkEntity {
   type: LinkEntityType;
   id: number;
+  /** The target's name when it was chosen: lets the editor still name it after it is deleted. Never shown on the site. */
+  label?: string | null;
 }
 
 export const LINK_ENTITY_TYPES = ['category', 'product', 'contentPage', 'blogPost'] as const;
@@ -63,7 +65,12 @@ export interface LinkTarget {
   label: string;
   path: string | null;
   exists: boolean;
+  /** Only `published` shows on the site; a draft, inactive or archived target hides the link until it is published again. */
+  state: LinkState;
 }
+
+export const LINK_STATES = ['published', 'draft', 'inactive', 'archived', 'deleted'] as const;
+export type LinkState = (typeof LINK_STATES)[number];
 
 export interface HeroSlidePayload {
   mediaId: number | null;
