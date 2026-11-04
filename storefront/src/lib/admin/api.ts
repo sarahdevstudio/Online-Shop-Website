@@ -136,7 +136,9 @@ export async function adminFetch<T>(method: string, path: string, request: Admin
     throw new ApiUnavailableError(`${method} ${path} failed`, { cause: error });
   }
 
-  if (response.status === 401) redirect('/admin/login'); // revoked, expired or logged out elsewhere
+  // Revoked (account deactivated, roles changed, password reset), expired or logged out elsewhere. `ended` stops the login page from
+  // sending a browser that still holds the old sealed cookie straight back to /admin (which would answer 401 again, in a loop).
+  if (response.status === 401) redirect('/admin/login?ended=1');
   if (response.status >= 500) throw new ApiUnavailableError(`${method} ${path} returned ${response.status}`);
 
   const text = await response.text();

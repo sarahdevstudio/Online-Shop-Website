@@ -9,7 +9,7 @@ const TIMEOUT_MS = 15_000;
  * password, unknown username, locked account, throttled, correct password but not an admin), so the caller can show one text.
  * An API that is down throws (that is not a credentials problem).
  */
-export async function apiAdminLogin(username: string, password: string): Promise<{ auth: string; username: string } | null> {
+export async function apiAdminLogin(username: string, password: string): Promise<{ auth: string; username: string; perms: string[] } | null> {
   const ip = await clientIpForApi();
   const forwarded: Record<string, string> = ip ? { 'x-forwarded-for': ip } : {};
 
@@ -40,12 +40,30 @@ export async function apiAdminLogin(username: string, password: string): Promise
 
   const envelope = (await login.json().catch(() => null)) as { result?: { username?: string; roles?: string[] } } | null;
   const account = envelope?.result ?? null;
-  if (!account?.roles?.includes('Admin')) {
-    // A customer account: not allowed here. End that session again (this also revokes its other sessions).
+  // Staff = any role other than Customer. What the account may open comes from /admin/me; a shopper has nothing there (403).
+  const perms = account?.roles?.some((role) => role !== 'Customer') ? await fetchPermissions(auth, forwarded) : null;
+  if (!account || !perms) {
+    // A customer account (or a role without any permission): not allowed here. End that session again (this also revokes its other sessions).
     await endSession(auth, forwarded);
     return null;
   }
-  return { auth, username: account.username ?? username };
+  return { auth, username: account.username ?? username, perms };
+}
+
+async function fetchPermissions(auth: string, forwarded: Record<string, string>): Promise<string[] | null> {
+  try {
+    const response = await fetch(`${apiBaseUrl()}/api/v1/admin/me`, {
+      headers: { ...forwarded, accept: 'application/json', cookie: `shop_auth=${auth}` },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!response.ok) return null;
+    const body = (await response.json()) as { result?: { permissions?: string[] } };
+    const list = body.result?.permissions;
+    return Array.isArray(list) && list.length > 0 ? list : null;
+  } catch {
+    return null;
+  }
 }
 
 async function endSession(auth: string, forwarded: Record<string, string>) {

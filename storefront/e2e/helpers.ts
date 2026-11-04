@@ -44,6 +44,12 @@ export async function login(page: Page) {
 
 /** WCAG 2.2 A/AA plus best practices on the page as it is now. Fails on any violation (serious or not). */
 export async function axeCheck(page: Page, name: string) {
+  await page.waitForLoadState('networkidle'); // after a client-side navigation the title is applied a moment later
+  await expect(page).toHaveTitle(/.+/);
+  // "Loaded" means a real page: a heading, and not the generic error screen (axe happily passes an error page).
+  const heading = (await page.locator('h1').first().innerText().catch(() => '')).trim();
+  expect(heading, `${name}: the page rendered a heading`).not.toBe('');
+  expect(heading, `${name}: the page is not the error screen`).not.toContain('دوباره تلاش کنید');
   await page.evaluate(axeSource);
   const violations = await page.evaluate(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

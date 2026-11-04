@@ -13,7 +13,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     <div className={styles.shell}>
       <header className={styles.topbar}>
         <strong className={styles.brand}>{adminMessages.title}</strong>
-        <Nav />
+        <Nav permissions={session.perms} />
         <div className={styles.who}>
           <bdi dir="ltr">{session.username}</bdi>
           <Form action={logoutAction} inline>

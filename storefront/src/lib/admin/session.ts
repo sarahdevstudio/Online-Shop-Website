@@ -12,6 +12,8 @@ export interface AdminSession {
   /** The API's `shop_auth` cookie value. Never sent to the browser in clear text. */
   auth: string;
   username: string;
+  /** What the account may open (from /admin/me at sign-in; a role change ends the session, so it cannot go stale). Only the menu uses it; the API checks every call. */
+  perms?: string[];
   /** Login time (ms since epoch): the absolute limit counts from here. */
   iat: number;
   /** Last activity (ms): the idle limit counts from here. */

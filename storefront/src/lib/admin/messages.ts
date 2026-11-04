@@ -15,6 +15,7 @@ export const adminMessages = {
   get usernameRequired() { return t('admin.username-required'); },
   get passwordRequired() { return t('admin.password-required'); },
   get logout() { return t('admin.logout'); },
+  get sessionEnded() { return t('admin.session-ended'); },
   routes: {
     get title() { return t('admin.routes.title'); },
     get hint() { return t('admin.routes.hint'); },
@@ -105,6 +106,7 @@ export const adminMessages = {
     get translations() { return t('admin.nav.translations'); },
     get routes() { return t('admin.nav.routes'); },
     get settings() { return t('admin.nav.settings'); },
+    get staff() { return t('admin.nav.staff'); },
     get account() { return t('admin.nav.account'); },
   },
   get save() { return t('admin.save'); },

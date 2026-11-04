@@ -34,6 +34,6 @@ export async function loginAction(_previous: LoginState, formData: FormData): Pr
   if (!account) return failed;
 
   const now = Date.now();
-  await writeSessionCookie({ v: 1, auth: account.auth, username: account.username, iat: now, seen: now });
+  await writeSessionCookie({ v: 1, auth: account.auth, username: account.username, perms: account.perms, iat: now, seen: now });
   redirect('/admin');
 }
