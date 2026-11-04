@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Icon } from './Icon';
+import { dismissalCookie } from '@/lib/announcement';
 import { messages } from '@/lib/messages';
 import styles from './AnnouncementBar.module.css';
 
@@ -13,19 +14,12 @@ interface AnnouncementBarProps {
   dismissible: boolean;
 }
 
-const KEY_PREFIX = 'announcement-dismissed:';
-
-/** A short plain-text notice above the header. Dismissal is remembered per text in localStorage; if storage fails it simply shows. */
+/**
+ * A short plain-text notice above the header. Closing it stores a cookie (lib/announcement) that the server reads, so a visitor who
+ * closed it never gets the bar rendered and then pulled out of the page after hydration.
+ */
 export function AnnouncementBar({ text, href, style, dismissible }: AnnouncementBarProps) {
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    try {
-      if (window.localStorage.getItem(KEY_PREFIX + text) === '1') setDismissed(true);
-    } catch {
-      /* storage unavailable: show the bar */
-    }
-  }, [text]);
 
   if (dismissed) return null;
 
@@ -53,11 +47,7 @@ export function AnnouncementBar({ text, href, style, dismissible }: Announcement
             aria-label={messages.closeAnnouncement}
             onClick={() => {
               setDismissed(true);
-              try {
-                window.localStorage.setItem(KEY_PREFIX + text, '1');
-              } catch {
-                /* ignore */
-              }
+              document.cookie = dismissalCookie(text);
             }}
           >
             <Icon name="x" />

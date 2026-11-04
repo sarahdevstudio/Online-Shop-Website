@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
 import { JsonLd } from '@/components/JsonLd';
@@ -5,6 +6,7 @@ import { PreviewBanner } from '@/components/PreviewBanner';
 import { SiteFooter, type FooterGroup } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { TrustBadges } from '@/components/TrustBadges';
+import { ANNOUNCEMENT_COOKIE, isAnnouncementDismissed } from '@/lib/announcement';
 import { getCategoryTree } from '@/lib/catalog';
 import { getInfoLinks } from '@/lib/content';
 import { messages } from '@/lib/messages';
@@ -33,13 +35,14 @@ export async function ShopChrome({ children }: { children: ReactNode }) {
   const instagram = info?.instagramHandle || undefined;
   const sameAs = [...social.map((s) => s.href), ...(instagram ? [`https://www.instagram.com/${instagram}/`] : [])];
   const announcement = chrome.announcement;
+  const showAnnouncement = announcement.enabled && !isAnnouncementDismissed((await cookies()).get(ANNOUNCEMENT_COOKIE)?.value, announcement.text);
 
   return (
     <>
       <JsonLd data={{ ...organizationJsonLd(), name: seo.siteName, ...(sameAs.length > 0 ? { sameAs } : {}) }} />
       <JsonLd data={{ ...websiteJsonLd(), name: seo.siteName }} />
       {preview && <PreviewBanner />}
-      {announcement.enabled && <AnnouncementBar text={announcement.text} href={announcement.link} style={announcement.style} dismissible={announcement.dismissible} />}
+      {showAnnouncement && <AnnouncementBar text={announcement.text} href={announcement.link} style={announcement.style} dismissible={announcement.dismissible} />}
       <SiteHeader brandName={seo.siteName} logo={theme.logo} menu={buildMenu(chrome.headerMenu, categories)} cartCount={cartCount} />
       <main id="main" tabIndex={-1}>
         {children}
