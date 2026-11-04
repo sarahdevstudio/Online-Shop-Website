@@ -14,6 +14,7 @@ const items = (): { href: string; label: string; exact?: boolean }[] => [
   { href: '/admin/content', label: adminMessages.nav.content },
   { href: '/admin/blog', label: adminMessages.nav.blog },
   { href: '/admin/site', label: adminMessages.nav.site },
+  { href: '/admin/redirects', label: adminMessages.nav.routes },
   { href: '/admin/translations', label: adminMessages.nav.translations },
   { href: '/admin/settings', label: adminMessages.nav.settings },
   { href: '/admin/account', label: adminMessages.nav.account },
