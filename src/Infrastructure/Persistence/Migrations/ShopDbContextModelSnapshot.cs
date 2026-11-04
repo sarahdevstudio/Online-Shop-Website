@@ -339,6 +339,54 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.ToTable("Brands", (string)null);
                 });
 
+            modelBuilder.Entity("Shop.Domain.Catalog.CatalogTransferLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<int>("ProductsCreated")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductsUpdated")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Rows")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("VariantsCreated")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VariantsUpdated")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AtUtc")
+                        .HasDatabaseName("IX_CatalogTransferLogs_AtUtc");
+
+                    b.ToTable("CatalogTransferLogs", (string)null);
+                });
+
             modelBuilder.Entity("Shop.Domain.Catalog.Category", b =>
                 {
                     b.Property<int>("Id")

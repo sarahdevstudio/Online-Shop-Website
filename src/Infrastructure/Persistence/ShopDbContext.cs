@@ -48,6 +48,7 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     public DbSet<RouteEntry> RoutePaths => Set<RouteEntry>();
     public DbSet<RouteAuditLog> RouteAuditLogs => Set<RouteAuditLog>();
     public DbSet<StaffAuditLog> StaffAuditLogs => Set<StaffAuditLog>();
+    public DbSet<CatalogTransferLog> CatalogTransferLogs => Set<CatalogTransferLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

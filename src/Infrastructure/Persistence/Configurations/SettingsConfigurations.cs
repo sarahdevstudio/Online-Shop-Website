@@ -59,3 +59,16 @@ internal sealed class StaffAuditLogConfiguration : IEntityTypeConfiguration<Shop
         builder.HasIndex(x => x.AtUtc).HasDatabaseName("IX_StaffAuditLogs_AtUtc");
     }
 }
+
+internal sealed class CatalogTransferLogConfiguration : IEntityTypeConfiguration<Shop.Domain.Catalog.CatalogTransferLog>
+{
+    public void Configure(EntityTypeBuilder<Shop.Domain.Catalog.CatalogTransferLog> builder)
+    {
+        builder.ToTable("CatalogTransferLogs");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.AtUtc).HasColumnType("datetime2");
+        builder.Property(x => x.Kind).IsRequired().HasMaxLength(20).IsUnicode(false);
+        builder.Property(x => x.FileName).IsRequired().HasMaxLength(Shop.Domain.Catalog.CatalogTransferLog.FileNameMaxLength);
+        builder.HasIndex(x => x.AtUtc).HasDatabaseName("IX_CatalogTransferLogs_AtUtc");
+    }
+}

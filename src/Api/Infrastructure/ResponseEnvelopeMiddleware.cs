@@ -41,6 +41,15 @@ internal sealed class ResponseEnvelopeMiddleware(RequestDelegate next)
         }
 
         buffer.Position = 0;
+
+        // A file download (the catalog export): a successful body that is not JSON is passed through as it is.
+        if (context.Response.StatusCode < StatusCodes.Status400BadRequest
+            && context.Response.ContentType is { } contentType && !contentType.Contains("json", StringComparison.OrdinalIgnoreCase))
+        {
+            await buffer.CopyToAsync(originalBody, context.RequestAborted);
+            return;
+        }
+
         object envelope = context.Response.StatusCode < StatusCodes.Status400BadRequest
             ? new ResponseModel<JsonElement?> { Result = buffer.Length == 0 ? null : JsonSerializer.Deserialize<JsonElement>(buffer, JsonOptions) }
             : BuildErrorEnvelope(context.Response.StatusCode, buffer);

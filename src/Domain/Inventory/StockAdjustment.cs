@@ -9,6 +9,7 @@ public sealed class StockAdjustment
     public const int ReasonMaxLength = 200;
     public const string AdjustSource = "adjust";
     public const string EditSource = "edit";
+    public const string ImportSource = "import";
 
     private StockAdjustment()
     {

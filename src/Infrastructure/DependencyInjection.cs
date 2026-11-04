@@ -80,6 +80,7 @@ public static class DependencyInjection
         services.AddScoped<IStoreInfoService, StoreInfoService>();
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
         services.AddScoped<Shop.Application.Staff.IStaffService, Shop.Infrastructure.Staff.StaffService>();
+        services.AddScoped<Shop.Application.Catalog.Transfer.ICatalogTransferService, Shop.Infrastructure.Catalog.CatalogTransferService>();
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IAdminOrderService, AdminOrderService>();

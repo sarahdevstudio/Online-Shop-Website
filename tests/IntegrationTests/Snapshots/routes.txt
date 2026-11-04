@@ -9,6 +9,7 @@ GET /api/v1/admin/blog | auth: Blog.Manage | - | rate: - | -
 GET /api/v1/admin/blog/{id:int} | auth: Blog.Manage | - | rate: - | -
 GET /api/v1/admin/blog/{id:int}/audit | auth: Blog.Manage | - | rate: - | -
 GET /api/v1/admin/brands | auth: Catalog.Manage | - | rate: - | -
+GET /api/v1/admin/catalog/export | auth: Catalog.Manage | - | rate: - | -
 GET /api/v1/admin/categories | auth: Catalog.Manage | - | rate: - | -
 GET /api/v1/admin/content-pages | auth: Content.Manage | - | rate: - | -
 GET /api/v1/admin/content-pages/{slug} | auth: Content.Manage | - | rate: - | -
@@ -63,6 +64,8 @@ GET /api/v1/store/orders/{token:length(43)} | auth:  | anonymous | rate: store-l
 POST /api/v1/admin/attributes/{id:int}/options | auth: Catalog.Manage | - | rate: - | -
 POST /api/v1/admin/blog | auth: Blog.Manage | - | rate: - | -
 POST /api/v1/admin/brands | auth: Catalog.Manage | - | rate: - | -
+POST /api/v1/admin/catalog/import/apply | auth: Catalog.Manage | - | rate: - | -
+POST /api/v1/admin/catalog/import/preview | auth: Catalog.Manage | - | rate: - | -
 POST /api/v1/admin/categories | auth: Catalog.Manage | - | rate: - | -
 POST /api/v1/admin/orders/{id:int}/cancel | auth: Orders.Manage | - | rate: - | -
 POST /api/v1/admin/orders/{id:int}/confirm-payment | auth: Orders.Manage | - | rate: - | -
