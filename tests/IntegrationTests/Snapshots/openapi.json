@@ -363,6 +363,18 @@
         ],
         "type": "object"
       },
+      "ModerateReviewRequest": {
+        "properties": {
+          "rowVersion": {
+            "format": "byte",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rowVersion"
+        ],
+        "type": "object"
+      },
       "OrderStatus": {
         "enum": [
           "awaitingPayment",
@@ -723,6 +735,14 @@
         ],
         "type": "object"
       },
+      "ReviewStatus": {
+        "enum": [
+          "pending",
+          "approved",
+          "rejected",
+          null
+        ]
+      },
       "SaveRoleRequest": {
         "properties": {
           "currentPassword": {
@@ -986,6 +1006,45 @@
           "storeAddress",
           "workingHours",
           "instagramHandle"
+        ],
+        "type": "object"
+      },
+      "SubmitReviewRequest": {
+        "properties": {
+          "mobile": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "productSlug": {
+            "type": "string"
+          },
+          "rating": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "website": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "productSlug",
+          "name",
+          "mobile",
+          "rating",
+          "text",
+          "website"
         ],
         "type": "object"
       },
@@ -2538,6 +2597,161 @@
         },
         "tags": [
           "Admin catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/reviews": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "$ref": "#/components/schemas/ReviewStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin reviews"
+        ]
+      }
+    },
+    "/api/v1/admin/reviews/audit": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin reviews"
+        ]
+      }
+    },
+    "/api/v1/admin/reviews/{id}/approve": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerateReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin reviews"
+        ]
+      }
+    },
+    "/api/v1/admin/reviews/{id}/reject": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerateReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin reviews"
         ]
       }
     },
@@ -4433,6 +4647,35 @@
         ]
       }
     },
+    "/api/v1/catalog/reviews/{slug}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
     "/api/v1/catalog/seo/noindex": {
       "get": {
         "responses": {
@@ -4529,6 +4772,34 @@
     },
     "/api/v1/catalog/store-info": {
       "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/suggest": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -4831,6 +5102,35 @@
         ]
       }
     },
+    "/api/v1/store/reviews": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Store"
+        ]
+      }
+    },
     "/robots.txt": {
       "get": {
         "responses": {
@@ -4880,6 +5180,9 @@
     },
     {
       "name": "Admin orders"
+    },
+    {
+      "name": "Admin reviews"
     },
     {
       "name": "Admin routes"

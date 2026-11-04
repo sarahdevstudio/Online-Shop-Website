@@ -17,8 +17,11 @@ public static class Permissions
     public const string SiteManage = "Site.Manage";
     public const string TranslationsManage = "Translations.Manage";
 
+    /// <summary>Approving or rejecting the reviews guests submit (their own page and queue).</summary>
+    public const string ReviewsManage = "Reviews.Manage";
+
     /// <summary>Releasing or deleting an old path (redirect). Changing an entity's own path needs that entity's permission (docs/11 C-4).</summary>
     public const string RoutesManage = "Routes.Manage";
 
-    public static IReadOnlyList<string> All { get; } = [UserManage, SettingsManage, CatalogManage, OrdersManage, ContentManage, BlogManage, SiteManage, TranslationsManage, RoutesManage];
+    public static IReadOnlyList<string> All { get; } = [UserManage, SettingsManage, CatalogManage, OrdersManage, ContentManage, BlogManage, SiteManage, TranslationsManage, RoutesManage, ReviewsManage];
 }

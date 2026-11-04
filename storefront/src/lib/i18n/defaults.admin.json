@@ -650,6 +650,7 @@
   "admin.staff.permissions.catalog-manage": "محصولات، دسته‌ها و برندها",
   "admin.staff.permissions.content-manage": "صفحات اطلاعات",
   "admin.staff.permissions.orders-manage": "سفارش‌ها",
+  "admin.staff.permissions.reviews-manage": "بررسی نظرات مشتریان",
   "admin.staff.permissions.routes-manage": "آزاد کردن و حذف مسیرهای قدیمی",
   "admin.staff.permissions.settings-manage": "تنظیمات فروشگاه",
   "admin.staff.permissions.site-manage": "ظاهر و محتوای سایت",

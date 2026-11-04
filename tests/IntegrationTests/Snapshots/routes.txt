@@ -21,6 +21,8 @@ GET /api/v1/admin/orders/{id:int} | auth: Orders.Manage | - | rate: - | -
 GET /api/v1/admin/ping | auth: Settings.Manage | - | rate: - | -
 GET /api/v1/admin/products | auth: Catalog.Manage | - | rate: - | -
 GET /api/v1/admin/products/{id:int} | auth: Catalog.Manage | - | rate: - | -
+GET /api/v1/admin/reviews | auth: Reviews.Manage | - | rate: - | -
+GET /api/v1/admin/reviews/audit | auth: Reviews.Manage | - | rate: - | -
 GET /api/v1/admin/routes/audit | auth: Routes.Manage+authenticated | - | rate: - | -
 GET /api/v1/admin/routes/redirects | auth: Routes.Manage+authenticated | - | rate: - | -
 GET /api/v1/admin/routes/{type}/{id:int} | auth: authenticated | - | rate: - | -
@@ -54,11 +56,13 @@ GET /api/v1/catalog/pages/{slug} | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/products | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/products/{slug} | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/resolve | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/reviews/{slug} | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/seo/noindex | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/seo/{type}/{slug} | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/site | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/sitemap | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/store-info | auth:  | anonymous | rate: - | -
+GET /api/v1/catalog/suggest | auth:  | anonymous | rate: - | -
 GET /api/v1/catalog/translations | auth:  | anonymous | rate: - | -
 GET /api/v1/customer/profile | auth: Customer | - | rate: - | -
 GET /api/v1/store/cart | auth:  | anonymous | rate: store-cart | storefront
@@ -76,6 +80,8 @@ POST /api/v1/admin/orders/{id:int}/status | auth: Orders.Manage | - | rate: - | 
 POST /api/v1/admin/products | auth: Catalog.Manage | - | rate: - | -
 POST /api/v1/admin/products/{id:int}/images | auth: Catalog.Manage | - | rate: - | -
 POST /api/v1/admin/products/{id:int}/variants | auth: Catalog.Manage | - | rate: - | -
+POST /api/v1/admin/reviews/{id:int}/approve | auth: Reviews.Manage | - | rate: - | -
+POST /api/v1/admin/reviews/{id:int}/reject | auth: Reviews.Manage | - | rate: - | -
 POST /api/v1/admin/site/images | auth: Site.Manage | - | rate: - | -
 POST /api/v1/admin/site/{kind}/discard | auth: Site.Manage | - | rate: - | -
 POST /api/v1/admin/site/{kind}/publish | auth: Site.Manage | - | rate: - | -
@@ -92,6 +98,7 @@ POST /api/v1/auth/register | auth:  | anonymous | rate: auth | -
 POST /api/v1/store/cart/items | auth:  | anonymous | rate: store-cart | storefront
 POST /api/v1/store/orders | auth:  | anonymous | rate: store-order | storefront
 POST /api/v1/store/orders/{token:length(43)}/transfer-reference | auth:  | anonymous | rate: store-lookup | storefront
+POST /api/v1/store/reviews | auth:  | anonymous | rate: store-review | storefront
 PUT /api/v1/admin/blog/{id:int} | auth: Blog.Manage | - | rate: - | -
 PUT /api/v1/admin/brands/{id:int} | auth: Catalog.Manage | - | rate: - | -
 PUT /api/v1/admin/categories/{id:int} | auth: Catalog.Manage | - | rate: - | -

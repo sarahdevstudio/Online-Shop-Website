@@ -101,3 +101,33 @@ internal sealed class FaqItemConfiguration : IEntityTypeConfiguration<Shop.Domai
         builder.HasIndex(x => new { x.TargetType, x.TargetId, x.SortOrder }).HasDatabaseName("IX_FaqItems_Target");
     }
 }
+
+internal sealed class ProductReviewConfiguration : IEntityTypeConfiguration<Shop.Domain.Reviews.ProductReview>
+{
+    public void Configure(EntityTypeBuilder<Shop.Domain.Reviews.ProductReview> builder)
+    {
+        builder.ToTable("ProductReviews", t => t.HasCheckConstraint("CK_ProductReviews_Rating", "[Rating] BETWEEN 1 AND 5"));
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.AuthorName).IsRequired().HasMaxLength(Shop.Domain.Reviews.ProductReview.NameMaxLength);
+        builder.Property(x => x.Mobile).IsRequired().HasMaxLength(11).IsUnicode(false);
+        builder.Property(x => x.Text).IsRequired().HasMaxLength(Shop.Domain.Reviews.ProductReview.TextMaxLength);
+        builder.Property(x => x.CreatedAtUtc).HasColumnType("datetime2");
+        builder.Property(x => x.ModeratedAtUtc).HasColumnType("datetime2");
+        builder.Property(x => x.RowVersion).IsRowVersion();
+        builder.HasIndex(x => new { x.ProductId, x.Mobile }).IsUnique().HasDatabaseName("UX_ProductReviews_ProductMobile");
+        builder.HasIndex(x => new { x.ProductId, x.Status }).HasDatabaseName("IX_ProductReviews_Product_Status");
+        builder.HasIndex(x => new { x.Status, x.CreatedAtUtc }).HasDatabaseName("IX_ProductReviews_Status_Created");
+    }
+}
+
+internal sealed class ReviewModerationLogConfiguration : IEntityTypeConfiguration<Shop.Domain.Reviews.ReviewModerationLog>
+{
+    public void Configure(EntityTypeBuilder<Shop.Domain.Reviews.ReviewModerationLog> builder)
+    {
+        builder.ToTable("ReviewModerationLogs");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Action).IsRequired().HasMaxLength(20).IsUnicode(false);
+        builder.Property(x => x.AtUtc).HasColumnType("datetime2");
+        builder.HasIndex(x => x.AtUtc).HasDatabaseName("IX_ReviewModerationLogs_AtUtc");
+    }
+}

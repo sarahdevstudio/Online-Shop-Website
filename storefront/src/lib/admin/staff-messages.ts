@@ -95,6 +95,7 @@ const PERMISSION_KEYS: Record<string, TextKey> = {
   'Site.Manage': 'admin.staff.permissions.site-manage',
   'Translations.Manage': 'admin.staff.permissions.translations-manage',
   'Routes.Manage': 'admin.staff.permissions.routes-manage',
+  'Reviews.Manage': 'admin.staff.permissions.reviews-manage',
 };
 
 const ACTION_KEYS: Record<string, TextKey> = {
