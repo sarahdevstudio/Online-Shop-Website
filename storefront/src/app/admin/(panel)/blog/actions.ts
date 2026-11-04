@@ -6,6 +6,7 @@ import { adminFetch } from '@/lib/admin/api';
 import { checked, id as readId, text } from '@/lib/admin/form-input';
 import { failState, okState, problemState, submittedFrom, type FormState } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
+import { applyPathChange } from '@/lib/admin/route-actions';
 import type { AdminBlogPost } from '@/lib/admin/types';
 
 /** What the storefront shows is cached for up to a minute; this refreshes the route caches right away. */
@@ -30,13 +31,16 @@ export async function saveBlogAction(_previous: FormState, formData: FormData): 
   };
 
   if (postId === null) {
-    const result = await adminFetch<AdminBlogPost>('POST', '/admin/blog', { body: { ...content, slug: text(formData, 'slug') } });
+    const result = await adminFetch<AdminBlogPost>('POST', '/admin/blog', { body: { ...content, slug: text(formData, 'slug'), path: text(formData, 'path') || null } });
     if (!result.ok) return problemState(result.problem, submitted);
     refreshPublicPages(result.body.slug);
     revalidatePath('/admin/blog');
     redirect(`/admin/blog/${result.body.id}`);
   }
 
+  // The URL first: a refused path stops here and nothing else is saved.
+  const path = await applyPathChange('blogPost', postId, formData, submitted);
+  if (!path.ok) return path.state;
   const result = await adminFetch<AdminBlogPost>('PUT', `/admin/blog/${postId}`, {
     body: { ...content, rowVersion: String(formData.get('rowVersion') ?? '') },
   });

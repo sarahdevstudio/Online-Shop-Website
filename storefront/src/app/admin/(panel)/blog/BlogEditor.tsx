@@ -3,7 +3,8 @@
 import { useActionState, useState } from 'react';
 import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
-import type { AdminBlogPost } from '@/lib/admin/types';
+import type { AdminBlogPost, RouteTarget } from '@/lib/admin/types';
+import { PathField } from '../../_components/PathField';
 import { renderMarkdown } from '@/lib/markdown';
 import { CheckField, Form, FormActions, FormBlock, FormGrid, FormSection, RequiredNote, SubmitButton, TextAreaField, TextField } from '@/components/form';
 import { FormBanner } from '../../_components/FormBits';
@@ -12,7 +13,7 @@ import { deleteBlogAction, saveBlogAction } from './actions';
 const t = adminMessages.blog;
 
 /** Create (no `post`) or edit a post: title, excerpt, Markdown body with a live preview from the storefront's safe renderer. */
-export function BlogEditor({ post }: { post?: AdminBlogPost }) {
+export function BlogEditor({ post, route }: { post?: AdminBlogPost; route?: RouteTarget }) {
   const [state, action] = useActionState(saveBlogAction, INITIAL_FORM_STATE);
   const [body, setBody] = useState(post?.body ?? '');
   const [version, setVersion] = useState(post?.rowVersion);
@@ -35,6 +36,7 @@ export function BlogEditor({ post }: { post?: AdminBlogPost }) {
           {!post && <TextField name="slug" label={t.slug} hint={t.slugHint} ltr required maxLength={100} />}
           <TextAreaField name="excerpt" label={t.excerpt} defaultValue={post?.excerpt} required rows={3} maxLength={300} />
         </div>
+        <PathField key={route?.rowVersion ?? 'new'} route={route} defaultPattern="/blog/<slug>" />
 
         <TextAreaField name="body" label={t.body} value={body} onChange={(event) => setBody(event.target.value)} rows={22} code />
 

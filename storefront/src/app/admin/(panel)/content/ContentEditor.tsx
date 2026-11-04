@@ -4,7 +4,8 @@ import { useActionState, useState } from 'react';
 import { Alert } from '@/components/Alert';
 import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
-import type { AdminContentPage } from '@/lib/admin/types';
+import type { AdminContentPage, RouteTarget } from '@/lib/admin/types';
+import { PathField } from '../../_components/PathField';
 import { renderMarkdown } from '@/lib/markdown';
 import { Form, FormActions, FormBlock, FormGrid, RequiredNote, SubmitButton, TextAreaField, TextField } from '@/components/form';
 import { FormBanner } from '../../_components/FormBits';
@@ -13,7 +14,7 @@ import { saveContentAction } from './actions';
 const t = adminMessages.content;
 
 /** Title + Markdown textarea with a live preview rendered by the same safe renderer the storefront uses. */
-export function ContentEditor({ page }: { page: AdminContentPage }) {
+export function ContentEditor({ page, route }: { page: AdminContentPage; route: RouteTarget }) {
   const [state, action] = useActionState(saveContentAction, INITIAL_FORM_STATE);
   const [body, setBody] = useState(page.body);
   const [version, setVersion] = useState(page.rowVersion);
@@ -35,6 +36,7 @@ export function ContentEditor({ page }: { page: AdminContentPage }) {
         </>
       }
     >
+      <input type="hidden" name="id" value={page.id} />
       <input type="hidden" name="slug" value={page.slug} />
       <input type="hidden" name="rowVersion" value={page.rowVersion} />
       <RequiredNote />
@@ -43,6 +45,7 @@ export function ContentEditor({ page }: { page: AdminContentPage }) {
         <div key={page.rowVersion} style={{ display: 'contents' }}>
           <TextField name="title" label={t.pageTitle} defaultValue={page.title} required full />
         </div>
+        <PathField key={route.rowVersion} route={route} />
 
         <TextAreaField name="body" label={t.body} value={body} onChange={(event) => setBody(event.target.value)} rows={22} code />
 

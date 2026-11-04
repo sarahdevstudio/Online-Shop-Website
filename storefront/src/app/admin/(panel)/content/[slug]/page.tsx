@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { adminGet } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
-import type { AdminContentPage, ContentAuditEntry } from '@/lib/admin/types';
+import type { AdminContentPage, ContentAuditEntry, RouteTarget } from '@/lib/admin/types';
 import { isInfoSlug } from '@/lib/content';
 import { formatJalaliDate } from '@/lib/format';
 import { ContentEditor } from '../ContentEditor';
@@ -18,16 +18,18 @@ export default async function EditContentPage({ params }: { params: Promise<{ sl
     adminGet<ContentAuditEntry[]>(`/admin/content-pages/${slug}/audit`),
   ]);
   if (!page) notFound();
+  const route = await adminGet<RouteTarget>(`/admin/routes/contentPage/${page.id}`);
+  if (!route) notFound();
 
   return (
     <>
       <div className={styles.row}>
         <h1 className="ui-heading-2">{page.title}</h1>
-        <Link href={`/${slug}`} target="_blank" rel="noopener">
+        <Link href={route.path} target="_blank" rel="noopener">
           {t.viewOnSite}
         </Link>
       </div>
-      <ContentEditor page={page} />
+      <ContentEditor page={page} route={route} />
 
       <section className={styles.panel} aria-labelledby="history">
         <h2 id="history" className="ui-heading-4">
