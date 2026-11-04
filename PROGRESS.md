@@ -50,8 +50,8 @@ Update this file in the same commit as each item.
 - [ ] Image pipeline (AVIF/WebP, srcset, derivatives)
 - [ ] Analytics + e-commerce events, Search Console
 - [ ] Persistent logging/monitoring, automated backups
-- [ ] CSP and Permissions-Policy headers
-- [ ] Remove `web/` (Angular) after porting `check:contrast` / `check:rtl` to `storefront/`
+- [ ] CSP and Permissions-Policy headers (E1, in progress)
+- [x] Remove `web/` (Angular); contrast is `storefront/tests/contrast.test.ts`, RTL is `storefront/tests/rtl.test.ts`
 
 Also deferred (from the previous P1/P2 list, not in the MVP scope):
 

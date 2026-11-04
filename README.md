@@ -1,6 +1,6 @@
 # Shop MVP
 
-Small, production-capable e-commerce MVP. ASP.NET Core (.NET 10 LTS) API, SQL Server, Angular storefront and admin (later phases).
+Small, production-capable e-commerce MVP. ASP.NET Core (.NET 10 LTS) API, SQL Server, Next.js storefront and admin panel (`storefront/`).
 Architecture decisions: see the ADR kept with the project history (`docs/`).
 
 ## Layout
