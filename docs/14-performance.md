@@ -8,15 +8,15 @@ Lab data has no INP (it needs real interactions); **TBT** is its lab proxy. Run-
 
 | Page | LCP before | LCP after | CLS | TBT before | TBT after | TTFB (after) | JS | Images before → after | Fonts before → after | Total before → after |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `/` | 2.64 s | **2.06 s** | 0 → 0 | 59 ms | 73 ms | 29 ms | 167 KB | 16 → 7 KB | 80 → 36 KB | 295 → 242 KB |
-| `/category/lamps` | 2.64 s | **1.99 s** | 0 → 0 | 51 ms | 86 ms | 25 ms | 165 KB | 13 → 7 KB | 80 → 36 KB | 297 → 245 KB |
-| `/product/…` | 2.89 s | **2.50 s** | 0 → 0 | 60 ms | 77 ms | 25 ms | 165 KB | 44 → 39 KB | 80 → 36 KB | 321 → 272 KB |
-| `/cart` | 2.67 s | **2.03 s** | 0 → 0 | 54 ms | 58 ms | 13 ms | 165 KB | 13 → 7 KB | 80 → 36 KB | 295 → 245 KB |
-| `/blog/…` | 2.36 s | **2.12 s** | 0 → 0 | 81 ms | 60 ms | 24 ms | 165 KB | 13 → 7 KB | 80 → 36 KB | 286 → 235 KB |
+| `/` | 2.64 s | **2.05 s** | 0 → 0 | 59 ms | 62 ms | 19 ms | 167 KB | 16 → 10 KB | 80 → 36 KB | 295 → 246 KB |
+| `/category/lamps` | 2.64 s | **1.99 s** | 0 → 0 | 51 ms | 83 ms | 34 ms | 165 KB | 13 → 7 KB | 80 → 36 KB | 297 → 247 KB |
+| `/product/…` | 2.89 s | **2.65 s** | 0 → 0 | 60 ms | 75 ms | 30 ms | 165 KB | 44 → 39 KB | 80 → 36 KB | 321 → 270 KB |
+| `/cart` | 2.67 s | **2.01 s** | 0 → 0 | 54 ms | 62 ms | 20 ms | 165 KB | 13 → 7 KB | 80 → 36 KB | 295 → 245 KB |
+| `/blog/…` | 2.36 s | **1.98 s** | 0 → 0 | 81 ms | 65 ms | 25 ms | 165 KB | 13 → 7 KB | 80 → 36 KB | 286 → 236 KB |
 
 JS is the same before and after (167/165 KB transferred, gzip); TTFB was 17-26 ms before. Scores went from 95-97 to 97-99. TBT moved within the noise (all far below the 200 ms budget); the LCP gains come from bytes: the first paint and the LCP element compete for the simulated 1.6 Mbps link with everything else.
 
-**The product page is at the budget edge** (median 2.50 s; nine separate runs of that page alone gave 2.1-3.1 s). Its LCP is the photo (31 KB WebP at 750 px). The CI budget is asserted on the median of five runs; if it flakes on a slower runner, the options are a 3.0 s budget for that page or a lower image quality (`images.qualities`).
+**The product page does not have a safe margin.** Its LCP is the photo (31 KB WebP at 750 px) and Lighthouse's simulation turns tens of milliseconds of observed jitter into hundreds: a run of that page alone (15 runs) gave 1.8-3.0 s, median 2.35 s, in two clusters (about 2.2 s and 2.9 s) while the first paint was identical in all runs (0.92 s). The table's 2.65 s is the median of one five-run set; the CI assertion (`median-run`) passed on both local runs, but it can fail on a slower runner. A smaller `sizes` (640 px cap) made no measurable difference. If it flakes: a 3.0 s budget for that page, or a lower image quality (`images.qualities`). The other four pages sit at 2.0-2.05 s.
 
 ## What was done
 
