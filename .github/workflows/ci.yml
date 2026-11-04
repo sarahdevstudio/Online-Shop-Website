@@ -60,6 +60,8 @@ jobs:
 
       - run: npm ci
       - run: npm run typecheck
+      # The bundled fallback texts must match translations/fa-IR.json (fix: npm run i18n:sync). docs/12-translations.md
+      - run: npm run i18n:check
       - run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: https://staging.invalid

@@ -22,7 +22,8 @@ Placeholders are named and ASCII: `{count}`, `{max}`. Numbers and dates are form
 1. Add the key and its Persian text to `translations/fa-IR.json` (keep it sorted).
 2. **C#**: Domain and Application return the key, never text: `Msg.Of("api.validation.max-length", ("max", 30))` (a plain `"api.error.x"` for no arguments). The API boundary turns it into text (`Translate.Resolve`): `ToProblem`, the validation filter, the exception handler. Operator logs and startup errors stay English.
 3. **Storefront / admin**: `npm run i18n:sync` (in `storefront/`) copies the manifest into the two bundles; add an accessor to `lib/messages.ts` or `lib/admin/messages.ts` (`get x() { return t('shop.x'); }` or `tf('shop.x', { n })`). `t()` and `tf()` accept only existing keys: a typo is a compile error.
-4. Run the tests: `TranslationUsageTests` (every key named in C# exists; no Persian text literal in C# outside the documented seed/marker files), `i18n.test.ts` (bundles in sync; no Persian text in storefront source outside the digit/regex helpers).
+4. CI runs `npm run i18n:check` (the sync script in check mode: it writes nothing and exits 1 with the names of the stale bundles). If it fails, run `npm run i18n:sync` and commit the two JSON files. Locally the same check is `npm run i18n:check`.
+5. Run the tests: `TranslationUsageTests` (every key named in C# exists; no Persian text literal in C# outside the documented seed/marker files), `i18n.test.ts` (bundles in sync; no Persian text in storefront source outside the digit/regex helpers).
 
 ## Behavior worth knowing
 
