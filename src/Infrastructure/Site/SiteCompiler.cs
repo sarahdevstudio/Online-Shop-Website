@@ -16,8 +16,11 @@ namespace Shop.Infrastructure.Site;
 /// slugs, disabled blocks and anything that can no longer be resolved are left out. A kind without a usable version falls back
 /// to the built-in defaults, so the document is always complete.
 /// </summary>
-internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media, IRouteTable routes)
+internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media, IRouteTable routes, ISiteLinkTargets linkTargets)
 {
+    /// <summary>Name, path and state of every entity the compiled links point to, read once per compile.</summary>
+    private IReadOnlyDictionary<string, SiteLinkTargetDto> _targets = new Dictionary<string, SiteLinkTargetDto>();
+
     public async Task<SiteConfigDto> CompileAsync(bool useDrafts, CancellationToken ct)
     {
         var rows = await db.SiteConfigVersions.AsNoTracking()
@@ -42,6 +45,14 @@ internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media, IRoute
         {
             mediaIds.UnionWith(SitePayloadValidator.CollectReferences(payload).MediaIds);
         }
+
+        var linked = new HashSet<(string Type, int Id)>();
+        foreach (var payload in new object[] { chrome, home })
+        {
+            linked.UnionWith(SitePayloadValidator.CollectReferences(payload).LinkEntities);
+        }
+
+        _targets = await linkTargets.DescribeAsync(linked, ct);
 
         var files = await db.SiteMedia.AsNoTracking().Where(m => mediaIds.Contains(m.Id)).ToDictionaryAsync(m => m.Id, ct);
 
@@ -79,10 +90,20 @@ internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media, IRoute
 
     /// <summary>
     /// The URL a link points to NOW: the entity's current path (so a path change shows up with no redirect hop), the typed URL
-    /// for a custom link, or null when the entity was deleted (the caller hides the link).
+    /// for a custom link, or null when the entity was deleted or is not published (the caller hides the link; it comes back by
+    /// itself once the entity is published, because the stored reference is untouched).
     /// </summary>
-    private string? Resolve(string? link, LinkEntity? entity) =>
-        entity is null ? (string.IsNullOrEmpty(link) ? null : link) : routes.CurrentPathOf(entity.Type, entity.Id);
+    private string? Resolve(string? link, LinkEntity? entity)
+    {
+        if (entity is null)
+        {
+            return string.IsNullOrEmpty(link) ? null : link;
+        }
+
+        return _targets.TryGetValue($"{entity.Type}:{entity.Id}", out var target) && target is { State: LinkStates.Published }
+            ? routes.CurrentPathOf(entity.Type, entity.Id)
+            : null;
+    }
 
     private AnnouncementBar ResolveAnnouncement(AnnouncementBar bar) => bar with { Link = Resolve(bar.Link, bar.Entity), Entity = null };
 

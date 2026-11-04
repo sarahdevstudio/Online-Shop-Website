@@ -28,6 +28,9 @@ public sealed record LinkEntity
 {
     public string Type { get; init; } = string.Empty;
     public int Id { get; init; }
+
+    /// <summary>The target's name when the link was chosen, kept so the editor can still name it after the target is deleted. Never shown on the site.</summary>
+    public string? Label { get; init; }
 }
 
 // ---- theme ----

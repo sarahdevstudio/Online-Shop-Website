@@ -17,8 +17,21 @@ public sealed record SiteDraftDto(JsonElement Payload, byte[] RowVersion, DateTi
 
 public sealed record SiteMediaDto(string Url, int Width, int Height, string Purpose);
 
-/// <summary>An entity a link can point to: what the editor shows (label), where it leads now (path) and whether it still exists.</summary>
-public sealed record SiteLinkTargetDto(string Type, int Id, string Label, string? Path, bool Exists);
+/// <summary>
+/// An entity a link can point to: what the editor shows (label), where it leads now (path), whether it still exists and its
+/// <see cref="State"/>. Only a <see cref="LinkStates.Published"/> target shows on the site; a link to any other state is hidden.
+/// </summary>
+public sealed record SiteLinkTargetDto(string Type, int Id, string Label, string? Path, bool Exists, string State = LinkStates.Published);
+
+/// <summary>Whether the site shows a link to an entity: only a published one (visible product/post/page, active category).</summary>
+public static class LinkStates
+{
+    public const string Published = "published";
+    public const string Draft = "draft";
+    public const string Inactive = "inactive";
+    public const string Archived = "archived";
+    public const string Deleted = "deleted";
+}
 
 public sealed record SiteReportDto(IReadOnlyList<ContrastResult> Contrast);
 

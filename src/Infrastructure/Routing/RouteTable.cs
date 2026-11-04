@@ -74,6 +74,8 @@ public sealed class RouteTable(IServiceScopeFactory scopes, ILogger<RouteTable> 
 
     public int Version => Volatile.Read(ref _version);
 
+    public void MarkChanged() => Interlocked.Increment(ref _version);
+
     public async Task ReloadAsync(CancellationToken ct = default)
     {
         await using var scope = scopes.CreateAsyncScope();

@@ -34,6 +34,9 @@ public interface IRouteTable
     /// <summary>Changes whenever the table is rebuilt; caches built from paths compare it to know they are stale.</summary>
     int Version { get; }
 
+    /// <summary>Bumps <see cref="Version"/> without a rebuild: something a link depends on changed (an entity was published or hidden).</summary>
+    void MarkChanged();
+
     Task ReloadAsync(CancellationToken ct = default);
 }
 

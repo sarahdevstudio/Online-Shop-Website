@@ -39,7 +39,10 @@ public static class DependencyInjection
                 "ConnectionStrings:Default is not configured. Set the ConnectionStrings__Default environment variable or user-secrets.");
         }
 
-        services.AddDbContext<ShopDbContext>(options => options.UseSqlServer(connectionString));
+        services.AddSingleton<Shop.Infrastructure.Site.LinkStateInterceptor>();
+        services.AddDbContext<ShopDbContext>((sp, options) => options
+            .UseSqlServer(connectionString)
+            .AddInterceptors(sp.GetRequiredService<Shop.Infrastructure.Site.LinkStateInterceptor>()));
 
         services.AddIdentityCore<ApplicationUser>(options =>
             {

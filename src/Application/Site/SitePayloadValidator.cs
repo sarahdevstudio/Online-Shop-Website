@@ -204,6 +204,8 @@ public static partial class SitePayloadValidator
     /// <paramref name="required"/> one of the two must be present. An entity that has been deleted since is NOT an error: the
     /// link is hidden when the document is compiled and the editor warns, so an old version can still be restored.
     /// </summary>
+    private const int LinkLabelMaxLength = 200;
+
     private static (string? Link, LinkEntity? Entity) LinkOrEntity(
         string? value, LinkEntity? entity, string path, SiteReferences refs, Errors errors, bool required)
     {
@@ -222,7 +224,13 @@ public static partial class SitePayloadValidator
             errors.Add(path, "api.validation.site-link-entity");
         }
 
-        return (required ? string.Empty : null, new LinkEntity { Type = type, Id = entity.Id });
+        var label = PersianText.Normalize(entity.Label);
+        if (label.Length > LinkLabelMaxLength)
+        {
+            label = label[..LinkLabelMaxLength];
+        }
+
+        return (required ? string.Empty : null, new LinkEntity { Type = type, Id = entity.Id, Label = label.Length == 0 ? null : label });
     }
 
     private static string RequiredLink(string? value, string path, Errors errors)

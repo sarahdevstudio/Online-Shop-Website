@@ -24,10 +24,17 @@ public sealed class SiteLinkConverter(ShopDbContext db, TimeProvider clock, ILog
         }
 
         var rows = await db.RoutePaths.AsNoTracking().Where(r => !r.IsGone).Select(r => new { r.Path, r.TargetType, r.TargetId }).ToListAsync(ct);
+        // The names are stored with the reference, so the editor can still name a target after it is deleted.
+        var labels = new Dictionary<(string, int), string>();
+        foreach (var x in await db.Categories.AsNoTracking().Select(x => new { x.Id, Label = x.Name }).ToListAsync(ct)) labels[(RouteTargetTypes.Category, x.Id)] = x.Label;
+        foreach (var x in await db.Products.AsNoTracking().Select(x => new { x.Id, Label = x.Name }).ToListAsync(ct)) labels[(RouteTargetTypes.Product, x.Id)] = x.Label;
+        foreach (var x in await db.ContentPages.AsNoTracking().Select(x => new { x.Id, Label = x.Title }).ToListAsync(ct)) labels[(RouteTargetTypes.ContentPage, x.Id)] = x.Label;
+        foreach (var x in await db.BlogPosts.AsNoTracking().Select(x => new { x.Id, Label = x.Title }).ToListAsync(ct)) labels[(RouteTargetTypes.BlogPost, x.Id)] = x.Label;
+
         var byPath = new Dictionary<string, LinkEntity>(StringComparer.OrdinalIgnoreCase);
         foreach (var r in rows)
         {
-            byPath[r.Path] = new LinkEntity { Type = r.TargetType, Id = r.TargetId };
+            byPath[r.Path] = new LinkEntity { Type = r.TargetType, Id = r.TargetId, Label = labels.GetValueOrDefault((r.TargetType, r.TargetId)) };
         }
 
         var converter = new Converter(byPath);
