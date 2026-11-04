@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { SeoPanel } from '../../../_components/SeoPanel';
+import type { AdminSeo } from '@/lib/admin/seo-types';
 import { adminGet } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminBlogPost, BlogAuditEntry, RouteTarget } from '@/lib/admin/types';
@@ -12,10 +14,11 @@ const t = adminMessages.blog;
 export default async function EditBlogPostPage({ params }: { params: Promise<{ id: string }> }) {
   const raw = (await params).id;
   if (!/^[1-9]\d{0,9}$/.test(raw)) notFound();
-  const [post, route, audit] = await Promise.all([
+  const [post, route, audit, seo] = await Promise.all([
     adminGet<AdminBlogPost>(`/admin/blog/${raw}`),
     adminGet<RouteTarget>(`/admin/routes/blogPost/${raw}`),
     adminGet<BlogAuditEntry[]>(`/admin/blog/${raw}/audit`),
+    adminGet<AdminSeo>(`/admin/seo/blogPost/${raw}`),
   ]);
   if (!post || !route) notFound();
 
@@ -35,6 +38,7 @@ export default async function EditBlogPostPage({ params }: { params: Promise<{ i
         {post.publishedAtUtc && <> — {t.publishedAt}: {formatJalaliDate(post.publishedAtUtc)}</>}
       </p>
       <BlogEditor post={post} route={route} />
+      {seo && <SeoPanel data={seo} />}
 
       <section className={styles.panel} aria-labelledby="history">
         <h2 id="history" className="ui-heading-4">

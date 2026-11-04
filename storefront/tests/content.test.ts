@@ -7,7 +7,13 @@ vi.mock('../src/lib/api', () => ({ apiGet, revalidate: { products: 60, categorie
 
 const { DEFAULT_TITLES, INFO_SLUGS, getInfoLinks, isInfoSlug } = await import('../src/lib/content');
 const { contactJsonLd, pageMetadata } = await import('../src/lib/seo');
-const { default: sitemap } = await import('../src/app/sitemap');
+const { entriesFor, SITEMAP_NAMES } = await import('../src/lib/sitemaps');
+
+/** Every URL of the four split sitemaps, in the shape these tests were written for. */
+async function sitemap() {
+  const all = await Promise.all(SITEMAP_NAMES.map((name) => entriesFor(name)));
+  return all.flat().map((e) => ({ url: e.loc, lastModified: e.lastmod ? new Date(e.lastmod) : undefined }));
+}
 
 describe('info page slugs', () => {
   it('are exactly the five fixed pages', () => {

@@ -20,6 +20,7 @@ export const RESERVED_SEGMENTS = [
   'search',
   'site-icon',
   'sitemap.xml',
+  'sitemaps',
 ] as const;
 
 /** Whole paths (not prefixes) owned by static pages. */

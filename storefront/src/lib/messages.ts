@@ -128,6 +128,8 @@ export const messages = {
   get cartRemove() { return t('shop.cart-remove'); },
   cartRemoveItem: (name: string) => tf('shop.cart-remove-item', { name }),
   get cartItems() { return t('shop.cart-items'); },
+  get faqTitle() { return t('shop.faq-title'); },
+  get guideTitle() { return t('shop.guide-title'); },
   get subtotal() { return t('shop.subtotal'); },
   get shipping() { return t('shop.shipping'); },
   get shippingFree() { return t('shop.shipping-free'); },

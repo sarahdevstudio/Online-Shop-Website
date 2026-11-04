@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { ADMIN_COOKIE, readSessionConfig, sealSession, sessionCookieOptions, sessionState, touchSession, unsealSession } from './lib/admin/session';
 import { isReservedPath } from './lib/reserved-paths';
 import { isResolvablePath } from './lib/route-paths';
+import { analyticsCspExtra } from './lib/analytics-config';
 import { contentSecurityPolicy, newNonce } from './lib/csp';
 import { securityHeaders } from './lib/security-headers';
 import { PREVIEW_COOKIE } from './lib/site-preview';
@@ -77,7 +78,9 @@ export async function proxy(request: NextRequest) {
   const readOnly = request.method === 'GET' || request.method === 'HEAD';
   // The nonce goes to Next on the REQUEST (Next tags its own scripts with it) and the policy on the response.
   const nonce = newNonce();
-  const csp = contentSecurityPolicy({ nonce, development: process.env.NODE_ENV === 'development' });
+  // The shop (never the admin) may load the analytics tag, but only while the owner has configured one.
+  const extra = isAdmin ? undefined : await analyticsCspExtra();
+  const csp = contentSecurityPolicy({ nonce, development: process.env.NODE_ENV === 'development', extra });
   const forward = new Headers(request.headers);
   forward.set('x-nonce', nonce);
   forward.set('content-security-policy', csp);

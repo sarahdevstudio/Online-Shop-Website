@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
 import { FormSection } from '@/components/form';
+import { SeoPanel } from '../../../_components/SeoPanel';
+import type { AdminSeo } from '@/lib/admin/seo-types';
 import { adminGet } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminAttribute, AdminBrand, AdminCategory, AdminProduct, RouteTarget, StockHistoryEntry } from '@/lib/admin/types';
@@ -14,12 +16,13 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   const product = await adminGet<AdminProduct>(`/admin/products/${id}`);
   if (!product) notFound();
 
-  const [route, categories, brands, attributes, histories] = await Promise.all([
+  const [route, categories, brands, attributes, histories, seo] = await Promise.all([
     adminGet<RouteTarget>(`/admin/routes/product/${id}`),
     adminGet<AdminCategory[]>('/admin/categories'),
     adminGet<AdminBrand[]>('/admin/brands'),
     adminGet<AdminAttribute[]>('/admin/attributes'),
     Promise.all(product.variants.map((v) => adminGet<StockHistoryEntry[]>(`/admin/variants/${v.id}/stock-history`))),
+    adminGet<AdminSeo>(`/admin/seo/product/${id}`),
   ]);
   if (!route) notFound();
   const history: Record<number, StockHistoryEntry[]> = {};
@@ -36,6 +39,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       <VariantsEditor productId={product.id} variants={product.variants} history={history} />
       <AttributesEditor product={product} attributes={attributes ?? []} />
       <ImagesEditor product={product} />
+      {seo && <SeoPanel data={seo} />}
     </>
   );
 }

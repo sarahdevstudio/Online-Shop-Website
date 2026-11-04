@@ -28,6 +28,7 @@ public static class ReservedPaths
         "search",
         "site-icon",      // favicon / touch icon route
         "sitemap.xml",
+        "sitemaps",       // the split sitemaps behind sitemap.xml (products, categories, pages, blog)
     ];
 
     /// <summary>Whole paths (not prefixes) owned by static pages.</summary>

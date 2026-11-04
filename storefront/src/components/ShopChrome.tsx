@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
+import { Analytics } from '@/components/Analytics';
 import { JsonLd } from '@/components/JsonLd';
 import { PreviewBanner } from '@/components/PreviewBanner';
 import { SiteFooter, type FooterGroup } from '@/components/SiteFooter';
@@ -42,6 +43,8 @@ export async function ShopChrome({ children }: { children: ReactNode }) {
       <JsonLd data={{ ...organizationJsonLd(), name: seo.siteName, ...(sameAs.length > 0 ? { sameAs } : {}) }} />
       <JsonLd data={{ ...websiteJsonLd(), name: seo.siteName }} />
       {preview && <PreviewBanner />}
+      {/* Analytics: only with a configured id, never in a draft preview, started after the first interaction or idle time. */}
+      {seo.ga4Id && !preview && <Analytics id={seo.ga4Id} />}
       {showAnnouncement && <AnnouncementBar text={announcement.text} href={announcement.link} style={announcement.style} dismissible={announcement.dismissible} />}
       <SiteHeader brandName={seo.siteName} logo={theme.logo} menu={buildMenu(chrome.headerMenu, categories)} cartCount={cartCount} />
       <main id="main" tabIndex={-1}>

@@ -6,7 +6,8 @@ import { getBlogPost } from '@/lib/blog';
 import { formatJalaliDate } from '@/lib/format';
 import { renderMarkdown } from '@/lib/markdown';
 import { messages } from '@/lib/messages';
-import { absoluteUrl, breadcrumbJsonLd, pageMetadata, site } from '@/lib/seo';
+import { absoluteUrl, breadcrumbJsonLd, pageMetadata, site, withSeoOverrides } from '@/lib/seo';
+import { getEntitySeo } from '@/lib/entity-seo';
 import { seoDefaults } from '@/lib/site-config';
 import styles from '../blog/blog.module.css';
 
@@ -15,8 +16,8 @@ type Props = { slug: string };
 export async function blogPostMetadata({ slug }: Props): Promise<Metadata> {
   const post = await getBlogPost(slug);
   if (!post) return {};
-  const defaults = await seoDefaults();
-  return pageMetadata({ title: post.title, description: post.excerpt, path: post.path, type: 'article', siteName: defaults.siteName, image: defaults.image });
+  const [defaults, seo] = await Promise.all([seoDefaults(), getEntitySeo('blogPost', slug)]);
+  return pageMetadata(withSeoOverrides({ title: post.title, description: post.excerpt, path: post.path, type: 'article' as const, siteName: defaults.siteName, image: defaults.image }, seo));
 }
 
 export async function BlogPostView({ slug }: Props) {

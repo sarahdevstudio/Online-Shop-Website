@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { SeoPanel } from '../../../_components/SeoPanel';
+import type { AdminSeo } from '@/lib/admin/seo-types';
 import { adminGet } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminContentPage, ContentAuditEntry, RouteTarget } from '@/lib/admin/types';
@@ -18,7 +20,7 @@ export default async function EditContentPage({ params }: { params: Promise<{ sl
     adminGet<ContentAuditEntry[]>(`/admin/content-pages/${slug}/audit`),
   ]);
   if (!page) notFound();
-  const route = await adminGet<RouteTarget>(`/admin/routes/contentPage/${page.id}`);
+  const [route, seo] = await Promise.all([adminGet<RouteTarget>(`/admin/routes/contentPage/${page.id}`), adminGet<AdminSeo>(`/admin/seo/contentPage/${page.id}`)]);
   if (!route) notFound();
 
   return (
@@ -30,6 +32,7 @@ export default async function EditContentPage({ params }: { params: Promise<{ sl
         </Link>
       </div>
       <ContentEditor page={page} route={route} />
+      {seo && <SeoPanel data={seo} />}
 
       <section className={styles.panel} aria-labelledby="history">
         <h2 id="history" className="ui-heading-4">

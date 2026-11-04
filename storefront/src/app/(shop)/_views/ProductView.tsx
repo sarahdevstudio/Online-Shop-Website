@@ -14,7 +14,9 @@ import { VariantSelector } from '@/components/VariantSelector';
 import { getProduct, type ProductDetailDto, type VariantDto } from '@/lib/catalog';
 import { messages } from '@/lib/messages';
 import type { SearchParams } from '@/lib/paging';
-import { absoluteUrl, pageMetadata, productJsonLd, type Availability } from '@/lib/seo';
+import { absoluteUrl, pageMetadata, productJsonLd, withSeoOverrides, type Availability } from '@/lib/seo';
+import { getEntitySeo } from '@/lib/entity-seo';
+import { FaqSection } from '@/components/FaqSection';
 import { seoDefaults } from '@/lib/site-config';
 import { pickVariant, selectionFromParams, variantQuery } from '@/lib/variants';
 
@@ -25,13 +27,19 @@ export async function productMetadata({ slug }: Props): Promise<Metadata> {
   if (!product) return {};
   // Variant URLs (?wattage=…) canonicalize to the clean product URL. Archived products stay indexable.
   const defaults = await seoDefaults();
-  return pageMetadata({
-    siteName: defaults.siteName,
-    title: product.name,
-    description: product.description ?? product.name,
-    path: product.path,
-    image: product.images[0] ? absoluteUrl(product.images[0].url) : defaults.image,
-  });
+  const seo = await getEntitySeo('product', slug);
+  return pageMetadata(
+    withSeoOverrides(
+      {
+        siteName: defaults.siteName,
+        title: product.name,
+        description: product.description ?? product.name,
+        path: product.path,
+        image: product.images[0] ? absoluteUrl(product.images[0].url) : defaults.image,
+      },
+      seo,
+    ),
+  );
 }
 
 function specRows(product: ProductDetailDto, variant: VariantDto | null): SpecRow[] {
@@ -49,7 +57,7 @@ function specRows(product: ProductDetailDto, variant: VariantDto | null): SpecRo
 }
 
 export async function ProductView({ slug, searchParams }: Props) {
-  const product = await getProduct(slug);
+  const [product, seo] = await Promise.all([getProduct(slug), getEntitySeo('product', slug)]);
   if (!product) notFound();
 
   const basePath = product.path;
@@ -134,6 +142,7 @@ export async function ProductView({ slug, searchParams }: Props) {
           <p>{product.description}</p>
         </section>
       )}
+      <FaqSection items={seo.faq} />
     </div>
   );
 }

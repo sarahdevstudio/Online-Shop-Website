@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { EntitySeo } from './entity-seo';
 import { messages } from './messages';
 
 /** Single source of truth for site-wide SEO values. Override per environment with env vars. */
@@ -173,5 +174,33 @@ export function contactJsonLd(info: ContactInfo) {
     ...(phone && !address ? { contactPoint: { '@type': 'ContactPoint', telephone: phone, contactType: 'customer service', availableLanguage: 'fa' } } : {}),
     ...(address ? { address: { '@type': 'PostalAddress', streetAddress: address, addressCountry: 'IR' } } : {}),
     ...(info.instagram ? { sameAs: [`https://www.instagram.com/${info.instagram}/`] } : {}),
+  };
+}
+
+/**
+ * The admin's overrides on top of the generated metadata: a filled title / description / share image replaces the default, a
+ * noindex toggle keeps the page out of the index (links still followed). Empty fields change nothing.
+ */
+export function withSeoOverrides<T extends { title: string; description: string; image?: string | null; noindex?: boolean | 'follow' }>(input: T, seo: EntitySeo): T {
+  return {
+    ...input,
+    title: seo.title ?? input.title,
+    description: seo.description ?? input.description,
+    image: seo.ogImageUrl ? absoluteUrl(seo.ogImageUrl) : input.image,
+    noindex: seo.noIndex ? input.noindex || 'follow' : input.noindex,
+  };
+}
+
+/** FAQPage for a product's or category's questions; null when there are none (an empty FAQPage is invalid). */
+export function faqJsonLd(items: readonly { question: string; answer: string }[]) {
+  if (items.length === 0) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: { '@type': 'Answer', text: item.answer },
+    })),
   };
 }

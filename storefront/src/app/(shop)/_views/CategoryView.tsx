@@ -22,7 +22,10 @@ import {
 } from '@/lib/listing';
 import { messages } from '@/lib/messages';
 import { isPageInRange, type SearchParams } from '@/lib/paging';
-import { pageMetadata } from '@/lib/seo';
+import { pageMetadata, withSeoOverrides } from '@/lib/seo';
+import { EMPTY_SEO, getEntitySeo } from '@/lib/entity-seo';
+import { renderMarkdown } from '@/lib/markdown';
+import { FaqSection } from '@/components/FaqSection';
 import { seoDefaults } from '@/lib/site-config';
 
 /** `path` is the category's current public path (the listing's base: filters, sort and paging are appended to it). */
@@ -60,15 +63,20 @@ export async function categoryMetadata(props: Props): Promise<Metadata> {
   const data = await load(props);
   if (!data) return {};
   const { basePath, category, state, result } = data;
-  const defaults = await seoDefaults();
-  return pageMetadata({
-    siteName: defaults.siteName,
-    image: defaults.image,
-    title: result.page > 1 ? messages.listingPageTitle(category.name, formatNumber(result.page)) : category.name,
-    description: category.description || category.name,
-    path: listingHref(basePath, state),
-    ...listingIndexing(state),
-  });
+  const [defaults, seo] = await Promise.all([seoDefaults(), getEntitySeo('category', props.slug)]);
+  return pageMetadata(
+    withSeoOverrides(
+      {
+        siteName: defaults.siteName,
+        image: defaults.image,
+        title: result.page > 1 ? messages.listingPageTitle(category.name, formatNumber(result.page)) : category.name,
+        description: category.description || category.name,
+        path: listingHref(basePath, state),
+        ...listingIndexing(state),
+      },
+      seo,
+    ),
+  );
 }
 
 export async function CategoryView(props: Props) {
@@ -76,6 +84,9 @@ export async function CategoryView(props: Props) {
   if (!data) notFound();
   const { basePath, category, state, result, allFacets } = data;
   const linkQuery = productLinkQuery(state);
+  // The guide and the FAQ belong to the category itself: only on its clean address (no filter, no sort, first page).
+  const clean = serializeListing(state) === '';
+  const seo = clean ? await getEntitySeo('category', props.slug) : EMPTY_SEO;
 
   return (
     <div className="ui-container ui-section ui-stack">
@@ -134,6 +145,17 @@ export async function CategoryView(props: Props) {
           />
         </div>
       </div>
+
+      {seo.intro && (
+        <section aria-labelledby="guide" className="ui-stack">
+          <h2 id="guide" className="ui-heading-3">
+            {messages.guideTitle}
+          </h2>
+          {/* Safe by construction: raw HTML is disabled and links are filtered (see lib/markdown.ts). */}
+          <div className="ui-prose" dangerouslySetInnerHTML={{ __html: renderMarkdown(seo.intro) }} />
+        </section>
+      )}
+      {clean && <FaqSection items={seo.faq} />}
     </div>
   );
 }

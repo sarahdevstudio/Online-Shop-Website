@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { requestNonce } from '@/lib/nonce';
+import { Analytics } from '@/components/Analytics';
 import { ThemeHead } from '@/components/ThemeHead';
 import { TextsProvider } from '@/lib/i18n/TextsProvider';
 import { clientTexts, ensureTexts } from '@/lib/i18n/texts-server';
@@ -16,6 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     robots: preview ? { index: false, follow: false } : undefined,
     metadataBase: new URL(site.url),
+    // The Search Console tag is rendered only when a (valid) token is configured.
+    verification: seo.searchConsoleToken ? { google: seo.searchConsoleToken } : undefined,
     title: { default: seo.homeTitle, template: seo.titleTemplate },
     description: seo.defaultDescription,
     openGraph: {

@@ -4,7 +4,8 @@ import { JsonLd } from '@/components/JsonLd';
 import { getContentPage, type InfoSlug } from '@/lib/content';
 import { messages } from '@/lib/messages';
 import { plainDescription, renderMarkdown } from '@/lib/markdown';
-import { contactJsonLd, pageMetadata } from '@/lib/seo';
+import { contactJsonLd, pageMetadata, withSeoOverrides } from '@/lib/seo';
+import { getEntitySeo } from '@/lib/entity-seo';
 import { seoDefaults } from '@/lib/site-config';
 import { getStoreInfo } from '@/lib/store-info';
 import styles from './info-page.module.css';
@@ -17,7 +18,8 @@ export async function infoPageMetadata({ slug }: Props): Promise<Metadata> {
   if (!page) return {};
   // Indexable and self-canonical.
   const defaults = await seoDefaults();
-  return pageMetadata({ title: page.title, description: plainDescription(page.body) || page.title, path: page.path, siteName: defaults.siteName, image: defaults.image });
+  const seo = await getEntitySeo('contentPage', slug);
+  return pageMetadata(withSeoOverrides({ title: page.title, description: plainDescription(page.body) || page.title, path: page.path, siteName: defaults.siteName, image: defaults.image }, seo));
 }
 
 export async function InfoPageView({ slug }: Props) {
