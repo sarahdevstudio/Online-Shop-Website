@@ -4,7 +4,7 @@ import { SOCIAL_PLATFORMS, normalizeChrome, parseChromePayload, socialForSave } 
 describe('chrome model', () => {
   it('fills missing parts with safe defaults', () => {
     const chrome = normalizeChrome({});
-    expect(chrome.announcement).toEqual({ enabled: false, text: '', link: null, style: 'primary', dismissible: true });
+    expect(chrome.announcement).toEqual({ enabled: false, text: '', link: null, entity: null, style: 'primary', dismissible: true });
     expect(chrome.headerMenu).toEqual([]);
     expect(chrome.footer).toEqual({ about: '', columns: [] });
     expect(Object.keys(chrome.social)).toEqual([...SOCIAL_PLATFORMS]);

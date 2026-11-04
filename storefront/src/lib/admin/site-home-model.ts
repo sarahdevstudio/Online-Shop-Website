@@ -1,4 +1,5 @@
-import type { HomeBlockPayload, HomePayload } from './site-types';
+import { optionalLink } from './link-model';
+import type { HomeBlockPayload, HomePayload, LinkEntity } from './site-types';
 
 /**
  * Pure model of the home page editor: the editor works on string-typed state (a text input is never `null`), converted
@@ -38,6 +39,7 @@ export interface SlideState {
   text: string;
   linkLabel: string;
   link: string;
+  entity: LinkEntity | null;
 }
 export interface HeroState {
   autoplaySeconds: number;
@@ -65,6 +67,7 @@ export interface BannerState {
   mediaId: number | null;
   alt: string;
   link: string;
+  entity: LinkEntity | null;
   height: BannerHeight;
 }
 
@@ -79,7 +82,7 @@ export type BlockState =
   | (BlockBase & { type: 'text'; data: TextState })
   | (BlockBase & { type: 'banner'; data: BannerState });
 
-export const newSlide = (): SlideState => ({ mediaId: null, alt: '', title: '', text: '', linkLabel: '', link: '' });
+export const newSlide = (): SlideState => ({ mediaId: null, alt: '', title: '', text: '', linkLabel: '', link: '', entity: null });
 
 export function newBlock(type: BlockType, id: string): BlockState {
   switch (type) {
@@ -92,7 +95,7 @@ export function newBlock(type: BlockType, id: string): BlockState {
     case 'text':
       return { id, type, enabled: true, data: { heading: '', body: '' } };
     case 'banner':
-      return { id, type, enabled: true, data: { mediaId: null, alt: '', link: '', height: 'md' } };
+      return { id, type, enabled: true, data: { mediaId: null, alt: '', link: '', entity: null, height: 'md' } };
   }
 }
 
@@ -131,7 +134,7 @@ export function fromPayload(payload: HomePayload | null | undefined): BlockState
           enabled: block.enabled,
           data: {
             autoplaySeconds: block.data.autoplaySeconds,
-            slides: block.data.slides.map((s) => ({ mediaId: s.mediaId, alt: s.alt, title: s.title, text: s.text, linkLabel: s.linkLabel, link: s.link ?? '' })),
+            slides: block.data.slides.map((s) => ({ mediaId: s.mediaId, alt: s.alt, title: s.title, text: s.text, linkLabel: s.linkLabel, link: s.link ?? '', entity: s.entity ?? null })),
           },
         });
         break;
@@ -145,7 +148,7 @@ export function fromPayload(payload: HomePayload | null | undefined): BlockState
         blocks.push({ id: block.id, type: 'text', enabled: block.enabled, data: { ...block.data } });
         break;
       case 'banner':
-        blocks.push({ id: block.id, type: 'banner', enabled: block.enabled, data: { mediaId: block.data.mediaId, alt: block.data.alt, link: block.data.link ?? '', height: block.data.height } });
+        blocks.push({ id: block.id, type: 'banner', enabled: block.enabled, data: { mediaId: block.data.mediaId, alt: block.data.alt, link: block.data.link ?? '', entity: block.data.entity ?? null, height: block.data.height } });
         break;
     }
   }
@@ -162,7 +165,7 @@ export function toPayload(blocks: readonly BlockState[]): HomePayload {
             id: block.id,
             type: 'hero',
             enabled: block.enabled,
-            data: { autoplaySeconds: block.data.autoplaySeconds, slides: block.data.slides.map((s) => ({ ...s, link: orNull(s.link) })) },
+            data: { autoplaySeconds: block.data.autoplaySeconds, slides: block.data.slides.map((s) => ({ ...s, ...optionalLink({ link: s.link, entity: s.entity }) })) },
           };
         case 'categoryTiles':
           return { id: block.id, type: 'categoryTiles', enabled: block.enabled, data: { items: block.data.items.map((i) => ({ categoryId: i.categoryId, label: orNull(i.label) })) } };
@@ -172,7 +175,7 @@ export function toPayload(blocks: readonly BlockState[]): HomePayload {
           return { id: block.id, type: 'text', enabled: block.enabled, data: { ...block.data } };
         case 'banner':
           // No image yet: 0 is never a media id, so the server answers with the error under `…data.mediaId`.
-          return { id: block.id, type: 'banner', enabled: block.enabled, data: { mediaId: block.data.mediaId ?? 0, alt: block.data.alt, link: orNull(block.data.link), height: block.data.height } };
+          return { id: block.id, type: 'banner', enabled: block.enabled, data: { mediaId: block.data.mediaId ?? 0, alt: block.data.alt, ...optionalLink({ link: block.data.link, entity: block.data.entity }), height: block.data.height } };
       }
     }),
   };

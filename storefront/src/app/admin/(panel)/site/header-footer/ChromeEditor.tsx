@@ -17,12 +17,14 @@ import {
   type ChromePayload,
   type SocialPlatform,
 } from '@/lib/admin/site-chrome-model';
+import { optionalLink, requiredLink } from '@/lib/admin/link-model';
 import { moveItem, removeAt, replaceAt } from '@/lib/admin/site-home-model';
 import { siteEditorMessages } from '@/lib/admin/site-messages';
 import type { AdminSiteDocument } from '@/lib/admin/site-types';
 import { formatNumber } from '@/lib/format';
 import { SiteEditor } from '../_components/SiteEditor';
 import styles from '../_components/site.module.css';
+import { LinkField } from '../_components/LinkField';
 import { chromeAction } from './actions';
 
 const t = siteEditorMessages.chrome;
@@ -45,6 +47,7 @@ function Tools({ index, count, onMove, onRemove }: { index: number; count: numbe
 
 function ChromeFields({ doc }: { doc: AdminSiteDocument<ChromePayload> }) {
   const initial = normalizeChrome(doc.draft?.payload ?? doc.published?.payload);
+  const known = doc.links;
   const [ann, setAnn] = useState(initial.announcement);
   const [menu, setMenu] = useState(initial.headerMenu);
   const [about, setAbout] = useState(initial.footer.about);
@@ -52,9 +55,13 @@ function ChromeFields({ doc }: { doc: AdminSiteDocument<ChromePayload> }) {
   const [social, setSocial] = useState<Record<SocialPlatform, string>>(() => Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p, initial.social[p] ?? ''])) as Record<SocialPlatform, string>);
 
   const payload: ChromePayload = {
-    announcement: { ...ann, link: ann.link?.trim() ? ann.link : null },
-    headerMenu: menu.map((m) => ({ ...m, link: m.allCategories ? (m.link?.trim() ? m.link : null) : m.link })),
-    footer: { about, columns },
+    announcement: { ...ann, ...optionalLink({ link: ann.link, entity: ann.entity ?? null }) },
+    headerMenu: menu.map((m) => ({
+      ...m,
+      ...optionalLink({ link: m.link, entity: m.entity ?? null }),
+      children: m.children.map((c) => ({ ...c, ...requiredLink({ link: c.link, entity: c.entity ?? null }) })),
+    })),
+    footer: { about, columns: columns.map((c) => ({ ...c, links: c.links.map((l) => ({ ...l, ...requiredLink({ link: l.link, entity: l.entity ?? null }) })) })) },
     social: socialForSave(social),
   };
 
@@ -66,7 +73,7 @@ function ChromeFields({ doc }: { doc: AdminSiteDocument<ChromePayload> }) {
         <CheckField name="announcement.enabled" label={t.annEnabled} checked={ann.enabled} onChange={(e) => setAnn({ ...ann, enabled: e.target.checked })} />
         <FormGrid>
           <TextField name="announcement.text" label={t.annText} value={ann.text} onChange={(e) => setAnn({ ...ann, text: e.target.value })} maxLength={CHROME_LIMITS.announcementText} full />
-          <TextField name="announcement.link" label={t.annLink} value={ann.link ?? ''} onChange={(e) => setAnn({ ...ann, link: e.target.value })} ltr autoComplete="off" />
+          <LinkField name="announcement.link" label={t.annLink} value={{ link: ann.link, entity: ann.entity ?? null }} known={known} onChange={(v) => setAnn({ ...ann, ...v })} />
           <SelectField name="announcement.style" label={t.annStyle} value={ann.style} onChange={(e) => setAnn({ ...ann, style: e.target.value as AnnouncementStyle })}>
             {ANNOUNCEMENT_STYLES.map((s) => (
               <option key={s} value={s}>
@@ -90,13 +97,13 @@ function ChromeFields({ doc }: { doc: AdminSiteDocument<ChromePayload> }) {
                 </div>
                 <FormGrid>
                   <TextField name={`headerMenu[${i}].label`} label={t.label} value={item.label} onChange={(e) => setItem({ ...item, label: e.target.value })} maxLength={CHROME_LIMITS.menuLabel} required />
-                  <TextField name={`headerMenu[${i}].link`} label={t.link} value={item.link ?? ''} onChange={(e) => setItem({ ...item, link: e.target.value })} ltr autoComplete="off" />
+                  <LinkField name={`headerMenu[${i}].link`} label={t.link} value={{ link: item.link, entity: item.entity ?? null }} known={known} onChange={(v) => setItem({ ...item, ...v })} />
                 </FormGrid>
                 <CheckField name={`headerMenu[${i}].allCategories`} label={t.allCategories} checked={item.allCategories} onChange={(e) => setItem({ ...item, allCategories: e.target.checked })} />
                 {item.children.map((child, j) => (
                   <FormGrid key={j}>
                     <TextField name={`headerMenu[${i}].children[${j}].label`} label={`${t.child(formatNumber(j + 1))} — ${t.label}`} value={child.label} onChange={(e) => setItem({ ...item, children: replaceAt(item.children, j, { ...child, label: e.target.value }) })} maxLength={CHROME_LIMITS.menuLabel} />
-                    <TextField name={`headerMenu[${i}].children[${j}].link`} label={t.link} value={child.link} onChange={(e) => setItem({ ...item, children: replaceAt(item.children, j, { ...child, link: e.target.value }) })} ltr autoComplete="off" />
+                    <LinkField name={`headerMenu[${i}].children[${j}].link`} label={t.link} value={{ link: child.link, entity: child.entity ?? null }} known={known} onChange={(v) => setItem({ ...item, children: replaceAt(item.children, j, { ...child, link: v.link ?? '', entity: v.entity }) })} />
                     <Button type="button" variant="secondary" onClick={() => setItem({ ...item, children: removeAt(item.children, j) })}>
                       {t.remove}
                     </Button>
@@ -133,7 +140,7 @@ function ChromeFields({ doc }: { doc: AdminSiteDocument<ChromePayload> }) {
                 {column.links.map((link, j) => (
                   <FormGrid key={j}>
                     <TextField name={`footer.columns[${i}].links[${j}].label`} label={`${t.footerLink(formatNumber(j + 1))} — ${t.label}`} value={link.label} onChange={(e) => setColumn({ ...column, links: replaceAt(column.links, j, { ...link, label: e.target.value }) })} maxLength={CHROME_LIMITS.menuLabel} />
-                    <TextField name={`footer.columns[${i}].links[${j}].link`} label={t.link} value={link.link} onChange={(e) => setColumn({ ...column, links: replaceAt(column.links, j, { ...link, link: e.target.value }) })} ltr autoComplete="off" />
+                    <LinkField name={`footer.columns[${i}].links[${j}].link`} label={t.link} value={{ link: link.link, entity: link.entity ?? null }} known={known} onChange={(v) => setColumn({ ...column, links: replaceAt(column.links, j, { ...link, link: v.link ?? '', entity: v.entity }) })} />
                     <Button type="button" variant="secondary" onClick={() => setColumn({ ...column, links: removeAt(column.links, j) })}>
                       {t.remove}
                     </Button>

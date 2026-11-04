@@ -47,6 +47,24 @@ export interface BadgesPayload {
   samandehi: { id: string; verifyCode: string; logoCode: string } | null;
 }
 
+/** A link to an entity of the shop instead of a typed URL (the site document shows the entity's CURRENT path). */
+export interface LinkEntity {
+  type: LinkEntityType;
+  id: number;
+}
+
+export const LINK_ENTITY_TYPES = ['category', 'product', 'contentPage', 'blogPost'] as const;
+export type LinkEntityType = (typeof LINK_ENTITY_TYPES)[number];
+
+/** What the editor knows about an entity a stored link points to (`links` of the document) or a search result. */
+export interface LinkTarget {
+  type: LinkEntityType;
+  id: number;
+  label: string;
+  path: string | null;
+  exists: boolean;
+}
+
 export interface HeroSlidePayload {
   mediaId: number | null;
   alt: string;
@@ -54,6 +72,7 @@ export interface HeroSlidePayload {
   text: string;
   linkLabel: string;
   link: string | null;
+  entity?: LinkEntity | null;
 }
 
 export type HomeBlockPayload =
@@ -66,7 +85,7 @@ export type HomeBlockPayload =
       data: { title: string; source: 'newest' | 'discounted' | 'category' | 'handpicked'; categoryId: number | null; productIds: number[]; limit: number };
     }
   | { id: string; type: 'text'; enabled: boolean; data: { heading: string; body: string } }
-  | { id: string; type: 'banner'; enabled: boolean; data: { mediaId: number; alt: string; link: string | null; height: 'sm' | 'md' | 'lg' } };
+  | { id: string; type: 'banner'; enabled: boolean; data: { mediaId: number; alt: string; link: string | null; entity?: LinkEntity | null; height: 'sm' | 'md' | 'lg' } };
 
 export interface HomePayload {
   blocks: HomeBlockPayload[];
@@ -75,17 +94,19 @@ export interface HomePayload {
 export interface MenuLinkPayload {
   label: string;
   link: string;
+  entity?: LinkEntity | null;
 }
 
 export interface MenuItemPayload {
   label: string;
   link: string | null;
+  entity?: LinkEntity | null;
   allCategories: boolean;
   children: MenuLinkPayload[];
 }
 
 export interface ChromePayload {
-  announcement: { enabled: boolean; text: string; link: string | null; style: 'primary' | 'accent' | 'neutral'; dismissible: boolean };
+  announcement: { enabled: boolean; text: string; link: string | null; entity?: LinkEntity | null; style: 'primary' | 'accent' | 'neutral'; dismissible: boolean };
   headerMenu: MenuItemPayload[];
   footer: { about: string; columns: { title: string; links: MenuLinkPayload[] }[] };
   social: Record<'telegram' | 'whatsapp' | 'aparat' | 'twitter' | 'pinterest' | 'youtube' | 'linkedin', string | null>;
@@ -121,6 +142,8 @@ export interface AdminSiteDocument<P> {
   history: SiteVersionSummary[];
   media: Record<string, SiteMediaInfo>;
   report: { contrast: ContrastItem[] } | null;
+  /** Every entity the draft or the published payload links to, keyed `type:id`. */
+  links?: Record<string, LinkTarget>;
 }
 
 export interface SiteOverviewItem {
@@ -139,7 +162,7 @@ export interface SiteVersionDocument<P> {
   publishedBy: string | null;
 }
 
-export type SiteAuditAction = 'saved' | 'published' | 'restored' | 'discarded' | 'uploaded';
+export type SiteAuditAction = 'saved' | 'published' | 'restored' | 'discarded' | 'uploaded' | 'converted';
 
 export interface SiteAuditItem {
   atUtc: string;

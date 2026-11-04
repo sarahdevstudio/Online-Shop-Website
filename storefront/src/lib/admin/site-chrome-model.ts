@@ -3,6 +3,8 @@
  * helpers of the editor. The server validates everything again; these limits only keep the editor usable.
  */
 
+import type { LinkEntity } from './site-types';
+
 export const CHROME_LIMITS = {
   announcementText: 140,
   menuItems: 8,
@@ -25,22 +27,26 @@ export interface Announcement {
   enabled: boolean;
   text: string;
   link: string | null;
+  entity?: LinkEntity | null;
   style: AnnouncementStyle;
   dismissible: boolean;
 }
 export interface MenuChild {
   label: string;
   link: string;
+  entity?: LinkEntity | null;
 }
 export interface MenuItem {
   label: string;
   link: string | null;
+  entity?: LinkEntity | null;
   allCategories: boolean;
   children: MenuChild[];
 }
 export interface FooterLink {
   label: string;
   link: string;
+  entity?: LinkEntity | null;
 }
 export interface FooterColumn {
   title: string;
@@ -66,6 +72,7 @@ export function normalizeChrome(raw: Partial<ChromePayload> | null | undefined):
       enabled: raw?.announcement?.enabled ?? false,
       text: raw?.announcement?.text ?? '',
       link: raw?.announcement?.link ?? null,
+      entity: raw?.announcement?.entity ?? null,
       style: raw?.announcement?.style ?? 'primary',
       dismissible: raw?.announcement?.dismissible ?? true,
     },

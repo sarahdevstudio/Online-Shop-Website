@@ -7,6 +7,7 @@ import { normalizePathInput, pathProblemState } from './route-form';
 import type { RouteTarget } from './types';
 import { CATALOG_TAG } from '../api';
 import { ROUTES_TAG } from '../routes';
+import { SITE_CACHE_TAG } from '../site-config';
 
 /**
  * Changing an entity's public path from its edit form (docs/11 C.3, decision C-4: the entity's own permission is enough; the API
@@ -19,13 +20,14 @@ export type PathChange = { ok: true; changed: boolean } | { ok: false; state: Fo
 
 export interface PathChangeDeps {
   put: (url: string, body: { path: string; rowVersion: string }) => Promise<AdminResult<RouteTarget>>;
-  /** Drops everything cached that may show a path: resolve answers (`routes`), DTOs with `path` (`catalog`) and the sitemap. */
+  /** Drops everything cached that may show a path: resolve answers (`routes`), DTOs with `path` (`catalog`), the site document (menu, footer and home links) and the sitemap. */
   refresh: () => void;
 }
 
 export function refreshPublicPaths() {
   updateTag(ROUTES_TAG);
   updateTag(CATALOG_TAG);
+  updateTag(SITE_CACHE_TAG); // the menu, footer and home links of the site document follow the entity's path
   revalidatePath('/sitemap.xml');
 }
 

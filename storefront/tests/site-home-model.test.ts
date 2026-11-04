@@ -4,11 +4,11 @@ import type { HomePayload } from '../src/lib/admin/site-types';
 
 const stored: HomePayload = {
   blocks: [
-    { id: 'a', type: 'hero', enabled: true, data: { autoplaySeconds: 0, slides: [{ mediaId: null, alt: '', title: 'T', text: 'X', linkLabel: 'L', link: '/search' }] } },
+    { id: 'a', type: 'hero', enabled: true, data: { autoplaySeconds: 0, slides: [{ mediaId: null, alt: '', title: 'T', text: 'X', linkLabel: 'L', link: '/search', entity: null }] } },
     { id: 'b', type: 'categoryTiles', enabled: false, data: { items: [{ categoryId: 1, label: null }, { categoryId: 2, label: 'لوستر' }] } },
     { id: 'c', type: 'productRow', enabled: true, data: { title: 'جدید', source: 'handpicked', categoryId: null, productIds: [3, 4], limit: 8 } },
     { id: 'd', type: 'text', enabled: true, data: { heading: 'H', body: 'B' } },
-    { id: 'e', type: 'banner', enabled: true, data: { mediaId: 7, alt: 'alt', link: null, height: 'lg' } },
+    { id: 'e', type: 'banner', enabled: true, data: { mediaId: 7, alt: 'alt', link: null, entity: null, height: 'lg' } },
   ],
 };
 
@@ -31,6 +31,18 @@ describe('home block model', () => {
     expect(state[1].type === 'categoryTiles' && state[1].data.items[0].label).toBe('');
     expect(state[4].type === 'banner' && state[4].data.link).toBe('');
     expect(toPayload(state)).toEqual(stored);
+  });
+
+  it('keeps an entity link and drops the typed URL it replaces; a typed link has no entity', () => {
+    const payload: HomePayload = {
+      blocks: [
+        { id: 'a', type: 'hero', enabled: true, data: { autoplaySeconds: 0, slides: [{ mediaId: null, alt: '', title: 'T', text: '', linkLabel: 'L', link: null, entity: { type: 'category', id: 5 } }] } },
+        { id: 'e', type: 'banner', enabled: true, data: { mediaId: 7, alt: 'alt', link: '/x', entity: null, height: 'md' } },
+      ],
+    };
+    const state = fromPayload(payload);
+    expect(state[0].type === 'hero' && state[0].data.slides[0].entity).toEqual({ type: 'category', id: 5 });
+    expect(toPayload(state)).toEqual(payload);
   });
 
   it('drops unknown block types and tolerates a missing payload', () => {

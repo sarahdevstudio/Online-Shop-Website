@@ -28,6 +28,7 @@ import {
 import { siteEditorMessages } from '@/lib/admin/site-messages';
 import type { AdminSiteDocument, HomePayload, SiteMediaInfo } from '@/lib/admin/site-types';
 import { formatNumber } from '@/lib/format';
+import { LinkField } from '../_components/LinkField';
 import { ImageUploadField, type UploadedImage } from '../_components/ImageUploadField';
 import { SiteEditor } from '../_components/SiteEditor';
 import styles from '../_components/site.module.css';
@@ -76,7 +77,7 @@ function HomeFields({ doc, categories }: { doc: AdminSiteDocument<HomePayload>; 
                   </div>
                 </div>
                 <CheckField name={`blocks[${index}].enabled`} label={t.enabled} checked={block.enabled} onChange={(e) => patch(index, (b) => ({ ...b, enabled: e.target.checked }))} />
-                <BlockFields block={block} index={index} categories={categories} media={media} onChange={(next) => patch(index, () => next)} />
+                <BlockFields block={block} index={index} categories={categories} media={media} known={doc.links} onChange={(next) => patch(index, () => next)} />
               </li>
             );
           })}
@@ -101,7 +102,7 @@ function HomeFields({ doc, categories }: { doc: AdminSiteDocument<HomePayload>; 
   );
 }
 
-function BlockFields({ block, index, categories, media, onChange }: { block: BlockState; index: number; categories: Category[]; media: Record<string, SiteMediaInfo>; onChange: (next: BlockState) => void }) {
+function BlockFields({ block, index, categories, media, known, onChange }: { block: BlockState; index: number; categories: Category[]; media: Record<string, SiteMediaInfo>; known: AdminSiteDocument<HomePayload>['links']; onChange: (next: BlockState) => void }) {
   const base = `blocks[${index}].data`;
   switch (block.type) {
     case 'hero': {
@@ -127,7 +128,7 @@ function BlockFields({ block, index, categories, media, onChange }: { block: Blo
                   <TextField name={`${sp}.title`} label={t.slideTitle} value={slide.title} onChange={(e) => setSlide({ title: e.target.value })} maxLength={HOME_LIMITS.title} />
                   <TextField name={`${sp}.text`} label={t.slideText} value={slide.text} onChange={(e) => setSlide({ text: e.target.value })} maxLength={HOME_LIMITS.slideText} full />
                   <TextField name={`${sp}.linkLabel`} label={t.slideLinkLabel} value={slide.linkLabel} onChange={(e) => setSlide({ linkLabel: e.target.value })} maxLength={HOME_LIMITS.linkLabel} />
-                  <TextField name={`${sp}.link`} label={t.slideLink} hint={t.linkHint} value={slide.link} onChange={(e) => setSlide({ link: e.target.value })} ltr autoComplete="off" />
+                  <LinkField name={`${sp}.link`} label={t.slideLink} value={{ link: slide.link || null, entity: slide.entity }} known={known} onChange={(v) => setSlide({ link: v.link ?? '', entity: v.entity })} />
                 </FormGrid>
                 {data.slides.length > HOME_LIMITS.slides.min && (
                   <Button type="button" variant="secondary" onClick={() => set({ ...data, slides: removeAt(data.slides, i) })}>
@@ -236,7 +237,7 @@ function BlockFields({ block, index, categories, media, onChange }: { block: Blo
           <ImageUploadField name={`${base}.mediaId`} label={t.bannerImage} purpose="banner" initial={imageOf(media, data.mediaId)} onChange={(img) => set({ mediaId: img?.id ?? null })} />
           <FormGrid>
             <TextField name={`${base}.alt`} label={t.bannerAlt} value={data.alt} onChange={(e) => set({ alt: e.target.value })} maxLength={HOME_LIMITS.alt} />
-            <TextField name={`${base}.link`} label={t.bannerLink} hint={t.linkHint} value={data.link} onChange={(e) => set({ link: e.target.value })} ltr autoComplete="off" />
+            <LinkField name={`${base}.link`} label={t.bannerLink} value={{ link: data.link || null, entity: data.entity }} known={known} onChange={(v) => set({ link: v.link ?? '', entity: v.entity })} />
             <SelectField name={`${base}.height`} label={t.bannerHeight} value={data.height} onChange={(e) => set({ height: e.target.value as BannerHeight })}>
               {BANNER_HEIGHTS.map((h) => (
                 <option key={h} value={h}>
