@@ -236,6 +236,67 @@
         ],
         "type": "object"
       },
+      "CreateStaffRequest": {
+        "properties": {
+          "currentPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "password": {
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "displayName",
+          "email",
+          "password",
+          "roles",
+          "currentPassword"
+        ],
+        "type": "object"
+      },
+      "DeleteRoleRequest": {
+        "properties": {
+          "currentPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "stamp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "stamp",
+          "currentPassword"
+        ],
+        "type": "object"
+      },
       "DiscardSiteDraftRequest": {
         "properties": {
           "rowVersion": {
@@ -478,6 +539,28 @@
         ],
         "type": "object"
       },
+      "ResetStaffPasswordRequest": {
+        "properties": {
+          "currentPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "newPassword": {
+            "type": "string"
+          },
+          "stamp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "newPassword",
+          "stamp",
+          "currentPassword"
+        ],
+        "type": "object"
+      },
       "ResetTranslationRequest": {
         "properties": {
           "rowVersion": {
@@ -625,6 +708,45 @@
         ],
         "type": "object"
       },
+      "SaveRoleRequest": {
+        "properties": {
+          "currentPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "stamp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "title",
+          "permissions",
+          "stamp",
+          "currentPassword"
+        ],
+        "type": "object"
+      },
       "SaveSiteDraftRequest": {
         "properties": {
           "payload": {
@@ -652,6 +774,46 @@
         },
         "required": [
           "status"
+        ],
+        "type": "object"
+      },
+      "SetStaffActiveRequest": {
+        "properties": {
+          "isActive": {
+            "type": "boolean"
+          },
+          "stamp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "isActive",
+          "stamp"
+        ],
+        "type": "object"
+      },
+      "SetStaffRolesRequest": {
+        "properties": {
+          "currentPassword": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "stamp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "roles",
+          "stamp",
+          "currentPassword"
         ],
         "type": "object"
       },
@@ -832,6 +994,31 @@
           "title",
           "body",
           "rowVersion"
+        ],
+        "type": "object"
+      },
+      "UpdateStaffRequest": {
+        "properties": {
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "stamp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName",
+          "email",
+          "stamp"
         ],
         "type": "object"
       },
@@ -1619,6 +1806,25 @@
         },
         "tags": [
           "Admin catalog"
+        ]
+      }
+    },
+    "/api/v1/admin/me": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin account"
         ]
       }
     },
@@ -2843,6 +3049,354 @@
         ]
       }
     },
+    "/api/v1/admin/staff": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin staff"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStaffRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin staff"
+        ]
+      }
+    },
+    "/api/v1/admin/staff/audit": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin staff"
+        ]
+      }
+    },
+    "/api/v1/admin/staff/roles": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin staff"
+        ]
+      }
+    },
+    "/api/v1/admin/staff/roles/{id}": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin staff"
+        ]
+      }
+    },
+    "/api/v1/admin/staff/roles/{id}/delete": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin staff"
+        ]
+      }
+    },
+    "/api/v1/admin/staff/{id}": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStaffRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin staff"
+        ]
+      }
+    },
+    "/api/v1/admin/staff/{id}/active": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetStaffActiveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin staff"
+        ]
+      }
+    },
+    "/api/v1/admin/staff/{id}/password": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetStaffPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin staff"
+        ]
+      }
+    },
+    "/api/v1/admin/staff/{id}/roles": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetStaffRolesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin staff"
+        ]
+      }
+    },
     "/api/v1/admin/translations": {
       "get": {
         "parameters": [
@@ -3988,6 +4542,9 @@
       "name": "Admin"
     },
     {
+      "name": "Admin account"
+    },
+    {
       "name": "Admin blog"
     },
     {
@@ -4007,6 +4564,9 @@
     },
     {
       "name": "Admin site"
+    },
+    {
+      "name": "Admin staff"
     },
     {
       "name": "Admin translations"

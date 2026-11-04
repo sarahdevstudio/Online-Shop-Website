@@ -13,6 +13,8 @@ public sealed record StaffOverviewBody(StaffUserBody[] Users, StaffRoleBody[] Ro
 
 public sealed record StaffAuditItemBody(int Id, Guid? ActorUserId, string? ActorName, string Action, string? Subject, string? Detail);
 
+public sealed record AdminMeBody(string Username, string[] Permissions);
+
 public sealed record StaffAuditBody(StaffAuditItemBody[] Items, int Total);
 
 /// <summary>Staff accounts and roles (docs/16): create, deactivate (sessions end), reset password, roles, the no-lock-out rule, step-up, audit.</summary>
@@ -76,6 +78,24 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
         // A write without the CSRF token is refused before anything happens.
         var noCsrf = await admin.PostAsJsonAsync(Url, new { username = NewUsername(), password = "x", roles = new[] { Roles.Admin } });
         Assert.Equal(HttpStatusCode.BadRequest, noCsrf.StatusCode);
+    }
+
+    [Fact]
+    public async Task Me_ListsOnlyThePermissionsOfTheSignedInStaffAccount()
+    {
+        Assert.Equal(HttpStatusCode.Unauthorized, (await NewClient().GetAsync("/api/v1/admin/me")).StatusCode);
+
+        var admin = await LoginAdminAsync();
+        Assert.Equal(Permissions.All.Order(StringComparer.Ordinal), (await GetOkAsync<AdminMeBody>(admin, "/api/v1/admin/me")).Permissions);
+
+        var role = await NewRoleAsync(admin, Permissions.BlogManage, Permissions.ContentManage);
+        var (user, password) = await CreateOkAsync(admin, role.Name);
+        var me = await GetOkAsync<AdminMeBody>(await SignInAsync(user.Username, password), "/api/v1/admin/me");
+        Assert.Equal([Permissions.BlogManage, Permissions.ContentManage], me.Permissions);
+
+        // A shopper has no permission at all: not a staff account.
+        var (customer, _, _) = await RegisterCustomerAsync();
+        Assert.Equal(HttpStatusCode.Forbidden, (await customer.GetAsync("/api/v1/admin/me")).StatusCode);
     }
 
     // ---- accounts ----------------------------------------------------------------------------------------------------------
