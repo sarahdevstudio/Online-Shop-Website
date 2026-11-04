@@ -464,9 +464,9 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
         {
             product.Status = status switch
             {
-                "draft" or "پیش‌نویس" => ProductStatus.Draft,
-                "published" or "منتشر شده" or "منتشرشده" => ProductStatus.Published,
-                "archived" or "بایگانی" or "بایگانی‌شده" => ProductStatus.Archived,
+                "draft" => ProductStatus.Draft,
+                "published" => ProductStatus.Published,
+                "archived" => ProductStatus.Archived,
                 _ => null,
             };
             if (product.Status is null)
@@ -592,16 +592,16 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
 
         if (has("variant_active"))
         {
-            var active = cell(row, "variant_active").ToLowerInvariant();
+            var active = ToAscii(cell(row, "variant_active")).ToLowerInvariant();
             if (active.Length == 0)
             {
                 variant.Active = true;
             }
-            else if (active is "1" or "yes" or "true" or "y" or "بله" or "فعال" or "۱")
+            else if (active is "1" or "yes" or "true" or "y")
             {
                 variant.Active = true;
             }
-            else if (active is "0" or "no" or "false" or "n" or "خیر" or "غیرفعال" or "۰")
+            else if (active is "0" or "no" or "false" or "n")
             {
                 variant.Active = false;
             }
