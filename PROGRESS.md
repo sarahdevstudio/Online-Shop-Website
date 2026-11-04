@@ -63,7 +63,6 @@ Also deferred (from the previous P1/P2 list, not in the MVP scope):
 - [ ] Storefront tests (axe, RTL, SEO-meta snapshots); Core Web Vitals measurement (Lighthouse CI)
 - [ ] Discontinued products: keep page / 301 to alternative
 - [ ] Inventory reservations with expiry + stock movement ledger; coupons; reports
-- [ ] Menu/footer/home links as entity references (pick a category/product/page/post; stored as an entity ref and rendered with its current path), custom URL only as a fallback
 
 ## Log
 
@@ -81,3 +80,4 @@ Also deferred (from the previous P1/P2 list, not in the MVP scope):
 - 2026-11-03: Series 3 done (site customization, docs/10): theme with WCAG AA check, fonts, logo and favicon; home blocks; header/footer/announcement; SEO defaults; E-Namad/Samandehi by ID; draft, preview, publish, history, restore; `Site.Manage`; audit; 409. Awaiting review.
 - 2026-11-03: Series B (translations) done on `feature/translate`: `Translations` table + `Translate` service (cache, fallback, one-time miss log), manifest seeding, message keys in Domain/Application translated at the API boundary, storefront and admin read texts through the dictionary with a bundled fallback, `/admin/translations` editor (placeholder check, 409, audit). Awaiting review.
 - 2026-11-04: Series B merged to main (persianOr removed, i18n sync check in CI). Series C (dynamic routing, docs/13) approved and merged to main: route table + resolve API, one-hop 308 redirects, 410 tombstones, reserved paths with a test, catch-all storefront route, path fields in the four admin forms, `/admin/redirects`.
+- 2026-11-04: Series D1 (entity links, docs/13) done on `feature/entity-links`: menu, footer, announcement, hero and banner links can point to a category/product/page/post (searchable select), render the current path with no redirect hop, hide when the entity is deleted (editor warns), work with draft/preview/publish/restore; typed links that matched a current or old path were converted once.
