@@ -68,8 +68,7 @@ test('dynamic routing: redirects, conflicts, 410, released paths', async ({ page
   await shot(page, '03-product-after-redirect');
   eq('canonical is the new URL', await canonicalOf(page), `${BASE}${newPath}`);
   check('JSON-LD uses the new path and not the old one', (await jsonLd(page)).includes(newPath) && !(await jsonLd(page)).includes(oldPath));
-  const sitemap = (await context.request.get(`${BASE}/sitemap.xml`)).text();
-  const sitemapText = await sitemap;
+  const sitemapText = await (await context.request.get(`${BASE}/sitemaps/products.xml`)).text(); // the index at /sitemap.xml lists the split sitemaps
   check('sitemap lists the new URL', sitemapText.includes(`${BASE}${newPath}</loc>`));
   check('sitemap no longer lists the old URL', !sitemapText.includes(`${BASE}${oldPath}</loc>`));
   // internal links: the product's category page links to the new path
