@@ -70,7 +70,7 @@ jobs:
 
   # Mobile Lighthouse (simulated slow 4G, 4x CPU slowdown) on a production build with the development sample data. Budgets are in
   # storefront/lighthouserc.json: LCP <= 2.5 s, CLS <= 0.1, TBT <= 200 ms on the home page, a category, a product, the cart and a
-  # blog post (median of five runs each). docs/14-performance.md
+  # blog post (median of five runs each); the product page's LCP warns above 2.5 s and fails above 3.0 s. docs/14-performance.md
   lighthouse:
     runs-on: ubuntu-latest
     env:
