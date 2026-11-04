@@ -48,7 +48,7 @@ export const transferMessages = {
   get formatIntro() { return t('admin.transfer.format-intro'); },
   get kept() { return t('admin.transfer.kept'); },
   actionLabel: (action: string): string => ACTIONS[action] ? t(ACTIONS[action]) : action,
-  columnHelp: (column: string): string => t(`admin.transfer.columns.${column}` as TextKey),
+  columnHelp: (column: string): string => t(`admin.transfer.columns.${column.replaceAll('_', '-')}` as TextKey),
 };
 
 const ACTIONS: Record<string, TextKey> = {
