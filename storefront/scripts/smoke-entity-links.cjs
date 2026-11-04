@@ -160,6 +160,27 @@ const hrefs = (page, selector) => page.locator(selector).evaluateAll((links) => 
   check('the typed link still points at the old path and hops through a 308', header.includes(oldPath) && typedHop.status === 308 && typedHop.location === newPath, `${typedHop.status} ${typedHop.location}`);
   await shot(page, '12-storefront-after-path-change');
 
+  // ---- 3b. unpublish the post: the link is hidden and the editor names it and its state; publish again: it comes back ------
+  const setPublished = async (published) => {
+    await page.goto(`${BASE}/admin/blog/${postId}`);
+    await (published ? page.check('input[name="publish"]') : page.uncheck('input[name="publish"]'));
+    await Promise.all([page.waitForLoadState('networkidle'), page.click('form:has(input[name="path"]) button[type="submit"]')]);
+    await page.waitForTimeout(700);
+  };
+  await setPublished(false);
+  await page.goto(`${BASE}/`);
+  footer = await hrefs(page, 'footer a');
+  check('an unpublished post\'s footer link is hidden', !footer.includes(`/blog/${slug}`) && footer.includes(newPath), footer.join(' '));
+  await page.goto(`${BASE}/admin/site/header-footer`);
+  let hint = await page.locator('p.ui-error').allInnerTexts();
+  check('the editor names the post and says it is a draft', hint.some((w) => w.includes(`نوشتهٔ پیوند ${RUN}`) && w.includes('پیش‌نویس')), hint.join(' | ').slice(0, 200));
+  await shot(page, '15-editor-draft-warning');
+  await axeCheck(page, '/admin/site/header-footer (draft warning)');
+  await setPublished(true);
+  await page.goto(`${BASE}/`);
+  footer = await hrefs(page, 'footer a');
+  check('publishing the post again brings its footer link back', footer.includes(`/blog/${slug}`), footer.join(' '));
+
   // ---- 4. delete the post: the link is hidden, the editor warns ------------------------------------------------------------
   await page.goto(`${BASE}/admin/blog/${postId}`);
   await page.locator('details summary').last().click();
@@ -169,7 +190,7 @@ const hrefs = (page, selector) => page.locator(selector).evaluateAll((links) => 
   check('the deleted post\'s footer link is hidden', !footer.includes(`/blog/${slug}`) && footer.includes(newPath), footer.join(' '));
   await page.goto(`${BASE}/admin/site/header-footer`);
   const warnings = await page.locator('p.ui-error').allInnerTexts();
-  check('the editor warns about the deleted target', warnings.some((w) => w.includes('حذف شده')), warnings.join(' | ').slice(0, 160));
+  check('the editor warns about the deleted target and still names it', warnings.some((w) => w.includes('حذف شده') && w.includes(`نوشتهٔ پیوند ${RUN}`)), warnings.join(' | ').slice(0, 200));
   await shot(page, '13-editor-deleted-warning');
   await axeCheck(page, '/admin/site/header-footer (deleted warning)');
 

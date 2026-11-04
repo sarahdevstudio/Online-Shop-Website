@@ -204,7 +204,8 @@ public sealed class SiteConfigTests(ApiFixture fixture) : CatalogTestBase(fixtur
 
         var chrome = document.GetProperty("chrome");
         Assert.False(chrome.GetProperty("announcement").GetProperty("enabled").GetBoolean());
-        Assert.Equal(["/", "/", "/about", "/contact"], chrome.GetProperty("headerMenu").EnumerateArray().Select(m => m.GetProperty("link").GetString()!).ToArray());
+        // The seeded About and Contact pages still carry the draft marker, so their (converted) entity links stay hidden until the text is reviewed.
+        Assert.Equal(["/", "/"], chrome.GetProperty("headerMenu").EnumerateArray().Select(m => m.GetProperty("link").GetString()!).ToArray());
         var social = chrome.GetProperty("social");
         Assert.Equal("https://x.com/e_ghasr", social.GetProperty("twitter").GetString());
         Assert.False(social.TryGetProperty("instagram", out _));

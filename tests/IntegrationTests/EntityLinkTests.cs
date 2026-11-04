@@ -15,7 +15,7 @@ using Shop.Infrastructure.Site;
 
 namespace Shop.IntegrationTests;
 
-public sealed record LinkTargetBody(string Type, int Id, string Label, string? Path, bool Exists);
+public sealed record LinkTargetBody(string Type, int Id, string Label, string? Path, bool Exists, string State);
 
 public sealed record SiteKindLinksBody(string Kind, SitePublishedBody? Published, SiteDraftBody? Draft, Dictionary<string, LinkTargetBody> Links);
 
@@ -210,6 +210,135 @@ public sealed class EntityLinkTests(ApiFixture fixture) : StoreTestBase(fixture)
         }
     }
 
+    // ---- links to something that is not published are hidden like a deleted target ----
+
+    private async Task AssertHiddenUntilPublishedAsync(HttpClient admin, string type, int id, string expectedPath, string hiddenState, Func<Task> hide, Func<Task> show)
+    {
+        var anon = NewClient();
+        try
+        {
+            await SaveOkAsync(admin, Chrome(
+                [new { label = "هدف", entity = new { type, id, label = "نام ذخیره‌شده" } }],
+                [new { title = "ستون", links = new object[] { new { label = "هدف", entity = new { type, id } } } }]));
+            await PublishAsync(admin);
+
+            Assert.Equal([expectedPath], MenuLinks(await PublicChromeAsync(anon)));
+
+            await hide();
+            var hidden = await PublicChromeAsync(anon);
+            Assert.Empty(MenuLinks(hidden)); // an item that led nowhere without its link is gone
+            Assert.Empty(hidden.GetProperty("footer").GetProperty("columns").EnumerateArray());
+
+            var editor = await GetOkAsync<SiteKindLinksBody>(admin, $"{Site}/chrome");
+            var target = editor.Links[$"{type}:{id}"];
+            Assert.True(target.Exists); // not deleted: the editor names it and says why it is hidden
+            Assert.Equal(hiddenState, target.State);
+            Assert.NotEmpty(target.Label);
+
+            await show();
+            var back = await PublicChromeAsync(anon); // nothing was republished: the stored reference simply works again
+            Assert.Equal([expectedPath], MenuLinks(back));
+            Assert.Equal([expectedPath], FooterLinks(back));
+            Assert.Equal("published", (await GetOkAsync<SiteKindLinksBody>(admin, $"{Site}/chrome")).Links[$"{type}:{id}"].State);
+        }
+        finally
+        {
+            await RestoreFirstVersionAsync(admin);
+        }
+    }
+
+    [Fact]
+    public async Task ALinkToAProduct_IsHiddenWhileItIsADraftOrArchived_AndComesBackWhenPublished()
+    {
+        var admin = await LoginAdminAsync();
+        var (categoryId, _) = await NewCategoryAsync(admin);
+        var slug = Slug();
+        var product = await CreateProductAsync(admin, categoryId, slug);
+
+        Task Status(string status) => SendOkAsync<AdminProductBody>(admin, HttpMethod.Put, $"/api/v1/admin/products/{product.Id}", new { categoryId, name = product.Name, slug, status });
+        await AssertHiddenUntilPublishedAsync(admin, "product", product.Id, $"/product/{slug}", "draft", () => Status("draft"), () => Status("published"));
+
+        await Status("archived");
+        Assert.Equal("archived", (await GetOkAsync<LinkTargetBody[]>(admin, $"{Site}/link-targets?type=product&q={Uri.EscapeDataString(product.Name)}")).Single(t => t.Id == product.Id).State);
+    }
+
+    [Fact]
+    public async Task ALinkToABlogPost_IsHiddenWhileUnpublished_AndComesBackWhenPublished()
+    {
+        var admin = await LoginAdminAsync();
+        var slug = Slug();
+        var post = await SendOkAsync<AdminBlogBody>(admin, HttpMethod.Post, "/api/v1/admin/blog", new { slug, title = "راهنمای مقصد", excerpt = "خلاصه", body = "متن", publish = true });
+
+        async Task Publish(bool publish)
+        {
+            var current = await GetOkAsync<AdminBlogBody>(admin, $"/api/v1/admin/blog/{post.Id}");
+            await SendOkAsync<AdminBlogBody>(admin, HttpMethod.Put, $"/api/v1/admin/blog/{post.Id}", new { title = current.Title, excerpt = current.Excerpt, body = current.Body, publish, rowVersion = current.RowVersion });
+        }
+
+        await AssertHiddenUntilPublishedAsync(admin, "blogPost", post.Id, $"/blog/{slug}", "draft", () => Publish(false), () => Publish(true));
+    }
+
+    [Fact]
+    public async Task ALinkToAnInactiveCategory_IsHidden_AndComesBackWhenActivated()
+    {
+        var admin = await LoginAdminAsync();
+        var (id, slug) = await NewCategoryAsync(admin);
+
+        Task Active(bool isActive) => SendOkAsync<IdBody>(admin, HttpMethod.Put, $"/api/v1/admin/categories/{id}", new { name = "دسته " + slug, parentId = (int?)null, sortOrder = 0, isActive });
+        await AssertHiddenUntilPublishedAsync(admin, "category", id, $"/category/{slug}", "inactive", () => Active(false), () => Active(true));
+    }
+
+    [Fact]
+    public async Task ALinkToAnInfoPageWithTheDraftMarker_IsHidden_AndComesBackWhenTheMarkerIsRemoved()
+    {
+        var admin = await LoginAdminAsync();
+        const string slug = ContentSlugs.Returns;
+        var original = await GetOkAsync<AdminPageBody>(admin, $"/api/v1/admin/content-pages/{slug}");
+        var target = (await GetOkAsync<LinkTargetBody[]>(admin, $"{Site}/link-targets?type=contentPage&q={Uri.EscapeDataString(original.Title)}")).Single(t => t.Label == original.Title);
+        var clean = original.Body.Replace(ContentPage.DraftMarker, "نسخهٔ نهایی", StringComparison.Ordinal);
+        var marked = "> **" + ContentPage.DraftMarker + "** " + clean;
+
+        async Task Body(string body)
+        {
+            var current = await GetOkAsync<AdminPageBody>(admin, $"/api/v1/admin/content-pages/{slug}");
+            await SendOkAsync<AdminPageBody>(admin, HttpMethod.Put, $"/api/v1/admin/content-pages/{slug}", new { title = current.Title, body, rowVersion = current.RowVersion });
+        }
+
+        try
+        {
+            await Body(clean); // start from a reviewed page
+            await AssertHiddenUntilPublishedAsync(admin, "contentPage", target.Id, target.Path!, "draft", () => Body(marked), () => Body(clean));
+        }
+        finally
+        {
+            await Body(original.Body);
+        }
+    }
+
+    [Fact]
+    public async Task TheLabelStoredWithAReference_SurvivesTheTargetsDeletion_AndIsTrimmed()
+    {
+        var admin = await LoginAdminAsync();
+        var (id, _) = await NewCategoryAsync(admin);
+        try
+        {
+            var saved = await SaveOkAsync(admin, Chrome([new { label = "هدف", entity = new { type = "category", id, label = "  لوستر   مدرن  " } }]));
+            var entity = saved.Draft!.Payload.GetProperty("headerMenu")[0].GetProperty("entity");
+            Assert.Equal("لوستر مدرن", entity.GetProperty("label").GetString());
+
+            Assert.Equal(HttpStatusCode.NoContent, (await SendAsync(admin, HttpMethod.Delete, $"/api/v1/admin/categories/{id}")).StatusCode);
+
+            var editor = await GetOkAsync<SiteKindLinksBody>(admin, $"{Site}/chrome");
+            Assert.False(editor.Links[$"category:{id}"].Exists);
+            Assert.Equal("deleted", editor.Links[$"category:{id}"].State);
+            Assert.Equal("لوستر مدرن", editor.Draft!.Payload.GetProperty("headerMenu")[0].GetProperty("entity").GetProperty("label").GetString()); // still there for the editor to name
+        }
+        finally
+        {
+            await RestoreFirstVersionAsync(admin);
+        }
+    }
+
     [Fact]
     public async Task TheLinkSearch_FindsEntitiesByName_AndNeedsSiteManage()
     {
@@ -300,6 +429,8 @@ public sealed class EntityLinkTests(ApiFixture fixture) : StoreTestBase(fixture)
                 var published = (ChromePayload)SiteJson.TryDeserialize(SiteKind.Chrome, (await check.SiteConfigVersions.SingleAsync(v => v.Kind == SiteKind.Chrome && v.State == SiteState.Published)).Payload)!;
                 Assert.Equal("/", published.HeaderMenu[0].Link);
                 Assert.Equal(("contentPage", null), (published.HeaderMenu[1].Entity!.Type, published.HeaderMenu[1].Link));
+                Assert.Equal("عنوان about", published.HeaderMenu[1].Entity!.Label); // the name is stored with the reference
+                Assert.Equal("راهنما", published.HeaderMenu[2].Children[0].Entity!.Label);
                 Assert.Equal((RouteTargetTypes.Category, categoryId), (published.HeaderMenu[2].Entity!.Type, published.HeaderMenu[2].Entity!.Id));
                 Assert.Equal((RouteTargetTypes.BlogPost, postId), (published.HeaderMenu[2].Children[0].Entity!.Type, published.HeaderMenu[2].Children[0].Entity!.Id));
                 Assert.Equal("https://example.com/x", published.HeaderMenu[2].Children[1].Link);
