@@ -45,6 +45,10 @@ export function problemState(problem: AdminProblem, submitted: Record<string, st
   if (isConflict(problem)) {
     return { ...INITIAL_FORM_STATE, conflict: true, message: adminMessages.conflict, submitted };
   }
+  // A path the API refused on create (taken, an old redirect, reserved): shown next to the field, not as a generic banner.
+  if (problem.status === 409 && problem.code?.startsWith('path_')) {
+    return failState(adminMessages.fixErrors, submitted, { path: problem.detail || adminMessages.invalidValue });
+  }
   const errors = camelKeys(problem.errors);
   if (problem.status === 400 && Object.keys(errors).length > 0) return failState(adminMessages.fixErrors, submitted, errors);
   if (problem.status === 403) return failState(problem.code === 'step_up_failed' ? adminMessages.stepUpFailed : adminMessages.forbidden, submitted);

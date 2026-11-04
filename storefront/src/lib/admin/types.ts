@@ -156,6 +156,7 @@ export interface AdminContentListItem {
 }
 
 export interface AdminContentPage {
+  id: number;
   slug: string;
   title: string;
   body: string;
@@ -219,4 +220,36 @@ export interface TranslationAuditEntry {
   adminUsername: string | null;
   oldText: string;
   newText: string;
+}
+
+/** An entity's current public path (with the version the form sends back) and the old paths that redirect to it. */
+export interface RouteTarget {
+  type: 'category' | 'product' | 'contentPage' | 'blogPost';
+  id: number;
+  path: string;
+  rowVersion: string;
+  oldPaths: { id: number; path: string; createdAtUtc: string }[];
+}
+
+/** One row of the redirects page: an old path (or the path of a deleted entity) and where it leads. */
+export interface RedirectRow {
+  id: number;
+  path: string;
+  targetType: string;
+  targetId: number;
+  targetName: string;
+  currentPath: string | null;
+  isGone: boolean;
+  createdAtUtc: string;
+}
+
+export interface RouteAuditEntry {
+  atUtc: string;
+  targetType: string;
+  targetId: number;
+  targetName: string;
+  action: string;
+  oldPath: string | null;
+  newPath: string | null;
+  adminUsername: string | null;
 }
