@@ -6,7 +6,7 @@ import { adminFetch } from '@/lib/admin/api';
 import { failState, okState, problemState, submittedFrom, type FormState } from '@/lib/admin/form-state';
 import { checked, id as readId, text, whole } from '@/lib/admin/form-input';
 import { adminMessages } from '@/lib/admin/messages';
-import { applyPathChange, refreshPublicPaths, refreshSiteLinks } from '@/lib/admin/route-actions';
+import { applyPathChange, refreshCatalog, refreshPublicPaths, refreshSiteLinks } from '@/lib/admin/route-actions';
 import type { AdminAttribute, AdminProduct } from '@/lib/admin/types';
 
 const STATUSES = ['draft', 'published', 'archived'];
@@ -64,6 +64,7 @@ export async function updateProductAction(_previous: FormState, formData: FormDa
   const result = await adminFetch<AdminProduct>('PUT', `/admin/products/${productId}`, { body: { ...productBody(formData), slug: null, variants: null } });
   if (!result.ok) return problemState(result.problem, submitted);
   refreshSiteLinks(); // the status may have changed: menu and footer links to this product appear or disappear
+  refreshCatalog();
   revalidatePath(`/admin/products/${productId}`);
   return okState(adminMessages.saved);
 }
@@ -76,6 +77,7 @@ export async function saveVariantAction(_previous: FormState, formData: FormData
   const body = { ...variantFrom(formData), rowVersion: text(formData, 'rowVersion') };
   const result = await adminFetch<unknown>('PUT', `/admin/variants/${variantId}`, { body });
   if (!result.ok) return problemState(result.problem, submittedFrom(formData));
+  refreshCatalog();
   revalidatePath(`/admin/products/${productId}`);
   return okState(adminMessages.saved);
 }
@@ -85,6 +87,7 @@ export async function addVariantAction(_previous: FormState, formData: FormData)
   if (productId === null) return failState(adminMessages.failed);
   const result = await adminFetch<unknown>('POST', `/admin/products/${productId}/variants`, { body: variantFrom(formData) });
   if (!result.ok) return problemState(result.problem, submittedFrom(formData));
+  refreshCatalog();
   revalidatePath(`/admin/products/${productId}`);
   return okState(adminMessages.saved);
 }
@@ -99,6 +102,7 @@ export async function adjustStockAction(_previous: FormState, formData: FormData
   }
   const result = await adminFetch<unknown>('POST', `/admin/variants/${variantId}/stock-adjust`, { body: { delta, reason: text(formData, 'reason') || null } });
   if (!result.ok) return problemState(result.problem, submittedFrom(formData));
+  refreshCatalog();
   revalidatePath(`/admin/products/${productId}`);
   return okState(adminMessages.saved);
 }
@@ -129,6 +133,7 @@ export async function saveAttributesAction(_previous: FormState, formData: FormD
 
   const result = await adminFetch<unknown>('PUT', `/admin/products/${productId}/attributes`, { body: { values } });
   if (!result.ok) return problemState(result.problem);
+  refreshCatalog();
   revalidatePath(`/admin/products/${productId}`);
   return okState(adminMessages.saved);
 }
@@ -142,6 +147,7 @@ export async function reorderImagesAction(_previous: FormState, formData: FormDa
   if (productId === null || imageIds.length === 0) return failState(adminMessages.failed);
   const result = await adminFetch<unknown>('PUT', `/admin/products/${productId}/images/order`, { body: { imageIds } });
   if (!result.ok) return problemState(result.problem);
+  refreshCatalog();
   revalidatePath(`/admin/products/${productId}`);
   return okState(adminMessages.saved);
 }
@@ -152,6 +158,7 @@ export async function deleteImageAction(_previous: FormState, formData: FormData
   if (productId === null || imageId === null) return failState(adminMessages.failed);
   const result = await adminFetch<unknown>('DELETE', `/admin/images/${imageId}`);
   if (!result.ok) return problemState(result.problem);
+  refreshCatalog();
   revalidatePath(`/admin/products/${productId}`);
   return okState(adminMessages.taxonomy.deleted);
 }

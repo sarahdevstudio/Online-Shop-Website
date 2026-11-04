@@ -41,4 +41,4 @@ A link in the site customization is either a **typed URL** (the fallback) or a *
 
 ## Checks
 
-`dotnet test` (RoutePath, reserved paths, routes API, dev-seed proof), `npm test` (resolve client, redirects, proxy 410, admin form helpers) the browser smokes `storefront/scripts/smoke-routing.cjs` and `smoke-entity-links.cjs` (need a running API in Development and the built storefront; see the header of the script).
+`dotnet test` (RoutePath, reserved paths, routes API, dev-seed proof), `npm test` (resolve client, redirects, proxy 410, admin form helpers) the Playwright specs `storefront/e2e/04-routing.e2e.ts` and `05-entity-links.e2e.ts` (docs/15-e2e.md).

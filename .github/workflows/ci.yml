@@ -158,3 +158,106 @@ jobs:
         with:
           name: lighthouse
           path: storefront/.lighthouseci
+
+  # Browser end-to-end suite (storefront/e2e, docs/15-e2e.md): a throwaway SQL Server, the API in Development with the sample
+  # catalog, the production-built storefront, then Playwright (Chromium). It covers the CSP on every main shop and admin page,
+  # guest checkout, the admin gate and editing, dynamic routing and entity links, with axe on the pages it opens.
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      API_URL: http://127.0.0.1:5167
+      SITE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: storefront/package-lock.json
+
+      # Throwaway SQL Server and secrets, generated per run and masked (nothing is stored in the repository).
+      - name: Start SQL Server and generate secrets
+        run: |
+          SA_PASSWORD="Aa1-$(openssl rand -hex 16)"
+          ADMIN_PASSWORD="Aa1-$(openssl rand -hex 12)"
+          API_KEY="$(openssl rand -hex 24)"
+          SESSION_SECRET="$(openssl rand -hex 32)"
+          for secret in "$SA_PASSWORD" "$ADMIN_PASSWORD" "$API_KEY" "$SESSION_SECRET"; do echo "::add-mask::$secret"; done
+          docker run -d --name sql -p 1433:1433 \
+            -e ACCEPT_EULA=Y -e "MSSQL_SA_PASSWORD=$SA_PASSWORD" \
+            mcr.microsoft.com/mssql/server:2022-latest
+          {
+            echo "SA_PASSWORD=$SA_PASSWORD"
+            echo "ADMIN_PASSWORD=$ADMIN_PASSWORD"
+            echo "API_KEY=$API_KEY"
+            echo "SESSION_SECRET=$SESSION_SECRET"
+          } >> "$GITHUB_ENV"
+          for i in $(seq 1 40); do
+            docker logs sql 2>&1 | grep -q "SQL Server is now ready for client connections" && exit 0
+            sleep 3
+          done
+          docker logs sql
+          exit 1
+
+      - run: dotnet build src/Api/Shop.Api.csproj -c Release
+
+      - name: "Start the API (Development, sample catalog)"
+        run: |
+          mkdir -p "$RUNNER_TEMP/media"
+          ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS="$API_URL" \
+          ConnectionStrings__Default="Server=localhost,1433;Database=ShopE2E;User Id=sa;Password=$SA_PASSWORD;TrustServerCertificate=True" \
+          Database__MigrateOnStartup=true Auth__RequireSecureCookie=false \
+          Seed__AdminUsername=e2e-admin Seed__AdminPassword="$ADMIN_PASSWORD" Seed__AdminFullName=E2E \
+          Storefront__ApiKey="$API_KEY" Media__RootPath="$RUNNER_TEMP/media" \
+          nohup dotnet src/Api/bin/Release/net10.0/Shop.Api.dll > "$RUNNER_TEMP/api.log" 2>&1 &
+          for i in $(seq 1 60); do curl -fsS "$API_URL/api/v1/catalog/site" > /dev/null && exit 0; sleep 2; done
+          cat "$RUNNER_TEMP/api.log"
+          exit 1
+
+      - name: Build and start the storefront (production build)
+        working-directory: storefront
+        run: |
+          npm ci
+          export NEXT_PUBLIC_SITE_URL="$SITE_URL" SITE_ENV=development API_BASE_URL="$API_URL" \
+                 STOREFRONT_API_KEY="$API_KEY" ADMIN_SESSION_SECRET="$SESSION_SECRET" TRUSTED_PROXY_HOPS=1
+          npm run build
+          nohup npx next start -p 3000 > "$RUNNER_TEMP/web.log" 2>&1 &
+          for i in $(seq 1 60); do curl -fsS "$SITE_URL/" > /dev/null && exit 0; sleep 2; done
+          cat "$RUNNER_TEMP/web.log"
+          exit 1
+
+      # The sample catalog has no blog post and no product photo: add them (idempotent).
+      - name: Seed the post and the product photo (the e2e specs open the post)
+        working-directory: storefront
+        run: node scripts/perf/seed.mjs
+        env:
+          API: ${{ env.API_URL }}
+          ADMIN_USER: e2e-admin
+          ADMIN_PASS: ${{ env.ADMIN_PASSWORD }}
+
+      - name: Install Chromium
+        working-directory: storefront
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright e2e
+        working-directory: storefront
+        run: npx playwright test
+        env:
+          CI: "true"
+          BASE: ${{ env.SITE_URL }}
+          API: ${{ env.API_URL }}
+          ADMIN_USER: e2e-admin
+          ADMIN_PASS: ${{ env.ADMIN_PASSWORD }}
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            storefront/playwright-report
+            storefront/e2e-results

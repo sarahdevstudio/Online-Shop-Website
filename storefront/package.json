@@ -8,6 +8,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "e2e": "playwright test",
     "i18n:sync": "node scripts/sync-i18n.mjs",
     "i18n:check": "node scripts/sync-i18n.mjs --check"
   },

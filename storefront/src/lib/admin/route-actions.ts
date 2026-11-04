@@ -29,6 +29,11 @@ export function refreshSiteLinks() {
   updateTag(SITE_CACHE_TAG);
 }
 
+/** Product, variant, stock, attribute, image and brand edits show on the shop at once, not after the catalog cache's time to live. */
+export function refreshCatalog() {
+  updateTag(CATALOG_TAG);
+}
+
 export function refreshPublicPaths() {
   updateTag(ROUTES_TAG);
   updateTag(CATALOG_TAG);

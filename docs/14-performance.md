@@ -63,4 +63,4 @@ All of « » ٪ ، ؛ ـ, the four marks (َ ُ ِ ّ), ك ي ة and ZWNJ render
 
 Why the product page has a looser budget: its LCP is the product photo, and under Lighthouse's simulated slow 4G the same build gives 1.8-3.0 s across runs (15 runs: median 2.35 s, two clusters at about 2.2 s and 2.9 s, with the first paint identical in all of them). A budget of 2.5 s there fails on noise alone, so the pipeline would teach people to ignore it; 3.0 s still fails on a real regression (a photo twice as heavy), and the warning keeps the 2.5 s target visible in every run. The budget is in `lighthouserc.json` (`assertMatrix`), not in the audit.
 
-Locally: start the API and the storefront as in `scripts/smoke-routing.cjs`'s header, `node scripts/perf/seed.mjs`, then `npx @lhci/cli@0.15.1 autorun --config=lighthouserc.json` in `storefront/`; `node scripts/perf/report.mjs .lighthouseci` prints the table above.
+Locally: start the API and the storefront as in docs/15-e2e.md, `node scripts/perf/seed.mjs`, then `npx @lhci/cli@0.15.1 autorun --config=lighthouserc.json` in `storefront/`; `node scripts/perf/report.mjs .lighthouseci` prints the table above.
