@@ -59,11 +59,24 @@ const VAZIRMATN_ARABIC_RANGE =
   'U+060C,U+061B,U+061F,U+0621-063A,U+0640-0655,U+0660-066D,U+0670,U+067E,U+0686,U+0698,U+06A9,U+06AF,U+06BE,U+06C0,U+06CC,U+06D4-06D5,U+06F0-06F9,U+200C-200F,U+FDFC';
 const VAZIRMATN_LATIN_RANGE = 'U+0020-007E,U+00A0,U+00A9,U+00AB,U+00BB,U+00D7,U+2013-2014,U+2018-2019,U+201C-201D,U+2022,U+2026,U+2212';
 
+// The complete Vazirmatn is kept as a fallback under the same family name and weights, for every character the subset leaves out
+// (rare Arabic letters, Quranic marks, presentation forms, accented Latin, ...). Each range is the full font's own coverage MINUS
+// the subset's, so the browser fetches one of these files only when a page really contains such a character, and never preloads
+// them. Emoji and anything the font does not cover use the next family of the stack.
+const VAZIRMATN_FULL_ARABIC_RANGE =
+  'U+0600-060B,U+060D-061A,U+061C-061E,U+0620,U+063B-063F,U+0656-065F,U+066E-066F,U+0671-067D,U+067F-0685,U+0687-0697,U+0699-06A8,U+06AA-06AE,U+06B0-06BD,U+06BF,U+06C1-06CB,U+06CD-06D3,U+06D6-06EF,U+06FA-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+2E41,U+FB50-FDFB,U+FDFD-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC4,U+10EFC-10EFF,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1';
+const VAZIRMATN_FULL_LATIN_RANGE =
+  'U+00A1-00A8,U+00AA,U+00AC-00BA,U+00BC-00D6,U+00D8-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-200B,U+2010-2012,U+2015-2017,U+201A-201B,U+201E-2021,U+2023-2025,U+2027-206F,U+20AC,U+2122,U+2191,U+2193,U+2215,U+FEFF,U+FFFD';
+const VAZIRMATN_FULL_LATIN_EXT_RANGE =
+  'U+0100-0130,U+0132-0151,U+0154-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF';
+
 interface FontFile {
   file: string;
   weight: string;
   range?: string;
   variable?: boolean;
+  /** Preloaded with the HTML: the files every page needs. A face without it loads only when a page uses a character of its range. */
+  preload?: boolean;
 }
 
 interface FontSpec {
@@ -79,8 +92,11 @@ const FONTS: Record<FontId, FontSpec> = {
     family: 'Vazirmatn',
     folder: 'vazirmatn',
     files: [
-      { file: 'vazirmatn-arabic-wght-normal.woff2', weight: '400 700', range: VAZIRMATN_ARABIC_RANGE, variable: true },
-      { file: 'vazirmatn-latin-wght-normal.woff2', weight: '400 700', range: VAZIRMATN_LATIN_RANGE, variable: true },
+      { file: 'vazirmatn-arabic-wght-normal.woff2', weight: '400 700', range: VAZIRMATN_ARABIC_RANGE, variable: true, preload: true },
+      { file: 'vazirmatn-latin-wght-normal.woff2', weight: '400 700', range: VAZIRMATN_LATIN_RANGE, variable: true, preload: true },
+      { file: 'vazirmatn-full-arabic-wght-normal.woff2', weight: '400 700', range: VAZIRMATN_FULL_ARABIC_RANGE, variable: true },
+      { file: 'vazirmatn-full-latin-wght-normal.woff2', weight: '400 700', range: VAZIRMATN_FULL_LATIN_RANGE, variable: true },
+      { file: 'vazirmatn-full-latin-ext-wght-normal.woff2', weight: '400 700', range: VAZIRMATN_FULL_LATIN_EXT_RANGE, variable: true },
     ],
     preload: 'vazirmatn-arabic-wght-normal.woff2',
   },
@@ -89,7 +105,7 @@ const FONTS: Record<FontId, FontSpec> = {
     folder: 'estedad',
     files: [
       { file: 'estedad-arabic-wght-normal.woff2', weight: '100 900', range: ARABIC_RANGE, variable: true },
-      { file: 'estedad-latin-wght-normal.woff2', weight: '100 900', range: LATIN_RANGE, variable: true },
+      { file: 'estedad-latin-wght-normal.woff2', weight: '100 900', range: LATIN_RANGE, variable: true, preload: true },
     ],
     preload: 'estedad-arabic-wght-normal.woff2',
   },
@@ -141,14 +157,14 @@ export function fontPreload(font: FontId): { href: string; type: 'font/woff2' } 
 }
 
 /**
- * Every font file EVERY page needs: the preloaded regular file and, for the two-subset families, the Latin subset too (digits in
+ * Every font file EVERY page needs: the preloaded regular file and the files flagged `preload` (for Vazirmatn the Latin subset: digits in
  * prices, the copyright sign and brand names are on all pages, so the browser always fetches it; preloading starts the request
  * with the HTML instead of after the style sheets). The other weights of the multi-file families load when used.
  */
 export function fontPreloads(font: FontId): Array<{ href: string; type: 'font/woff2' }> {
   const spec = FONTS[font];
   const hrefs = new Set([fontUrl(spec, spec.preload)]);
-  for (const f of spec.files) if (f.variable && f.file.includes('-latin-')) hrefs.add(fontUrl(spec, f.file));
+  for (const f of spec.files) if (f.preload) hrefs.add(fontUrl(spec, f.file));
   return [...hrefs].map((href) => ({ href, type: 'font/woff2' }));
 }
 

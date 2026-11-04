@@ -92,4 +92,57 @@ describe('fonts', () => {
     expect(fontPreloads('vazirmatn').map((p) => p.href)).toEqual(['/fonts/vazirmatn/vazirmatn-arabic-wght-normal.woff2', '/fonts/vazirmatn/vazirmatn-latin-wght-normal.woff2']);
     expect(fontPreloads('sahel').map((p) => p.href)).toEqual(['/fonts/sahel/Sahel.woff2']);
   });
+
+  describe('the complete Vazirmatn fallback', () => {
+    const css = fontFaceCss('vazirmatn');
+    const faces = [...css.matchAll(/@font-face\{[^}]*src:url\(([^)]+)\)[^}]*unicode-range:([^;}]+)/g)].map((m) => ({ url: m[1], range: m[2] }));
+    const points = (range: string) => {
+      const set = new Set<number>();
+      for (const part of range.split(',')) {
+        const [from, to] = part.slice(2).split('-').map((x) => parseInt(x, 16));
+        for (let c = from; c <= (to ?? from); c++) set.add(c);
+      }
+      return set;
+    };
+    const byUrl = (name: string) => points(faces.find((f) => f.url.endsWith(name))!.range);
+
+    it('has the subsets and three full files, all under the same family name and weights', () => {
+      expect(faces.map((f) => f.url.split('/').pop())).toEqual([
+        'vazirmatn-arabic-wght-normal.woff2',
+        'vazirmatn-latin-wght-normal.woff2',
+        'vazirmatn-full-arabic-wght-normal.woff2',
+        'vazirmatn-full-latin-wght-normal.woff2',
+        'vazirmatn-full-latin-ext-wght-normal.woff2',
+      ]);
+      expect(css.match(/font-family:'Vazirmatn'/g)).toHaveLength(5);
+      expect(css.match(/font-weight:400 700/g)).toHaveLength(5);
+    });
+
+    it('never overlaps the subset: a character is served by exactly one face', () => {
+      const all = faces.map((f) => points(f.range));
+      const seen = new Map<number, number>();
+      all.forEach((set, index) => {
+        for (const c of set) {
+          expect(seen.has(c), `U+${c.toString(16)} is in face ${seen.get(c)} and ${index}`).toBe(false);
+          seen.set(c, index);
+        }
+      });
+    });
+
+    it('serves the characters the shop writes from the preloaded subsets', () => {
+      const subset = new Set([...byUrl('vazirmatn-arabic-wght-normal.woff2'), ...byUrl('vazirmatn-latin-wght-normal.woff2')]);
+      for (const ch of '«»٪،؛ـَُِّكيةپچژگ\u200c0123456789۰۱۲۳۴۵۶۷۸۹ abc') expect(subset.has(ch.codePointAt(0)!), `U+${ch.codePointAt(0)!.toString(16)}`).toBe(true);
+    });
+
+    it('serves the rest of the font from the full files, and not the emoji', () => {
+      const full = new Set([...byUrl('vazirmatn-full-arabic-wght-normal.woff2'), ...byUrl('vazirmatn-full-latin-wght-normal.woff2'), ...byUrl('vazirmatn-full-latin-ext-wght-normal.woff2')]);
+      for (const ch of 'ٱڤڠﷲéñ°²€™ڕ') expect(full.has(ch.codePointAt(0)!), `U+${ch.codePointAt(0)!.toString(16)}`).toBe(true);
+      expect(full.has(0x1f600)).toBe(false);
+    });
+
+    it('preloads only the two subsets', () => {
+      expect(fontPreloads('vazirmatn').map((p) => p.href)).toEqual(['/fonts/vazirmatn/vazirmatn-arabic-wght-normal.woff2', '/fonts/vazirmatn/vazirmatn-latin-wght-normal.woff2']);
+      expect(fontPreloads('estedad').map((p) => p.href)).toHaveLength(2);
+    });
+  });
 });

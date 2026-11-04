@@ -6,8 +6,11 @@ Subsets the bundled Vazirmatn (variable, weight axis narrowed to 400-700) to the
   pip install fonttools brotli
   python3 scripts/perf/subset-vazirmatn.py
 
-The unicode-ranges in src/lib/theme-css.ts (VAZIRMATN_*_RANGE) list exactly these code points, so a character outside them
-falls back to the next family of the font stack instead of showing an empty box. Shaping (GSUB/GPOS) is kept whole.
+The unicode-ranges in src/lib/theme-css.ts (VAZIRMATN_*_RANGE) list exactly these code points. A character outside them is
+served by the complete font (public/fonts/vazirmatn/vazirmatn-full-*.woff2: the package files copied unchanged, with the
+VAZIRMATN_FULL_*_RANGE = the full font's coverage minus these code points, not preloaded). If you change the code points
+here, recompute those ranges too: tests/theme-css.test.ts fails when a character is served by two faces. Shaping (GSUB/GPOS)
+is kept whole.
 """
 import sys
 from pathlib import Path
