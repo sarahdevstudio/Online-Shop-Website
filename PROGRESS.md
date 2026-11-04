@@ -50,7 +50,7 @@ Update this file in the same commit as each item.
 - [ ] Image pipeline (AVIF/WebP, srcset, derivatives)
 - [ ] Analytics + e-commerce events, Search Console
 - [ ] Persistent logging/monitoring, automated backups
-- [ ] CSP and Permissions-Policy headers (E1, in progress)
+- [x] CSP and Permissions-Policy headers (E1)
 - [x] Remove `web/` (Angular); contrast is `storefront/tests/contrast.test.ts`, RTL is `storefront/tests/rtl.test.ts`
 
 Also deferred (from the previous P1/P2 list, not in the MVP scope):
@@ -84,3 +84,4 @@ Also deferred (from the previous P1/P2 list, not in the MVP scope):
 - 2026-11-04: D1 gap closed on `feature/hide-unpublished-links`: entity links to a draft/archived product, unpublished post, inactive category or draft-marked info page are hidden like deleted ones (editor names the target and its state); the target's name is stored with the reference so a deleted target is still named.
 - 2026-11-04: Series D2 (performance, docs/14) done on `feature/performance`: Lighthouse baseline and after (LCP 2.4-2.9 s → 2.0-2.5 s, CLS 0, TBT < 90 ms), Vazirmatn subset (81 → 36 KB), font cache and preload, logo through next/image, fetchPriority on LCP images, server-side announcement dismissal, Lighthouse CI with budgets. Awaiting review.
 - 2026-11-04: D2 follow-up on `feature/performance`: the complete Vazirmatn (arabic, latin, latin-ext) is a non-preloaded `unicode-range` fallback under the same family and weights, fetched only by pages with characters outside the subset; product-page LCP budget is warn 2.5 s / error 3.0 s (docs/14).
+- 2026-11-04: Series E1 (quality, docs/15) on `feature/quality`: `web/` (Angular) removed (contrast was already `tests/contrast.test.ts`, RTL ported to `tests/rtl.test.ts`); nonce-based Content-Security-Policy (no unsafe-eval/inline scripts in production) and Permissions-Policy per request from the proxy; Playwright e2e suite (CSP sweep of all main shop/admin pages, checkout, admin, routing, entity links, axe) replaces the smoke scripts and runs in CI as job `e2e`; product and brand edits now refresh the shop at once (they waited for the 60 s cache before). Latest CI on GitHub for main: build-test and storefront green, the Lighthouse job failed once on home LCP 2.59 s against the 2.5 s budget (runner noise; the run before passed).

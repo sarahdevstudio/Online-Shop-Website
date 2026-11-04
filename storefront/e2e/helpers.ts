@@ -13,6 +13,7 @@ export const BASE = (process.env.BASE ?? 'http://localhost:3000').replace(/\/$/,
 export const API = (process.env.API ?? 'http://127.0.0.1:5167').replace(/\/$/, '');
 export const ADMIN_USER = process.env.ADMIN_USER ?? 'smoke-admin';
 export const ADMIN_PASS = process.env.ADMIN_PASS ?? 'Smoke-Admin-Pass-2026!';
+export const AUTH_FILE = '.e2e-auth/admin.json';
 /** Distinguishes this run's data from earlier runs in the same database. */
 export const RUN = Date.now().toString(36);
 
@@ -32,11 +33,13 @@ export async function raw(context: BrowserContext, url: string) {
   return { status: response.status(), location: response.headers().location ?? null, body: await response.text() };
 }
 
+/** Gives the page's browser context the admin session that e2e/global-setup.ts created, then opens the admin home. */
 export async function login(page: Page) {
-  await page.goto('/admin/login');
-  await page.fill('input[name="username"]', ADMIN_USER);
-  await page.fill('input[name="password"]', ADMIN_PASS);
-  await Promise.all([page.waitForURL(/\/admin(\/)?$/), page.click('form button[type="submit"]')]);
+  const state = JSON.parse(readFileSync(AUTH_FILE, 'utf8'));
+  await page.context().addCookies(state.cookies);
+  await page.goto('/admin');
+  await expect(page.locator('h1').first()).toBeVisible();
+  expect(new URL(page.url()).pathname, 'signed in').not.toBe('/admin/login');
 }
 
 /** WCAG 2.2 A/AA plus best practices on the page as it is now. Fails on any violation (serious or not). */

@@ -8,3 +8,4 @@ AGENTS.md
 .lighthouseci/
 e2e-results/
 playwright-report/
+.e2e-auth/
