@@ -19,6 +19,8 @@ public static class ReservedPaths
         "cart",
         "checkout",
         "favicon.ico",
+        "fonts",          // storefront/public/fonts
+        "gone",           // the page behind every 410 response
         "health",
         "media",          // uploaded images pass-through
         "order",          // /order/{token}

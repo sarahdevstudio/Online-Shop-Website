@@ -123,11 +123,11 @@ describe('robots.txt', () => {
 describe('proxy applies the headers to every response', () => {
   const request = (path: string) => new NextRequest(`http://localhost:3000${path}`);
 
-  it('staging: noindex + security headers on shop pages, robots.txt, the sitemap and errors', () => {
+  it('staging: noindex + security headers on shop pages, robots.txt, the sitemap and errors', async () => {
     vi.stubEnv('SITE_ENV', 'staging');
 
     for (const path of ['/', '/product/x', '/about', '/robots.txt', '/sitemap.xml', '/media/a.jpg', '/no-such-page']) {
-      const response = proxy(request(path));
+      const response = (await proxy(request(path)));
       expect(response.headers.get('x-robots-tag'), path).toBe('noindex, nofollow');
       expect(response.headers.get('x-content-type-options'), path).toBe('nosniff');
       expect(response.headers.get('x-frame-options'), path).toBe('DENY');
@@ -135,25 +135,25 @@ describe('proxy applies the headers to every response', () => {
     }
   });
 
-  it('production: indexable pages carry no noindex header, and get HSTS', () => {
+  it('production: indexable pages carry no noindex header, and get HSTS', async () => {
     vi.stubEnv('SITE_ENV', 'production');
 
     for (const path of ['/', '/product/x', '/about']) {
-      const response = proxy(request(path));
+      const response = (await proxy(request(path)));
       expect(response.headers.get('x-robots-tag'), path).toBeNull();
       expect(response.headers.get('strict-transport-security'), path).toBe('max-age=31536000; includeSubDomains');
     }
   });
 
-  it('the order page gets no-referrer, every other shop page strict-origin-when-cross-origin', () => {
-    expect(proxy(request('/order/abc')).headers.get('referrer-policy')).toBe('no-referrer');
-    expect(proxy(request('/cart')).headers.get('referrer-policy')).toBe('strict-origin-when-cross-origin');
+  it('the order page gets no-referrer, every other shop page strict-origin-when-cross-origin', async () => {
+    expect((await proxy(request('/order/abc'))).headers.get('referrer-policy')).toBe('no-referrer');
+    expect((await proxy(request('/cart'))).headers.get('referrer-policy')).toBe('strict-origin-when-cross-origin');
   });
 
-  it('the admin stays noindex even in production, and redirects (with the same headers) when signed out', () => {
+  it('the admin stays noindex even in production, and redirects (with the same headers) when signed out', async () => {
     vi.stubEnv('SITE_ENV', 'production');
 
-    const response = proxy(request('/admin/orders'));
+    const response = (await proxy(request('/admin/orders')));
 
     expect(response.status).toBe(307);
     expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow');

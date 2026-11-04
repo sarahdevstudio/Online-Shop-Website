@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { JsonLd } from '@/components/JsonLd';
-import { getContentPage, isInfoSlug } from '@/lib/content';
+import { getContentPage, type InfoSlug } from '@/lib/content';
 import { messages } from '@/lib/messages';
 import { plainDescription, renderMarkdown } from '@/lib/markdown';
 import { contactJsonLd, pageMetadata } from '@/lib/seo';
@@ -9,22 +9,18 @@ import { seoDefaults } from '@/lib/site-config';
 import { getStoreInfo } from '@/lib/store-info';
 import styles from './info-page.module.css';
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { slug: InfoSlug };
 
-// Only the five info pages (about, contact, terms, returns, privacy) live here; any other single-segment URL is a 404.
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const slug = (await params).slug;
-  if (!isInfoSlug(slug)) return {};
+// The five info pages (about, contact, terms, returns, privacy); where they live is decided by the route table.
+export async function infoPageMetadata({ slug }: Props): Promise<Metadata> {
   const page = await getContentPage(slug);
   if (!page) return {};
   // Indexable and self-canonical.
   const defaults = await seoDefaults();
-  return pageMetadata({ title: page.title, description: plainDescription(page.body) || page.title, path: `/${slug}`, siteName: defaults.siteName, image: defaults.image });
+  return pageMetadata({ title: page.title, description: plainDescription(page.body) || page.title, path: page.path, siteName: defaults.siteName, image: defaults.image });
 }
 
-export default async function InfoPage({ params }: Props) {
-  const slug = (await params).slug;
-  if (!isInfoSlug(slug)) notFound();
+export async function InfoPageView({ slug }: Props) {
   const page = await getContentPage(slug);
   if (!page) notFound();
 

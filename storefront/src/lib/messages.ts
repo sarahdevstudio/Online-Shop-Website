@@ -7,6 +7,8 @@ registerDefaults(shopDefaults);
 export const messages = {
   get notFoundTitle() { return t('shop.not-found-title'); },
   get notFoundBack() { return t('shop.not-found-back'); },
+  get goneTitle() { return t('shop.gone-title'); },
+  get goneText() { return t('shop.gone-text'); },
   get listSeparator() { return t('common.list-separator'); },
   get searchTitle() { return t('shop.search-title'); },
   get searchDescription() { return t('shop.search-description'); },

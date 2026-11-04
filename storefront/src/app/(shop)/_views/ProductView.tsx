@@ -18,12 +18,10 @@ import { absoluteUrl, pageMetadata, productJsonLd, type Availability } from '@/l
 import { seoDefaults } from '@/lib/site-config';
 import { pickVariant, selectionFromParams, variantQuery } from '@/lib/variants';
 
-type Props = { params: Promise<{ slug: string }>; searchParams: Promise<SearchParams> };
+type Props = { slug: string; searchParams: SearchParams };
 
-// No generateStaticParams: products render on first request (the build never needs the API).
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const product = await getProduct((await params).slug);
+export async function productMetadata({ slug }: Props): Promise<Metadata> {
+  const product = await getProduct(slug);
   if (!product) return {};
   // Variant URLs (?wattage=…) canonicalize to the clean product URL. Archived products stay indexable.
   const defaults = await seoDefaults();
@@ -31,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     siteName: defaults.siteName,
     title: product.name,
     description: product.description ?? product.name,
-    path: `/product/${product.slug}`,
+    path: product.path,
     image: product.images[0] ? absoluteUrl(product.images[0].url) : defaults.image,
   });
 }
@@ -50,13 +48,13 @@ function specRows(product: ProductDetailDto, variant: VariantDto | null): SpecRo
   ];
 }
 
-export default async function ProductPage({ params, searchParams }: Props) {
-  const product = await getProduct((await params).slug);
+export async function ProductView({ slug, searchParams }: Props) {
+  const product = await getProduct(slug);
   if (!product) notFound();
 
-  const basePath = `/product/${product.slug}`;
+  const basePath = product.path;
   const archived = product.status === 'archived';
-  const variant = pickVariant(product.variants, selectionFromParams(product.axes, await searchParams));
+  const variant = pickVariant(product.variants, selectionFromParams(product.axes, searchParams));
   const category = product.breadcrumb.at(-1);
   const availability = (v: VariantDto): Availability => (archived ? 'Discontinued' : v.inStock ? 'InStock' : 'OutOfStock');
 
@@ -80,7 +78,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
       <Breadcrumb
         items={[
           { label: messages.home, href: '/' },
-          ...product.breadcrumb.map((c) => ({ label: c.name, href: `/category/${c.slug}` })),
+          ...product.breadcrumb.map((c) => ({ label: c.name, href: c.path })),
           { label: product.name },
         ]}
       />
@@ -95,7 +93,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
           {archived ? (
             <Alert variant="warning" heading={messages.discontinued}>
               <p>{messages.discontinuedNote}</p>
-              {category && <Link href={`/category/${category.slug}`}>{messages.seeCategory(category.name)}</Link>}
+              {category && <Link href={category.path}>{messages.seeCategory(category.name)}</Link>}
             </Alert>
           ) : (
             variant && (

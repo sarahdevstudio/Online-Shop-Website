@@ -25,12 +25,8 @@ import { isPageInRange, type SearchParams } from '@/lib/paging';
 import { pageMetadata } from '@/lib/seo';
 import { seoDefaults } from '@/lib/site-config';
 
-type Props = {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<SearchParams>;
-};
-
-// No generateStaticParams: categories render on first request (the build never needs the API).
+/** `path` is the category's current public path (the listing's base: filters, sort and paging are appended to it). */
+type Props = { slug: string; path: string; searchParams: SearchParams };
 
 /** Option slugs that exist in the category, from the unfiltered listing's facets. */
 function allowedOptions(facets: FacetsDto): AllowedOptions {
@@ -42,9 +38,7 @@ function allowedOptions(facets: FacetsDto): AllowedOptions {
  * Resolves category + listing, or null for a 404 (unknown category, invalid or out-of-range page).
  * A URL that is not in normalized form (key order, sorted values, invalid keys/values, page=1) 308-redirects to it.
  */
-async function load({ params, searchParams }: Props) {
-  const { slug } = await params;
-  const query = await searchParams;
+async function load({ slug, path, searchParams: query }: Props) {
   const category = await getCategory(slug);
   if (!category) return null;
 
@@ -52,7 +46,7 @@ async function load({ params, searchParams }: Props) {
   const all = await getProducts({ category: slug });
   if (!all) return null;
 
-  const basePath = `/category/${slug}`;
+  const basePath = path;
   const { state, invalidPage } = parseListing(query, allowedOptions(all.facets));
   if (invalidPage) return null;
   if (serializeRequest(query) !== serializeListing(state)) permanentRedirect(listingHref(basePath, state));
@@ -62,7 +56,7 @@ async function load({ params, searchParams }: Props) {
   return { slug, basePath, category, state, result, allFacets: all.facets };
 }
 
-export async function generateMetadata(props: Props): Promise<Metadata> {
+export async function categoryMetadata(props: Props): Promise<Metadata> {
   const data = await load(props);
   if (!data) return {};
   const { basePath, category, state, result } = data;
@@ -77,7 +71,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   });
 }
 
-export default async function CategoryPage(props: Props) {
+export async function CategoryView(props: Props) {
   const data = await load(props);
   if (!data) notFound();
   const { basePath, category, state, result, allFacets } = data;
@@ -88,7 +82,7 @@ export default async function CategoryPage(props: Props) {
       <Breadcrumb
         items={[
           { label: messages.home, href: '/' },
-          ...(category.parent ? [{ label: category.parent.name, href: `/category/${category.parent.slug}` }] : []),
+          ...(category.parent ? [{ label: category.parent.name, href: category.parent.path }] : []),
           { label: category.name },
         ]}
       />
@@ -99,7 +93,7 @@ export default async function CategoryPage(props: Props) {
           <ul className="ui-cluster">
             {category.children.map((child) => (
               <li key={child.slug}>
-                <Link href={`/category/${child.slug}`}>{child.name}</Link>
+                <Link href={child.path}>{child.name}</Link>
               </li>
             ))}
           </ul>

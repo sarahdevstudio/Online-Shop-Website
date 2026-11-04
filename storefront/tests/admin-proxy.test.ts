@@ -12,33 +12,33 @@ function request(path: string, cookie?: string) {
 }
 
 describe('admin proxy', () => {
-  it('sends a request without a session to the login page', () => {
-    const response = proxy(request('/admin/orders'));
+  it('sends a request without a session to the login page', async () => {
+    const response = (await proxy(request('/admin/orders')));
 
     expect(response.status).toBe(307);
     expect(response.headers.get('location')).toBe('http://localhost:3000/admin/login');
     expect(response.headers.get('x-robots-tag')).toContain('noindex');
   });
 
-  it('refuses a forged or foreign cookie and deletes it', () => {
-    const response = proxy(request('/admin', 'AAAA'));
+  it('refuses a forged or foreign cookie and deletes it', async () => {
+    const response = (await proxy(request('/admin', 'AAAA')));
     expect(response.headers.get('location')).toContain('/admin/login');
     expect(response.cookies.get(ADMIN_COOKIE)?.value).toBe('');
 
     const otherSecret = sealSession(fresh, 'another-secret-another-secret-another-secret');
-    expect(proxy(request('/admin', otherSecret)).headers.get('location')).toContain('/admin/login');
+    expect((await proxy(request('/admin', otherSecret))).headers.get('location')).toContain('/admin/login');
   });
 
-  it('sends idle- and absolute-expired sessions to the login page', () => {
+  it('sends idle- and absolute-expired sessions to the login page', async () => {
     const idle = sealSession({ ...fresh, seen: now - 61 * 60_000 }, cfg.secret);
     const absolute = sealSession({ ...fresh, iat: now - 9 * 3_600_000, seen: now - 1000 }, cfg.secret);
 
-    expect(proxy(request('/admin/products', idle)).headers.get('location')).toContain('/admin/login');
-    expect(proxy(request('/admin/products', absolute)).headers.get('location')).toContain('/admin/login');
+    expect((await proxy(request('/admin/products', idle))).headers.get('location')).toContain('/admin/login');
+    expect((await proxy(request('/admin/products', absolute))).headers.get('location')).toContain('/admin/login');
   });
 
-  it('lets a valid session through, renews its idle timer and keeps the login time', () => {
-    const response = proxy(request('/admin/orders', sealSession(fresh, cfg.secret)));
+  it('lets a valid session through, renews its idle timer and keeps the login time', async () => {
+    const response = (await proxy(request('/admin/orders', sealSession(fresh, cfg.secret))));
 
     expect(response.status).toBe(200);
     const renewed = unsealSession(response.cookies.get(ADMIN_COOKIE)!.value, cfg.secret)!;
@@ -51,8 +51,8 @@ describe('admin proxy', () => {
     expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow');
   });
 
-  it('serves the login page without a session', () => {
-    const response = proxy(request('/admin/login'));
+  it('serves the login page without a session', async () => {
+    const response = (await proxy(request('/admin/login')));
     expect(response.status).toBe(200);
     expect(response.headers.get('x-robots-tag')).toContain('noindex');
   });

@@ -2,32 +2,28 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { JsonLd } from '@/components/JsonLd';
-import { getBlogPost, isBlogSlug } from '@/lib/blog';
+import { getBlogPost } from '@/lib/blog';
 import { formatJalaliDate } from '@/lib/format';
 import { renderMarkdown } from '@/lib/markdown';
 import { messages } from '@/lib/messages';
 import { absoluteUrl, breadcrumbJsonLd, pageMetadata, site } from '@/lib/seo';
 import { seoDefaults } from '@/lib/site-config';
-import styles from '../blog.module.css';
+import styles from '../blog/blog.module.css';
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { slug: string };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const slug = (await params).slug;
-  if (!isBlogSlug(slug)) return {};
+export async function blogPostMetadata({ slug }: Props): Promise<Metadata> {
   const post = await getBlogPost(slug);
   if (!post) return {};
   const defaults = await seoDefaults();
-  return pageMetadata({ title: post.title, description: post.excerpt, path: `/blog/${post.slug}`, type: 'article', siteName: defaults.siteName, image: defaults.image });
+  return pageMetadata({ title: post.title, description: post.excerpt, path: post.path, type: 'article', siteName: defaults.siteName, image: defaults.image });
 }
 
-export default async function BlogPostPage({ params }: Props) {
-  const slug = (await params).slug;
-  if (!isBlogSlug(slug)) notFound();
+export async function BlogPostView({ slug }: Props) {
   const post = await getBlogPost(slug);
   if (!post) notFound();
 
-  const path = `/blog/${post.slug}`;
+  const path = post.path;
   const crumbs = [{ label: messages.home, href: '/' }, { label: messages.blog, href: '/blog' }, { label: post.title }];
 
   return (

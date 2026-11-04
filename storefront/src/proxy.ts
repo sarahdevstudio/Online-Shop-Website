@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { ADMIN_COOKIE, readSessionConfig, sealSession, sessionCookieOptions, sessionState, touchSession, unsealSession } from './lib/admin/session';
+import { isReservedPath } from './lib/reserved-paths';
+import { isResolvablePath } from './lib/route-paths';
 import { securityHeaders } from './lib/security-headers';
 import { PREVIEW_COOKIE } from './lib/site-preview';
 
@@ -26,9 +28,48 @@ function adminGate(request: NextRequest): NextResponse {
   return next;
 }
 
-export function proxy(request: NextRequest) {
+/**
+ * A permanently deleted category or post answers 410, not 404 (docs/11 C-3). A Next page cannot choose its status, so the
+ * proxy asks the API (an in-memory lookup there) about public-looking paths and, for a deleted one, rewrites to the /gone page
+ * with status 410. Answers are kept for 30 s per worker; any failure means "not gone": the catch-all page then answers 404.
+ */
+const GONE_TTL_MS = 30_000;
+const GONE_CACHE_MAX = 1000;
+const goneCache = new Map<string, { gone: boolean; at: number }>();
+
+async function isGone(pathname: string): Promise<boolean> {
+  if (!isResolvablePath(pathname) || isReservedPath(pathname)) return false;
+  const now = Date.now();
+  const hit = goneCache.get(pathname);
+  if (hit && now - hit.at < GONE_TTL_MS) return hit.gone;
+  const base = process.env.API_BASE_URL ?? (process.env.NODE_ENV === 'development' ? 'http://localhost:5167' : '');
+  if (!base) return false;
+  try {
+    const response = await fetch(`${base.replace(/\/+$/, '')}/api/v1/catalog/resolve?path=${encodeURIComponent(pathname)}`, {
+      headers: { accept: 'application/json' },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(1500),
+    });
+    if (!response.ok) return false;
+    const body = (await response.json()) as { result?: { kind?: string } | null };
+    const gone = body.result?.kind === 'gone';
+    if (goneCache.size >= GONE_CACHE_MAX) goneCache.clear();
+    goneCache.set(pathname, { gone, at: now });
+    return gone;
+  } catch {
+    return false;
+  }
+}
+
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const response = pathname === '/admin' || pathname.startsWith('/admin/') ? adminGate(request) : NextResponse.next();
+  const isAdmin = pathname === '/admin' || pathname.startsWith('/admin/');
+  const readOnly = request.method === 'GET' || request.method === 'HEAD';
+  const response = isAdmin
+    ? adminGate(request)
+    : readOnly && (await isGone(pathname))
+      ? NextResponse.rewrite(new URL('/gone', request.url), { status: 410 })
+      : NextResponse.next();
 
   for (const [name, value] of Object.entries(securityHeaders(pathname))) response.headers.set(name, value);
   // A draft preview is for one admin only: never cached, never indexed.
