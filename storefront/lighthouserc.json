@@ -1,0 +1,17 @@
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "http://localhost:3000/",
+        "http://localhost:3000/category/lamps",
+        "http://localhost:3000/product/modern-led-wall-light-12w",
+        "http://localhost:3000/cart",
+        "http://localhost:3000/blog/perf-guide"
+      ],
+      "numberOfRuns": 3,
+      "settings": {
+        "chromeFlags": "--no-sandbox --headless=new"
+      }
+    }
+  }
+}
