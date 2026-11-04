@@ -6,12 +6,13 @@ public sealed record PagedList<T>(IReadOnlyList<T> Items, int Page, int PageSize
 
 // ---- Public read model ----
 
-public sealed record CategoryLinkDto(string Slug, string Name);
+/// <summary>Every public DTO carries <c>Path</c>, the entity's CURRENT public URL path: links are never built from slugs (docs/11 C.1 #4).</summary>
+public sealed record CategoryLinkDto(string Slug, string Name, string Path);
 
-public sealed record CategoryTreeDto(string Slug, string Name, IReadOnlyList<CategoryLinkDto> Children);
+public sealed record CategoryTreeDto(string Slug, string Name, string Path, IReadOnlyList<CategoryLinkDto> Children);
 
 public sealed record CategoryDetailDto(
-    string Slug, string Name, string? Description, CategoryLinkDto? Parent, IReadOnlyList<CategoryLinkDto> Children);
+    string Slug, string Name, string Path, string? Description, CategoryLinkDto? Parent, IReadOnlyList<CategoryLinkDto> Children);
 
 public sealed record BrandDto(string Slug, string Name);
 
@@ -19,7 +20,7 @@ public sealed record ImageDto(string Url, string Alt);
 
 /// <summary>Card in a listing. Price/compare-at are those of the cheapest active variant.</summary>
 public sealed record ProductCardDto(
-    string Slug, string Name, string? Brand, long Price, long? CompareAtPrice, bool InStock, ImageDto? Image);
+    string Slug, string Name, string Path, string? Brand, long Price, long? CompareAtPrice, bool InStock, ImageDto? Image);
 
 public sealed record FacetOptionDto(string Slug, string Value, int Count);
 
@@ -49,6 +50,7 @@ public sealed record SpecDto(string Code, string Name, string Value, string? Uni
 public sealed record ProductDetailDto(
     string Slug,
     string Name,
+    string Path,
     string? Description,
     string Status,
     BrandDto? Brand,
@@ -59,7 +61,7 @@ public sealed record ProductDetailDto(
     IReadOnlyList<SpecDto> Specs,
     DateTime UpdatedAtUtc);
 
-public sealed record SitemapEntryDto(string Slug, DateTime? UpdatedAtUtc);
+public sealed record SitemapEntryDto(string Slug, string Path, DateTime? UpdatedAtUtc);
 
 public sealed record CatalogSitemapDto(IReadOnlyList<SitemapEntryDto> Categories, IReadOnlyList<SitemapEntryDto> Products);
 

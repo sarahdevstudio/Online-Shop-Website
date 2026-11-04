@@ -9,7 +9,7 @@ using Shop.Infrastructure.Persistence;
 
 namespace Shop.Infrastructure.Blog;
 
-internal sealed class BlogService(ShopDbContext db) : IBlogService
+internal sealed class BlogService(ShopDbContext db, IRouteTable routes) : IBlogService
 {
     public async Task<BlogListDto> ListAsync(int page, CancellationToken ct)
     {
@@ -19,23 +19,27 @@ internal sealed class BlogService(ShopDbContext db) : IBlogService
         var items = await published
             .OrderByDescending(p => p.PublishedAtUtc).ThenByDescending(p => p.Id)
             .Skip((page - 1) * BlogPaging.PageSize).Take(BlogPaging.PageSize)
-            .Select(p => new BlogPostSummaryDto(p.Slug, p.Title, p.Excerpt, p.PublishedAtUtc!.Value))
+            .Select(p => new { p.Id, p.Slug, p.Title, p.Excerpt, PublishedAtUtc = p.PublishedAtUtc!.Value })
             .ToListAsync(ct);
-        return new BlogListDto(items, page, BlogPaging.PageSize, total, (total + BlogPaging.PageSize - 1) / BlogPaging.PageSize);
+        return new BlogListDto(
+            items.Select(p => new BlogPostSummaryDto(p.Slug, routes.PathOf(RouteTargetTypes.BlogPost, p.Id, p.Slug), p.Title, p.Excerpt, p.PublishedAtUtc)).ToList(), page, BlogPaging.PageSize, total, (total + BlogPaging.PageSize - 1) / BlogPaging.PageSize);
     }
 
     public async Task<Result<BlogPostDto>> GetAsync(string slug, CancellationToken ct)
     {
         var post = await db.BlogPosts.AsNoTracking().Where(p => p.IsPublished && p.Slug == slug)
-            .Select(p => new BlogPostDto(p.Slug, p.Title, p.Excerpt, p.Body, p.PublishedAtUtc!.Value, p.UpdatedAtUtc))
+            .Select(p => new { p.Id, p.Slug, p.Title, p.Excerpt, p.Body, PublishedAtUtc = p.PublishedAtUtc!.Value, p.UpdatedAtUtc })
             .SingleOrDefaultAsync(ct);
-        return post is null ? Error.NotFound("post_not_found", "api.error.post-not-found") : post;
+        return post is null
+            ? Error.NotFound("post_not_found", "api.error.post-not-found")
+            : new BlogPostDto(post.Slug, routes.PathOf(RouteTargetTypes.BlogPost, post.Id, post.Slug), post.Title, post.Excerpt, post.Body, post.PublishedAtUtc, post.UpdatedAtUtc);
     }
 
     public async Task<IReadOnlyList<BlogSitemapEntryDto>> SitemapAsync(CancellationToken ct) =>
-        await db.BlogPosts.AsNoTracking().Where(p => p.IsPublished)
+        (await db.BlogPosts.AsNoTracking().Where(p => p.IsPublished)
             .OrderByDescending(p => p.PublishedAtUtc).ThenByDescending(p => p.Id)
-            .Select(p => new BlogSitemapEntryDto(p.Slug, p.UpdatedAtUtc)).ToListAsync(ct);
+            .Select(p => new { p.Id, p.Slug, p.UpdatedAtUtc }).ToListAsync(ct))
+        .Select(p => new BlogSitemapEntryDto(p.Slug, routes.PathOf(RouteTargetTypes.BlogPost, p.Id, p.Slug), p.UpdatedAtUtc)).ToList();
 }
 
 internal sealed class AdminBlogService(ShopDbContext db, ICurrentUser currentUser, TimeProvider clock, IRouteService routes) : IAdminBlogService

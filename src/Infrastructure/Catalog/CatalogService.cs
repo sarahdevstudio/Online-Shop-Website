@@ -2,13 +2,15 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Shop.Application.Catalog;
 using Shop.Application.Common;
+using Shop.Application.Routing;
 using Shop.Domain.Catalog;
 using Shop.Domain.Common;
+using Shop.Domain.Routing;
 using Shop.Infrastructure.Persistence;
 
 namespace Shop.Infrastructure.Catalog;
 
-internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : ICatalogService
+internal sealed class CatalogService(ShopDbContext db, IMediaStorage media, IRouteTable routes) : ICatalogService
 {
     private static readonly Error CategoryNotFound = Error.NotFound("category_not_found", "api.error.category-not-found-short");
     private static readonly Error ProductNotFound = Error.NotFound("product_not_found", "api.error.product-not-found-short");
@@ -21,7 +23,7 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : IC
     {
         var visible = await VisibleCategoriesAsync(ct);
         return visible.Where(c => c.ParentId is null)
-            .Select(root => new CategoryTreeDto(root.Slug, root.Name, ChildrenOf(visible, root.Id)))
+            .Select(root => new CategoryTreeDto(root.Slug, root.Name, CategoryPath(root), ChildrenOf(visible, root.Id)))
             .ToList();
     }
 
@@ -38,8 +40,9 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : IC
         return new CategoryDetailDto(
             category.Slug,
             category.Name,
+            CategoryPath(category),
             category.Description,
-            parent is null ? null : new CategoryLinkDto(parent.Slug, parent.Name),
+            parent is null ? null : new CategoryLinkDto(parent.Slug, parent.Name, CategoryPath(parent)),
             ChildrenOf(visible, category.Id));
     }
 
@@ -108,6 +111,7 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : IC
             .Take(query.PageSize)
             .Select(p => new
             {
+                p.Id,
                 p.Slug,
                 p.Name,
                 Brand = db.Brands.Where(b => b.Id == p.BrandId).Select(b => b.Name).FirstOrDefault(),
@@ -119,7 +123,7 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : IC
             .ToListAsync(ct);
 
         var items = rows.Select(r => new ProductCardDto(
-                r.Slug, r.Name, r.Brand, r.Cheapest.Price, r.Cheapest.CompareAtPrice, r.InStock,
+                r.Slug, r.Name, routes.PathOf(RouteTargetTypes.Product, r.Id, r.Slug), r.Brand, r.Cheapest.Price, r.Cheapest.CompareAtPrice, r.InStock,
                 r.Image is null ? null : new ImageDto(media.GetUrl(r.Image.Path), r.Image.Alt)))
             .ToList();
 
@@ -161,10 +165,10 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : IC
         if (category.ParentId is { } parentId)
         {
             var parent = await db.Categories.AsNoTracking().SingleAsync(c => c.Id == parentId, ct);
-            breadcrumb.Add(new CategoryLinkDto(parent.Slug, parent.Name));
+            breadcrumb.Add(new CategoryLinkDto(parent.Slug, parent.Name, CategoryPath(parent)));
         }
 
-        breadcrumb.Add(new CategoryLinkDto(category.Slug, category.Name));
+        breadcrumb.Add(new CategoryLinkDto(category.Slug, category.Name, CategoryPath(category)));
 
         var attributeIds = product.AttributeValues.Select(v => v.AttributeId).Distinct().ToList();
         var attributes = await db.Attributes.AsNoTracking()
@@ -207,19 +211,19 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : IC
             .ToList();
 
         return new ProductDetailDto(
-            product.Slug, product.Name, product.Description, product.Status.ToString().ToLowerInvariant(),
+            product.Slug, product.Name, routes.PathOf(RouteTargetTypes.Product, product.Id, product.Slug), product.Description, product.Status.ToString().ToLowerInvariant(),
             brand, breadcrumb, images, axes, variantDtos, specs, product.UpdatedAtUtc);
     }
 
     public async Task<CatalogSitemapDto> GetSitemapAsync(CancellationToken ct)
     {
-        var categories = (await VisibleCategoriesAsync(ct)).Select(c => new SitemapEntryDto(c.Slug, null)).ToList();
+        var categories = (await VisibleCategoriesAsync(ct)).Select(c => new SitemapEntryDto(c.Slug, CategoryPath(c), null)).ToList();
         var products = await db.Products.AsNoTracking()
             .Where(p => p.Status == ProductStatus.Published && p.Variants.Any(v => v.IsActive))
             .OrderBy(p => p.Id)
-            .Select(p => new SitemapEntryDto(p.Slug, p.UpdatedAtUtc))
+            .Select(p => new { p.Id, p.Slug, p.UpdatedAtUtc })
             .ToListAsync(ct);
-        return new CatalogSitemapDto(categories, products);
+        return new CatalogSitemapDto(categories, products.Select(p => new SitemapEntryDto(p.Slug, routes.PathOf(RouteTargetTypes.Product, p.Id, p.Slug), p.UpdatedAtUtc)).ToList());
     }
 
     // ---- listing internals ----
@@ -365,6 +369,8 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media) : IC
         return active.Where(c => c.ParentId is null || activeIds.Contains(c.ParentId.Value)).ToList();
     }
 
-    private static List<CategoryLinkDto> ChildrenOf(List<Category> categories, int parentId) =>
-        categories.Where(c => c.ParentId == parentId).Select(c => new CategoryLinkDto(c.Slug, c.Name)).ToList();
+    private string CategoryPath(Category category) => routes.PathOf(RouteTargetTypes.Category, category.Id, category.Slug);
+
+    private List<CategoryLinkDto> ChildrenOf(List<Category> categories, int parentId) =>
+        categories.Where(c => c.ParentId == parentId).Select(c => new CategoryLinkDto(c.Slug, c.Name, CategoryPath(c))).ToList();
 }

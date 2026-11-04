@@ -1,22 +1,27 @@
 using Microsoft.EntityFrameworkCore;
 using Shop.Application.Common;
 using Shop.Application.Content;
+using Shop.Application.Routing;
 using Shop.Domain.Content;
+using Shop.Domain.Routing;
 using Shop.Infrastructure.Persistence;
 
 namespace Shop.Infrastructure.Content;
 
-internal sealed class ContentService(ShopDbContext db) : IContentService
+internal sealed class ContentService(ShopDbContext db, IRouteTable routes) : IContentService
 {
     public async Task<IReadOnlyList<ContentPageSummaryDto>> ListAsync(CancellationToken ct) =>
-        await db.ContentPages.AsNoTracking().OrderBy(p => p.Id)
-            .Select(p => new ContentPageSummaryDto(p.Slug, p.Title, p.UpdatedAtUtc)).ToListAsync(ct);
+        (await db.ContentPages.AsNoTracking().OrderBy(p => p.Id)
+            .Select(p => new { p.Id, p.Slug, p.Title, p.UpdatedAtUtc }).ToListAsync(ct))
+        .Select(p => new ContentPageSummaryDto(p.Slug, routes.PathOf(RouteTargetTypes.ContentPage, p.Id, p.Slug), p.Title, p.UpdatedAtUtc)).ToList();
 
     public async Task<Result<ContentPageDto>> GetAsync(string slug, CancellationToken ct)
     {
         var page = await db.ContentPages.AsNoTracking().Where(p => p.Slug == slug)
-            .Select(p => new ContentPageDto(p.Slug, p.Title, p.Body, p.UpdatedAtUtc)).SingleOrDefaultAsync(ct);
-        return page is null ? Error.NotFound("page_not_found", "api.error.page-not-found") : page;
+            .Select(p => new { p.Id, p.Slug, p.Title, p.Body, p.UpdatedAtUtc }).SingleOrDefaultAsync(ct);
+        return page is null
+            ? Error.NotFound("page_not_found", "api.error.page-not-found")
+            : new ContentPageDto(page.Slug, routes.PathOf(RouteTargetTypes.ContentPage, page.Id, page.Slug), page.Title, page.Body, page.UpdatedAtUtc);
     }
 }
 

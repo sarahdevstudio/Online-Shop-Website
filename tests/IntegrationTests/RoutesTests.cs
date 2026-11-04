@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Shop.Domain.Routing;
@@ -460,6 +461,60 @@ public sealed class RoutesTests(ApiFixture fixture) : CatalogTestBase(fixture)
         Assert.Equal("redirect", (await ResolveAsync(anon, $"/lustre/{slug}")).Kind);
         Assert.Equal(other, (await ResolveAsync(anon, $"/product/{slug}")).To);
         Assert.Equal("product", (await ResolveAsync(anon, other)).Kind);
+    }
+
+    // ---- every public DTO carries the current path ------------------------------------------------------------------------
+
+    [Fact]
+    public async Task EveryPublicDto_CarriesTheCurrentPath_AndFollowsAChange()
+    {
+        var admin = await LoginAdminAsync();
+        var anon = NewClient();
+        var categorySlug = Slug();
+        var category = await CreateCategoryAsync(admin, categorySlug);
+        var (product, productSlug) = await NewProductInAsync(admin, category.Id);
+        var postSlug = Slug();
+        var post = await SendOkAsync<AdminBlogBody>(admin, HttpMethod.Post, "/api/v1/admin/blog",
+            new { slug = postSlug, title = "راهنما", excerpt = "خلاصه", body = "متن", publish = true });
+
+        async Task AssertPathsAsync(string categoryPath, string productPath, string postPath)
+        {
+            Assert.Equal(categoryPath, (await GetOkAsync<JsonElement>(anon, $"/api/v1/catalog/categories/{categorySlug}")).GetProperty("path").GetString());
+            Assert.Contains((await GetOkAsync<JsonElement>(anon, "/api/v1/catalog/categories")).EnumerateArray(), c => c.GetProperty("slug").GetString() == categorySlug && c.GetProperty("path").GetString() == categoryPath);
+            var detail = await GetOkAsync<JsonElement>(anon, $"/api/v1/catalog/products/{productSlug}");
+            Assert.Equal(productPath, detail.GetProperty("path").GetString());
+            Assert.Equal(categoryPath, detail.GetProperty("breadcrumb").EnumerateArray().Last().GetProperty("path").GetString());
+            var card = (await GetOkAsync<JsonElement>(anon, $"/api/v1/catalog/products?category={categorySlug}")).GetProperty("items").EnumerateArray().Single();
+            Assert.Equal(productPath, card.GetProperty("path").GetString());
+            var sitemap = await GetOkAsync<JsonElement>(anon, "/api/v1/catalog/sitemap");
+            Assert.Contains(sitemap.GetProperty("products").EnumerateArray(), e => e.GetProperty("path").GetString() == productPath);
+            Assert.Contains(sitemap.GetProperty("categories").EnumerateArray(), e => e.GetProperty("path").GetString() == categoryPath);
+            Assert.Equal(postPath, (await GetOkAsync<JsonElement>(anon, $"/api/v1/catalog/blog/{postSlug}")).GetProperty("path").GetString());
+            Assert.Contains((await GetOkAsync<JsonElement>(anon, "/api/v1/catalog/blog")).GetProperty("items").EnumerateArray(), e => e.GetProperty("path").GetString() == postPath);
+            Assert.Contains((await GetOkAsync<JsonElement>(anon, "/api/v1/catalog/blog/sitemap")).EnumerateArray(), e => e.GetProperty("path").GetString() == postPath);
+        }
+
+        await AssertPathsAsync($"/category/{categorySlug}", $"/product/{productSlug}", $"/blog/{postSlug}");
+
+        await ChangeOkAsync(admin, "category", category.Id, $"/shop/{categorySlug}");
+        await ChangeOkAsync(admin, "product", product.Id, $"/shop/{categorySlug}/{productSlug}");
+        await ChangeOkAsync(admin, "blogPost", post.Id, $"/guides/{postSlug}");
+        await AssertPathsAsync($"/shop/{categorySlug}", $"/shop/{categorySlug}/{productSlug}", $"/guides/{postSlug}");
+
+        var pages = await GetOkAsync<JsonElement>(anon, "/api/v1/catalog/pages");
+        Assert.Contains(pages.EnumerateArray(), p => p.GetProperty("slug").GetString() == "about" && p.GetProperty("path").GetString() == "/about");
+        Assert.Equal("/about", (await GetOkAsync<JsonElement>(anon, "/api/v1/catalog/pages/about")).GetProperty("path").GetString());
+    }
+
+    private async Task<(AdminProductBody Product, string Slug)> NewProductInAsync(HttpClient admin, int categoryId)
+    {
+        var slug = Slug();
+        var product = await SendOkAsync<AdminProductBody>(admin, HttpMethod.Post, "/api/v1/admin/products", new
+        {
+            categoryId, name = "محصول " + slug, slug, description = "توضیح", status = "published",
+            variants = new[] { new { sku = slug + "-0", price = 100_000L, compareAtPrice = (long?)null, stock = 3, isActive = true, sortOrder = 0 } },
+        });
+        return (product, slug);
     }
 
     // ---- permissions, redirects page, audit ---------------------------------------------------------------------------------

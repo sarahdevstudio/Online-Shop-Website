@@ -3,10 +3,10 @@ using Shop.Application.Common;
 namespace Shop.Application.Content;
 
 /// <summary>Public: what the storefront renders.</summary>
-public sealed record ContentPageDto(string Slug, string Title, string Body, DateTime UpdatedAtUtc);
+public sealed record ContentPageDto(string Slug, string Path, string Title, string Body, DateTime UpdatedAtUtc);
 
 /// <summary>Public: slug + title + last change (footer links, sitemap).</summary>
-public sealed record ContentPageSummaryDto(string Slug, string Title, DateTime UpdatedAtUtc);
+public sealed record ContentPageSummaryDto(string Slug, string Path, string Title, DateTime UpdatedAtUtc);
 
 public sealed record AdminContentPageListItemDto(string Slug, string Title, bool IsDraft, DateTime UpdatedAtUtc, string? UpdatedByUsername);
 
