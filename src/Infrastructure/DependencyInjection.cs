@@ -82,6 +82,7 @@ public static class DependencyInjection
         services.AddScoped<SiteCompiler>();
         services.AddSingleton<ISiteConfigService, SiteConfigProvider>();
         services.AddScoped<IAdminSiteService, AdminSiteService>();
+        services.AddScoped<ISiteLinkTargets, SiteLinkTargets>();
         services.Configure<MediaOptions>(configuration.GetSection(MediaOptions.SectionName));
         services.AddSingleton<IMediaStorage, LocalMediaStorage>();
 
@@ -89,6 +90,7 @@ public static class DependencyInjection
         services.Configure<SeedOptions>(configuration.GetSection(SeedOptions.SectionName));
         services.AddScoped<CatalogSeeder>();
         services.AddScoped<SiteSeeder>();
+        services.AddScoped<SiteLinkConverter>();
         services.AddScoped<Shop.Infrastructure.Translations.TranslationSeeder>();
         services.AddSingleton<Shop.Infrastructure.Translations.TranslationCache>();
         services.AddScoped<Shop.Application.Translations.IAdminTranslationService, Shop.Infrastructure.Translations.AdminTranslationService>();

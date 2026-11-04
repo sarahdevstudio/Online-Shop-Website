@@ -27,6 +27,7 @@ GET /api/v1/admin/settings/audit | auth: Settings.Manage | - | rate: - | -
 GET /api/v1/admin/site | auth: Site.Manage | - | rate: - | -
 GET /api/v1/admin/site/audit | auth: Site.Manage | - | rate: - | -
 GET /api/v1/admin/site/compiled | auth: Site.Manage | - | rate: - | -
+GET /api/v1/admin/site/link-targets | auth: Site.Manage | - | rate: - | -
 GET /api/v1/admin/site/{kind} | auth: Site.Manage | - | rate: - | -
 GET /api/v1/admin/site/{kind}/versions/{version:int} | auth: Site.Manage | - | rate: - | -
 GET /api/v1/admin/translations | auth: Translations.Manage | - | rate: - | -

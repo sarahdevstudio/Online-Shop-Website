@@ -17,6 +17,9 @@ public sealed record SiteDraftDto(JsonElement Payload, byte[] RowVersion, DateTi
 
 public sealed record SiteMediaDto(string Url, int Width, int Height, string Purpose);
 
+/// <summary>An entity a link can point to: what the editor shows (label), where it leads now (path) and whether it still exists.</summary>
+public sealed record SiteLinkTargetDto(string Type, int Id, string Label, string? Path, bool Exists);
+
 public sealed record SiteReportDto(IReadOnlyList<ContrastResult> Contrast);
 
 public sealed record SiteKindDto(
@@ -25,7 +28,11 @@ public sealed record SiteKindDto(
     SiteDraftDto? Draft,
     IReadOnlyList<SiteVersionInfoDto> History,
     IReadOnlyDictionary<string, SiteMediaDto> Media,
-    SiteReportDto? Report);
+    SiteReportDto? Report)
+{
+    /// <summary>Every entity the draft or the published payload links to, keyed "type:id", so the editor can name it and warn about a deleted one.</summary>
+    public IReadOnlyDictionary<string, SiteLinkTargetDto> Links { get; init; } = new Dictionary<string, SiteLinkTargetDto>();
+}
 
 public sealed record SiteVersionDto(int Version, string State, JsonElement Payload, DateTime? PublishedAtUtc, string? PublishedBy);
 
@@ -89,6 +96,14 @@ public interface ISiteConfigService
     Task<SiteConfigDto> GetPublishedAsync(CancellationToken ct);
 
     void Invalidate();
+}
+
+public interface ISiteLinkTargets
+{
+    /// <summary>Entities of <paramref name="type"/> whose name or title contains <paramref name="query"/> (at most 20; the newest when empty).</summary>
+    Task<IReadOnlyList<SiteLinkTargetDto>> SearchAsync(string type, string? query, CancellationToken ct);
+
+    Task<IReadOnlyDictionary<string, SiteLinkTargetDto>> DescribeAsync(IEnumerable<(string Type, int Id)> entities, CancellationToken ct);
 }
 
 public interface IAdminSiteService

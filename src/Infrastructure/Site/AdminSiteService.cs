@@ -16,6 +16,7 @@ internal sealed class AdminSiteService(
     ShopDbContext db,
     SiteCompiler compiler,
     ISiteConfigService publicConfig,
+    ISiteLinkTargets linkTargets,
     IMediaStorage media,
     IOptions<MediaOptions> mediaOptions,
     ICurrentUser currentUser,
@@ -77,12 +78,15 @@ internal sealed class AdminSiteService(
         var names = await UserNamesAsync(rows.SelectMany(r => new[] { r.PublishedByUserId, r.UpdatedByUserId }), ct);
 
         var mediaIds = new HashSet<int>();
+        var linked = new HashSet<(string Type, int Id)>();
         object? effective = null;
         foreach (var row in new[] { draft, published })
         {
             if (row is not null && SiteJson.TryDeserialize(kind, row.Payload) is { } payload)
             {
-                mediaIds.UnionWith(SitePayloadValidator.CollectReferences(payload).MediaIds);
+                var references = SitePayloadValidator.CollectReferences(payload);
+                mediaIds.UnionWith(references.MediaIds);
+                linked.UnionWith(references.LinkEntities);
                 effective ??= payload;
             }
         }
@@ -104,7 +108,10 @@ internal sealed class AdminSiteService(
             draft is null ? null : new SiteDraftDto(ToElement(draft.Payload), draft.RowVersion, draft.UpdatedAtUtc, NameOf(names, draft.UpdatedByUserId)),
             history.Select(r => new SiteVersionInfoDto(r.Version!.Value, r.State.ToDb(), r.PublishedAtUtc, NameOf(names, r.PublishedByUserId))).ToList(),
             mediaMap,
-            report);
+            report)
+        {
+            Links = await linkTargets.DescribeAsync(linked, ct),
+        };
     }
 
     private async Task<Dictionary<Guid, string>> UserNamesAsync(IEnumerable<Guid?> ids, CancellationToken ct)

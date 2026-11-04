@@ -2574,6 +2574,41 @@
         ]
       }
     },
+    "/api/v1/admin/site/link-targets": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin site"
+        ]
+      }
+    },
     "/api/v1/admin/site/{kind}": {
       "get": {
         "parameters": [

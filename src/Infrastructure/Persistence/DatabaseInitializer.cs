@@ -48,6 +48,7 @@ public sealed class DatabaseInitializer(
     IOptions<StoreDefaultsOptions> storeDefaults,
     CatalogSeeder catalogSeeder,
     SiteSeeder siteSeeder,
+    Shop.Infrastructure.Site.SiteLinkConverter siteLinkConverter,
     Shop.Infrastructure.Routing.RouteSeeder routeSeeder,
     Shop.Infrastructure.Translations.TranslationSeeder translationSeeder,
     Shop.Infrastructure.Translations.TranslationCache translationCache,
@@ -81,6 +82,9 @@ public sealed class DatabaseInitializer(
 
         // After the sample catalog, so the home page's category tiles can use the categories that exist.
         await siteSeeder.EnsureAsync(ct);
+
+        // After the routes and the site documents exist: typed links that match a current or old path become entity links, once.
+        await siteLinkConverter.EnsureAsync(ct);
     }
 
     /// <summary>The first start writes <c>StoreDefaults</c> into the database; later starts never touch the row.</summary>

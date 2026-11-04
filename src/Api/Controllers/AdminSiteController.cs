@@ -12,7 +12,7 @@ namespace Shop.Api.Controllers;
 [Route("api/v1/admin/site")]
 [Tags("Admin site")]
 [Authorize(Policy = Permissions.SiteManage)]
-public sealed class AdminSiteController(IAdminSiteService site, ISiteConfigService published) : ApiControllerBase
+public sealed class AdminSiteController(IAdminSiteService site, ISiteConfigService published, ISiteLinkTargets linkTargets) : ApiControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Overview(CancellationToken ct) =>
@@ -21,6 +21,20 @@ public sealed class AdminSiteController(IAdminSiteService site, ISiteConfigServi
     [HttpGet("audit")]
     public async Task<IActionResult> Audit([FromQuery] string? kind, [FromQuery] int? page, CancellationToken ct) =>
         Http(await site.AuditAsync(kind, page ?? 1, ct), Results.Ok);
+
+    /// <summary>The searchable list behind the "link to an entity" select: <c>type</c> is category | product | contentPage | blogPost.</summary>
+    [HttpGet("link-targets")]
+    public async Task<IActionResult> LinkTargets([FromQuery] string? type, [FromQuery] string? q, CancellationToken ct)
+    {
+        if (!Shop.Domain.Routing.RouteTargetTypes.IsKnown(type))
+        {
+            return Http(Results.ValidationProblem(
+                Messages.Resolve(new Dictionary<string, string[]> { ["type"] = ["api.validation.site-link-entity"] }),
+                title: ProblemText.BadRequest));
+        }
+
+        return Http(Results.Ok(await linkTargets.SearchAsync(type!, q, ct)));
+    }
 
     /// <summary>The compiled document for the storefront's preview: <c>state=draft</c> (drafts applied) or <c>published</c>.</summary>
     [HttpGet("compiled")]
