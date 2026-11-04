@@ -7,8 +7,7 @@
 - **بک‌اند:** ASP.NET Core (.NET 10) minimal API، لایه‌های Domain / Application / Infrastructure / Api، EF Core + SQL Server، ASP.NET Identity با کوکی، Serilog، ProblemDetails، FluentValidation، rate limiting، antiforgery، health check، OpenAPI. CI با SQL Server موقت.
 - **آنچه واقعاً ساخته شده:** فقط «فاز ۱ — Foundation»: ثبت‌نام/ورود/خروج مشتری، `/customer/profile`، یک endpoint ادمین با policy مبتنی بر permission، `IPaymentGateway` + `FakePaymentGateway` (فقط Development/Testing).
 - **فرانت:** (الف) Angular: فقط design system (`shared-ui`) و styleguide، بدون هیچ صفحه‌ی فروشگاه. (ب) `storefront/` (Next.js 16، SSR): خانه، دسته، محصول، جستجو، SEO پایه — **با داده‌ی نمونه**، چون API هنوز کاتالوگ ندارد.
-
-> **Update:** `web/` (Angular) was removed in E1; the notes below describe the audit state at that time.
+- **به‌روزرسانی:** پوشه‌ی `web/` (Angular) در E1 حذف شد؛ این گزارش وضعیت زمان ممیزی را شرح می‌دهد.
 - **پایگاه داده:** یک migration (`InitialFoundation`) با جداول Identity و `Customer`. هیچ جدول کاتالوگ، سبد، سفارش، موجودی، بلاگ، ریدایرکت یا SEO وجود ندارد.
 - **Git:** repository هنوز **هیچ commit ندارد** (همه‌چیز untracked).
 - **مفروضات از کد/مستندات (چون placeholderهای پرامپت پر نشده بود):** فارسی/RTL، تومان، تاریخ جلالی (در `format.ts`)، پرداخت **کارت‌به‌کارت و پرداخت در محل** با تأیید دستی ادمین (addendum بند ۱) نه درگاه آنلاین.
