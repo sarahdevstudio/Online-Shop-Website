@@ -21,7 +21,7 @@ export function ProductGallery({ images, name }: { images: readonly GalleryImage
   return (
     <div className={styles.gallery}>
       <div className={styles.main}>
-        <Image src={first.url} alt={first.alt} width={720} height={720} sizes="(min-width: 1024px) 45vw, 100vw" priority />
+        <Image src={first.url} alt={first.alt} width={720} height={720} sizes="(min-width: 1024px) 45vw, 100vw" priority fetchPriority="high" />
       </div>
       {rest.length > 0 && (
         <ul className={styles.thumbs}>

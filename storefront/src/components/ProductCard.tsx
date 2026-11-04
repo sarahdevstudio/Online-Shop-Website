@@ -48,6 +48,7 @@ export function ProductCard({ product, linkQuery = '', priority = false, imageSi
               width={imageSize}
               height={imageSize}
               priority={priority}
+              fetchPriority={priority ? 'high' : undefined}
             />
           ) : (
             <Icon name="image" className={styles.placeholder} />

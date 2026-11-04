@@ -76,7 +76,7 @@ export function HeroSlider({ slides, autoplaySeconds }: HeroSliderProps) {
             hidden={i !== index}
           >
             {slide.image && (
-              <Image className={styles.image} src={slide.image.url} alt={slide.alt} fill sizes="100vw" priority={i === 0} loading={i === 0 ? undefined : 'lazy'} />
+              <Image className={styles.image} src={slide.image.url} alt={slide.alt} fill sizes="100vw" priority={i === 0} fetchPriority={i === 0 ? 'high' : undefined} loading={i === 0 ? undefined : 'lazy'} />
             )}
             {(slide.title || slide.text || (slide.link && slide.linkLabel)) && (
               <div className={`ui-container ${styles.caption}`}>
