@@ -292,3 +292,44 @@ input.ui-check:focus-visible {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }
+
+/* Searchable select (ComboField): the list opens under the text box. */
+.ui-combo {
+  position: relative;
+}
+
+.ui-combo__list {
+  position: absolute;
+  inset-inline: 0;
+  z-index: 20;
+  margin: 0;
+  padding: var(--space-1);
+  max-block-size: 16rem;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.ui-combo__option {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.ui-combo__option--active {
+  background: var(--color-surface-sunken);
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.ui-combo__detail {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
