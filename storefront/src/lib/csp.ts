@@ -52,7 +52,7 @@ export function contentSecurityPolicy({ nonce, development = false, extra = {} }
 
 /** Browser features the shop never uses are switched off for the page and everything it embeds. */
 export const PERMISSIONS_POLICY = [
-  'accelerometer', 'autoplay', 'bluetooth', 'camera', 'display-capture', 'geolocation', 'gyroscope', 'hid', 'magnetometer',
+  'accelerometer', 'autoplay', 'camera', 'display-capture', 'geolocation', 'gyroscope', 'hid', 'magnetometer',
   'microphone', 'midi', 'payment', 'serial', 'usb', 'xr-spatial-tracking',
 ]
   .map((feature) => `${feature}=()`)
