@@ -314,8 +314,11 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
 
             // Reactivating the other one makes the same change legal again for them (they stay full), so reverse and prove the guard lifts.
             Assert.Equal(HttpStatusCode.OK, (await ActiveAsync(admin, await UserAsync(admin, other.Id), true)).StatusCode);
+            // With the other full user active again, giving up a role is legal. The fixture admin keeps exactly the Admin role (other tests rely on it).
             var restored = await UserAsync(admin, me.Id);
             Assert.Equal(HttpStatusCode.OK, (await RolesAsync(admin, restored, [limited.Name, Roles.Admin])).StatusCode);
+            var again = await LoginAdminAsync(); // changing one's own roles ended the session above
+            Assert.Equal(HttpStatusCode.OK, (await RolesAsync(again, await UserAsync(again, me.Id), [Roles.Admin])).StatusCode);
         }
         finally
         {
