@@ -79,6 +79,7 @@ public static class DependencyInjection
         services.AddSingleton<IStoreSettings>(sp => sp.GetRequiredService<StoreSettingsProvider>());
         services.AddScoped<IStoreInfoService, StoreInfoService>();
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
+        services.AddScoped<Shop.Application.Staff.IStaffService, Shop.Infrastructure.Staff.StaffService>();
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IAdminOrderService, AdminOrderService>();

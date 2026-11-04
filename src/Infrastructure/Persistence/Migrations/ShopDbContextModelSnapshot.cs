@@ -1154,6 +1154,42 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.ToTable("RoutePaths", (string)null);
                 });
 
+            modelBuilder.Entity("Shop.Domain.Security.StaffAuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Detail")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AtUtc")
+                        .HasDatabaseName("IX_StaffAuditLogs_AtUtc");
+
+                    b.ToTable("StaffAuditLogs", (string)null);
+                });
+
             modelBuilder.Entity("Shop.Domain.Settings.SettingsAuditLog", b =>
                 {
                     b.Property<int>("Id")
@@ -1544,6 +1580,10 @@ namespace Shop.Infrastructure.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("Title")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedName")
@@ -1570,12 +1610,21 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");

@@ -10,6 +10,7 @@ using Shop.Domain.Orders;
 using Shop.Domain.Settings;
 using Shop.Domain.Site;
 using Shop.Domain.Routing;
+using Shop.Domain.Security;
 using Shop.Domain.Translations;
 using Shop.Infrastructure.Identity;
 
@@ -46,6 +47,7 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     public DbSet<TranslationAuditLog> TranslationAuditLogs => Set<TranslationAuditLog>();
     public DbSet<RouteEntry> RoutePaths => Set<RouteEntry>();
     public DbSet<RouteAuditLog> RouteAuditLogs => Set<RouteAuditLog>();
+    public DbSet<StaffAuditLog> StaffAuditLogs => Set<StaffAuditLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -55,6 +57,8 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
         {
             user.ToTable("Users");
             user.Property(x => x.CreatedAtUtc).HasColumnType("datetime2");
+            user.Property(x => x.DisplayName).HasMaxLength(128);
+            user.Property(x => x.IsActive).HasDefaultValue(true);
 
             // Identity's default email index is non-unique; the UserName index already prevents
             // duplicates, this makes the email rule explicit and enforced by the database.
@@ -64,7 +68,11 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
                 .HasFilter("[NormalizedEmail] IS NOT NULL");
         });
 
-        builder.Entity<ApplicationRole>().ToTable("Roles");
+        builder.Entity<ApplicationRole>(role =>
+        {
+            role.ToTable("Roles");
+            role.Property(x => x.Title).HasMaxLength(80);
+        });
         builder.Entity<IdentityUserRole<Guid>>().ToTable("UserRoles");
         builder.Entity<IdentityUserClaim<Guid>>().ToTable("UserClaims");
         builder.Entity<IdentityUserLogin<Guid>>().ToTable("UserLogins");

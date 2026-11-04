@@ -79,6 +79,12 @@ internal sealed class AccountService(
             return Error.TooManyRequests("rate_limited", "api.error.login-rate-limited");
         }
 
+        // A deactivated account looks exactly like a wrong password (nothing says the account exists).
+        if (await userManager.FindByNameAsync(username) is { IsActive: false })
+        {
+            return InvalidCredentials;
+        }
+
         var result = await signInManager.PasswordSignInAsync(username, request.Password, isPersistent: false, lockoutOnFailure: true);
         if (!result.Succeeded)
         {

@@ -45,3 +45,17 @@ internal sealed class SettingsAuditLogConfiguration : IEntityTypeConfiguration<S
         builder.HasIndex(x => x.AtUtc).HasDatabaseName("IX_SettingsAuditLogs_AtUtc");
     }
 }
+
+internal sealed class StaffAuditLogConfiguration : IEntityTypeConfiguration<Shop.Domain.Security.StaffAuditLog>
+{
+    public void Configure(EntityTypeBuilder<Shop.Domain.Security.StaffAuditLog> builder)
+    {
+        builder.ToTable("StaffAuditLogs");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.AtUtc).HasColumnType("datetime2");
+        builder.Property(x => x.Action).IsRequired().HasMaxLength(Shop.Domain.Security.StaffAuditLog.ActionMaxLength).IsUnicode(false);
+        builder.Property(x => x.Subject).HasMaxLength(Shop.Domain.Security.StaffAuditLog.NameMaxLength);
+        builder.Property(x => x.Detail).HasMaxLength(Shop.Domain.Security.StaffAuditLog.DetailMaxLength);
+        builder.HasIndex(x => x.AtUtc).HasDatabaseName("IX_StaffAuditLogs_AtUtc");
+    }
+}

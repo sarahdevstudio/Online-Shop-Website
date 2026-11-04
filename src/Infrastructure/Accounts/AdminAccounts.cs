@@ -18,7 +18,8 @@ public static class AdminAccounts
 
     /// <summary>Admins sign in with the username; the e-mail is optional contact information.</summary>
     public static async Task<Result> CreateAdminAsync(
-        UserManager<ApplicationUser> users, string username, string password, TimeProvider clock, string? email = null)
+        UserManager<ApplicationUser> users, string username, string password, TimeProvider clock, string? email = null,
+        string? displayName = null, IReadOnlyList<string>? roleNames = null)
     {
         username = username.Trim();
         email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
@@ -52,6 +53,7 @@ public static class AdminAccounts
             Email = email,
             EmailConfirmed = email is not null,
             CreatedAtUtc = clock.GetUtcNow().UtcDateTime,
+            DisplayName = displayName,
         };
         var created = await users.CreateAsync(user, password);
         if (!created.Succeeded)
@@ -63,7 +65,7 @@ public static class AdminAccounts
             }));
         }
 
-        var role = await users.AddToRoleAsync(user, Roles.Admin);
+        var role = await users.AddToRolesAsync(user, roleNames is { Count: > 0 } ? roleNames : [Roles.Admin]);
         if (!role.Succeeded)
         {
             await users.DeleteAsync(user);
