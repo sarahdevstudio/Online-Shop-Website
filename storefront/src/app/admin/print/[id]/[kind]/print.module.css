@@ -1,0 +1,203 @@
+/* Printable invoice and packing slip. On screen: a sheet the size of the paper on a grey desk. When printing: only the sheet,
+   no controls, no shadow; the paper size comes from the @page rule the page injects (A4 or A5). Logical properties only. */
+.desk {
+  min-block-size: 100vh;
+  background: #e9e9e9;
+  padding: 1rem;
+  color: #000;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  max-inline-size: 210mm;
+  margin-inline: auto;
+  margin-block-end: 1rem;
+}
+
+.controls a,
+.controls button {
+  min-block-size: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 1rem;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.controls [aria-current='true'] {
+  background: #000;
+  color: #fff;
+}
+
+.hint {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.sheet {
+  box-sizing: border-box;
+  margin-inline: auto;
+  background: #fff;
+  padding: 12mm;
+  box-shadow: 0 1px 8px rgb(0 0 0 / 0.25);
+  font-size: 11pt;
+  line-height: 1.7;
+}
+
+.a4 {
+  inline-size: 210mm;
+  min-block-size: 297mm;
+}
+
+.a5 {
+  inline-size: 148mm;
+  min-block-size: 210mm;
+  padding: 8mm;
+  font-size: 9.5pt;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-block-end: 2px solid #000;
+  padding-block-end: 0.5rem;
+  margin-block-end: 0.75rem;
+}
+
+.head h1 {
+  margin: 0;
+  font-size: 1.6em;
+}
+
+.seller {
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.25rem 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.box {
+  border: 1px solid #000;
+  padding: 0.5rem 0.75rem;
+  margin-block-end: 0.75rem;
+  break-inside: avoid;
+}
+
+.box h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1em;
+}
+
+.box p {
+  margin: 0;
+}
+
+.recipientLarge {
+  font-size: 1.25em;
+}
+
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  margin-block-end: 0.75rem;
+}
+
+.table th,
+.table td {
+  border: 1px solid #000;
+  padding: 0.25rem 0.5rem;
+  text-align: start;
+  vertical-align: top;
+}
+
+.table thead th {
+  background: #eee;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.table tr {
+  break-inside: avoid;
+}
+
+.num {
+  text-align: end;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+}
+
+.totals {
+  margin-inline-start: auto;
+  inline-size: min(18rem, 100%);
+  break-inside: avoid;
+}
+
+.totals div {
+  display: flex;
+  justify-content: space-between;
+  padding-block: 0.15rem;
+}
+
+.grand {
+  border-block-start: 2px solid #000;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.tick {
+  display: inline-block;
+  inline-size: 1.1em;
+  block-size: 1.1em;
+  border: 1.5px solid #000;
+  vertical-align: middle;
+}
+
+.foot {
+  margin-block-start: 1rem;
+  text-align: center;
+  font-size: 0.9em;
+}
+
+@media print {
+  .desk {
+    background: #fff;
+    padding: 0;
+    min-block-size: 0;
+  }
+
+  .controls {
+    display: none;
+  }
+
+  .sheet {
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+    inline-size: auto;
+    min-block-size: 0;
+  }
+}

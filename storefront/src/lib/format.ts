@@ -3,11 +3,17 @@ import { messages } from './messages';
 const LOCALE = 'fa-IR';
 
 const integerFormat = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
+const plainFormat = new Intl.NumberFormat(LOCALE, { useGrouping: false, maximumFractionDigits: 0 });
 const percentFormat = new Intl.NumberFormat(LOCALE, { style: 'percent', maximumFractionDigits: 0 });
 
 /** Persian digits with Persian thousands separators: 1250000 -> ۱٬۲۵۰٬۰۰۰ */
 export function formatNumber(value: number): string {
   return integerFormat.format(value);
+}
+
+/** Persian digits without a separator, for identifiers such as an order number: 1001 -> ۱۰۰۱ */
+export function formatDigits(value: number): string {
+  return plainFormat.format(value);
 }
 
 /** Price in Toman with Persian digits and separators: 1250000 -> "۱٬۲۵۰٬۰۰۰ تومان" */

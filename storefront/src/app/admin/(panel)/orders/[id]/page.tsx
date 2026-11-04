@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { adminGet } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
+import { printMessages } from '@/lib/admin/print-messages';
+import Link from 'next/link';
 import type { AdminOrder } from '@/lib/admin/types';
 import { formatJalaliDate, formatNumber } from '@/lib/format';
 import { messages } from '@/lib/messages';
@@ -21,6 +23,17 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
       <h1 className="ui-heading-2">
         {adminMessages.orders.detail} {formatNumber(order.number)}
       </h1>
+
+      <p>
+        {/* The printable pages open in a new tab, so the order screen stays where it is. */}
+        <Link href={`/admin/print/${id}/invoice`} target="_blank" rel="noopener">
+          {printMessages.openInvoice}
+        </Link>
+        {' · '}
+        <Link href={`/admin/print/${id}/packing-slip`} target="_blank" rel="noopener">
+          {printMessages.openSlip}
+        </Link>
+      </p>
 
       <div className={styles.grid2}>
         <section className={styles.panel} aria-labelledby="status">
