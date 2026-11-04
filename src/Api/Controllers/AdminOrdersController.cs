@@ -28,7 +28,7 @@ public sealed class AdminOrdersController(IAdminOrderService orders) : ApiContro
 
         if (!TryParseFilter<OrderStatus>(status, out var statusFilter) || !TryParseFilter<PaymentStatus>(paymentStatus, out var paymentFilter))
         {
-            return Http(Results.ValidationProblem(Messages.Resolve(new Dictionary<string, string[]> { ["filter"] = ["api.validation.order-filter"] })));
+            return Http(Results.ValidationProblem(Messages.Resolve(new Dictionary<string, string[]> { ["filter"] = ["api.validation.order-filter"] }), title: ProblemText.BadRequest));
         }
 
         return Http(Results.Ok(await orders.ListAsync(statusFilter, paymentFilter, q, pageValue ?? 1, ct)));

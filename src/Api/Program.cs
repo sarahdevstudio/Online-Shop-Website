@@ -55,7 +55,9 @@ app.UseSerilogRequestLogging(options =>
 });
 
 app.UseExceptionHandler();
-app.UseStatusCodePages();
+// Bodiless error responses (unknown route, 405, auth challenges, a request that cannot be bound) get our translated title; the
+// framework's English defaults are never produced, so nothing needs to be filtered afterwards.
+app.UseStatusCodePages(ProblemText.WriteStatusCodePageAsync);
 
 if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
 {

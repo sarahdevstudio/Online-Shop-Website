@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Diagnostics;
 using Shop.Application.Translations;
 
 namespace Shop.Api.Infrastructure;
@@ -22,9 +23,7 @@ internal static class ProblemText
     public static string MalformedRequest => Translate.Get("api.error.malformed-request");
     public static string ConcurrentUpdate => Translate.Get("api.error.concurrent-update");
 
-    public static bool HasPersian(string? text) => text is not null && text.Any(c => c is >= '؀' and <= 'ۿ');
-
-    /// <summary>Title for a status code when the framework (not our code) produced the response, e.g. an unknown route.</summary>
+    /// <summary>Title for a status code when the framework (not our code) produced the response, e.g. an unknown route. Edited texts are shown as they are.</summary>
     public static string? ForStatus(int? status) => status switch
     {
         400 => BadRequest,
@@ -39,4 +38,16 @@ internal static class ProblemText
         >= 500 => Unexpected,
         _ => null,
     };
+
+    /// <summary>Writes the problem document for a response the framework ended without a body (status-code pages).</summary>
+    public static async Task WriteStatusCodePageAsync(StatusCodeContext context)
+    {
+        var http = context.HttpContext;
+        var status = http.Response.StatusCode;
+        await http.RequestServices.GetRequiredService<IProblemDetailsService>().WriteAsync(new ProblemDetailsContext
+        {
+            HttpContext = http,
+            ProblemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails { Status = status, Title = ForStatus(status) ?? Unexpected },
+        });
+    }
 }

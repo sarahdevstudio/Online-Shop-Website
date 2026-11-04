@@ -70,6 +70,33 @@ public sealed class TranslationTests(ApiFixture fixture) : StoreTestBase(fixture
     }
 
     [Fact]
+    public async Task AnEditedText_IsShownAsItIs_WhateverTheCulture_EvenForFrameworkBuiltResponses()
+    {
+        var admin = await LoginAdminAsync();
+        var anon = NewClient();
+        var notFound = await FindAsync(admin, "api.error.not-found");
+        var validation = await FindAsync(admin, "api.error.validation-failed");
+        try
+        {
+            Assert.True((await EditAsync(admin, notFound, "Nothing lives here")).IsSuccessStatusCode);
+            Assert.True((await EditAsync(admin, validation, "Please check the form")).IsSuccessStatusCode);
+
+            // The framework ends this response without a body; its title still comes from the table, untouched.
+            var unknown = await AssertProblemAsync(await anon.GetAsync("/api/v1/nope-" + Guid.NewGuid().ToString("N")), 404);
+            Assert.Equal("Nothing lives here", unknown.Title);
+
+            // A validation response keeps its own key (it is also a 400): the generic 400 text must not replace it.
+            var invalid = await AssertProblemAsync(await PostAsync(anon, "/api/v1/auth/login", new { }), 400);
+            Assert.Equal("Please check the form", invalid.Title);
+        }
+        finally
+        {
+            await ResetAsync(admin, await FindAsync(admin, "api.error.not-found"));
+            await ResetAsync(admin, await FindAsync(admin, "api.error.validation-failed"));
+        }
+    }
+
+    [Fact]
     public async Task AValidationMessageWithPlaceholders_KeepsThemWhenEdited_AndRefusesChangedOnes()
     {
         var admin = await LoginAdminAsync();

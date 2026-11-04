@@ -26,7 +26,8 @@ public sealed class StoreOrdersController(IOrderService orders) : ApiControllerB
         if (!Guid.TryParse(Request.Headers[StoreEndpointsPolicies.IdempotencyKeyHeader].ToString(), out var key) || key == Guid.Empty)
         {
             return Http(Results.ValidationProblem(
-                Messages.Resolve(new Dictionary<string, string[]> { [StoreEndpointsPolicies.IdempotencyKeyHeader] = [Msg.Of("api.validation.idempotency-key-required")] })));
+                Messages.Resolve(new Dictionary<string, string[]> { [StoreEndpointsPolicies.IdempotencyKeyHeader] = [Msg.Of("api.validation.idempotency-key-required")] }),
+                title: ProblemText.BadRequest));
         }
 
         var cartToken = Request.Headers[StoreEndpointsPolicies.CartTokenHeader].FirstOrDefault();

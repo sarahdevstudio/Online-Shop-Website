@@ -110,15 +110,7 @@ public static class ApiServiceCollectionExtensions
 
         services.AddProblemDetails(options =>
             options.CustomizeProblemDetails = context =>
-            {
-                context.ProblemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier;
-                // Responses the framework builds itself (unknown route, 405, ...) carry English titles; replace them.
-                if (ProblemText.ForStatus(context.ProblemDetails.Status) is { } title
-                    && !ProblemText.HasPersian(context.ProblemDetails.Title))
-                {
-                    context.ProblemDetails.Title = title;
-                }
-            });
+                context.ProblemDetails.Extensions["traceId"] = Activity.Current?.Id ?? context.HttpContext.TraceIdentifier);
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
         // Controllers keep every behavior the minimal-API endpoints had: the same JSON options, a bare 400 for a request that
