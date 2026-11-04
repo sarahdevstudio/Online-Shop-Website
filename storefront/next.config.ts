@@ -29,6 +29,9 @@ const nextConfig: NextConfig = {
         ],
       },
       { source: '/admin', headers: [noIndex, { key: 'Cache-Control', value: 'no-store' }] },
+      // Fonts never change under the same name (a new font is a new file name), so browsers keep them for a year and the
+      // second page of a visit does not even ask. `_next/static` and `/media` are immutable already.
+      { source: '/fonts/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
       { source: '/cart', headers: [noIndex] },
       { source: '/checkout', headers: [noIndex] },
     ];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contrastRatio } from '../src/lib/contrast';
-import { DEFAULT_THEME, derivedContrast, fontFaceCss, fontPreload, sanitizeTheme, themeColor, themeCss, themeTokens } from '../src/lib/theme-css';
+import { DEFAULT_THEME, derivedContrast, fontFaceCss, fontPreload, fontPreloads, sanitizeTheme, themeColor, themeCss, themeTokens } from '../src/lib/theme-css';
 
 const SEED = { ...DEFAULT_THEME, primary: '#5b0057', secondary: '#76007c', accent: '#d8c831', surface: '#f2f2f2', text: '#1a1a1a', font: 'sahel', radius: 'sm' };
 
@@ -85,5 +85,8 @@ describe('fonts', () => {
   it('preloads exactly one regular-weight file', () => {
     expect(fontPreload('vazirmatn')).toEqual({ href: '/fonts/vazirmatn/vazirmatn-arabic-wght-normal.woff2', type: 'font/woff2' });
     expect(fontPreload('sahel').href).toBe('/fonts/sahel/Sahel.woff2');
+    // the two-subset families also preload the Latin subset every page uses; the multi-weight families only the regular file
+    expect(fontPreloads('vazirmatn').map((p) => p.href)).toEqual(['/fonts/vazirmatn/vazirmatn-arabic-wght-normal.woff2', '/fonts/vazirmatn/vazirmatn-latin-wght-normal.woff2']);
+    expect(fontPreloads('sahel').map((p) => p.href)).toEqual(['/fonts/sahel/Sahel.woff2']);
   });
 });

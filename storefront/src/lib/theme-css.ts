@@ -128,10 +128,22 @@ export function fontFaceCss(font: FontId): string {
     .join('');
 }
 
-/** The single `<link rel="preload" as="font">` for the selected font (regular weight). */
+/** The `<link rel="preload" as="font">` for the selected font (regular weight). */
 export function fontPreload(font: FontId): { href: string; type: 'font/woff2' } {
   const spec = FONTS[font];
   return { href: fontUrl(spec, spec.preload), type: 'font/woff2' };
+}
+
+/**
+ * Every font file EVERY page needs: the preloaded regular file and, for the two-subset families, the Latin subset too (digits in
+ * prices, the copyright sign and brand names are on all pages, so the browser always fetches it; preloading starts the request
+ * with the HTML instead of after the style sheets). The other weights of the multi-file families load when used.
+ */
+export function fontPreloads(font: FontId): Array<{ href: string; type: 'font/woff2' }> {
+  const spec = FONTS[font];
+  const hrefs = new Set([fontUrl(spec, spec.preload)]);
+  for (const f of spec.files) if (f.variable && f.range === LATIN_RANGE) hrefs.add(fontUrl(spec, f.file));
+  return [...hrefs].map((href) => ({ href, type: 'font/woff2' }));
 }
 
 // ---- tokens ----

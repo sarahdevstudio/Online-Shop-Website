@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -185,9 +186,9 @@ export function SiteHeader({ brandName, logo = null, menu = [], cartCount = 0 }:
         <Link className={styles.brand} href="/">
           {logo ? (
             <span className={styles.logoPlate}>
-              {/* The logo is served by the API's media route; a fixed height keeps every aspect ratio safe. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className={styles.logo} src={logo.url} alt={logo.alt} width={logo.width} height={logo.height} />
+              {/* The logo is served by the media route; a fixed height keeps every aspect ratio safe. It is on every page and
+                  above the fold, so it is preloaded and resized to the 11rem it is shown at (a 300 px PNG becomes a few KB of WebP). */}
+              <Image className={styles.logo} src={logo.url} alt={logo.alt} width={logo.width} height={logo.height} sizes="176px" quality={90} priority />
             </span>
           ) : (
             <span>{brandName}</span>
