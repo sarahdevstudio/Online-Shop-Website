@@ -97,7 +97,8 @@ public sealed record ProductListQuery(
 
 // ---- Admin ----
 
-public sealed record CategoryRequest(string Name, string? Slug, int? ParentId, string? Description, int SortOrder, bool IsActive);
+/// <summary>Create: <see cref="Path"/> is the public URL path (default: the slug-based one); on update it is ignored (use the routes endpoint).</summary>
+public sealed record CategoryRequest(string Name, string? Slug, int? ParentId, string? Description, int SortOrder, bool IsActive, string? Path = null);
 
 public sealed record AdminCategoryDto(int Id, string Slug, string Name, int? ParentId, string? Description, int SortOrder, bool IsActive);
 
@@ -130,7 +131,7 @@ public sealed record UpdateVariantRequest(
 /// <summary>Create: slug is set here only. Update: <see cref="Slug"/> and <see cref="Variants"/> are ignored.</summary>
 public sealed record ProductRequest(
     int CategoryId, int? BrandId, string Name, string? Slug, string? Description, ProductStatus Status,
-    IReadOnlyList<VariantRequest>? Variants);
+    IReadOnlyList<VariantRequest>? Variants, string? Path = null);
 
 public sealed record AttributeValueRequest(int AttributeId, int? VariantId, int? OptionId, string? Text);
 

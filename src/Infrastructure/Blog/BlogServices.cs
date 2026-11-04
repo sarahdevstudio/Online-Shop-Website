@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Shop.Application.Blog;
 using Shop.Application.Common;
+using Shop.Application.Routing;
 using Shop.Domain.Blog;
 using Shop.Domain.Common;
+using Shop.Domain.Routing;
 using Shop.Infrastructure.Persistence;
 
 namespace Shop.Infrastructure.Blog;
@@ -36,7 +38,7 @@ internal sealed class BlogService(ShopDbContext db) : IBlogService
             .Select(p => new BlogSitemapEntryDto(p.Slug, p.UpdatedAtUtc)).ToListAsync(ct);
 }
 
-internal sealed class AdminBlogService(ShopDbContext db, ICurrentUser currentUser, TimeProvider clock) : IAdminBlogService
+internal sealed class AdminBlogService(ShopDbContext db, ICurrentUser currentUser, TimeProvider clock, IRouteService routes) : IAdminBlogService
 {
     private const string SlugIndex = "UX_BlogPosts_Slug";
 
@@ -63,6 +65,16 @@ internal sealed class AdminBlogService(ShopDbContext db, ICurrentUser currentUse
             return Error.Validation(errors);
         }
 
+        if (await db.BlogPosts.AnyAsync(p => p.Slug == request.Slug, ct))
+        {
+            return Error.Conflict("slug_taken", "api.error.blog-slug-taken"); // the slug is reported before its URL
+        }
+
+        if (await routes.CheckAvailableForNewAsync(RouteTargetTypes.BlogPost, request.Slug, request.Path, ct) is { IsSuccess: false } pathError)
+        {
+            return pathError.Error!;
+        }
+
         var now = clock.GetUtcNow().UtcDateTime;
         var post = BlogPost.Create(request.Slug, request.Title, request.Excerpt, request.Body, request.Publish, currentUser.UserId, now);
         db.BlogPosts.Add(post);
@@ -72,6 +84,8 @@ internal sealed class AdminBlogService(ShopDbContext db, ICurrentUser currentUse
             db.BlogAuditLogs.Add(BlogAuditLog.Create(post.Slug, BlogAuditLog.Published, currentUser.UserId, now));
         }
 
+        // The post and its first URL are created together or not at all.
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
         try
         {
             await db.SaveChangesAsync(ct);
@@ -81,6 +95,14 @@ internal sealed class AdminBlogService(ShopDbContext db, ICurrentUser currentUse
             return Error.Conflict("slug_taken", "api.error.blog-slug-taken");
         }
 
+        var route = await routes.AddForNewAsync(RouteTargetTypes.BlogPost, post.Id, post.Slug, request.Path, ct);
+        if (!route.IsSuccess)
+        {
+            return route.Error!;
+        }
+
+        await tx.CommitAsync(ct);
+        await routes.CompleteAsync(ct);
         return (await LoadAsync(post.Id, ct))!;
     }
 
@@ -150,9 +172,14 @@ internal sealed class AdminBlogService(ShopDbContext db, ICurrentUser currentUse
             return Result.Failure(NotFound());
         }
 
+        // Hard delete: its addresses answer 410 from now on, in the same transaction.
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
         db.BlogPosts.Remove(post);
         db.BlogAuditLogs.Add(BlogAuditLog.Create(post.Slug, BlogAuditLog.Deleted, currentUser.UserId, clock.GetUtcNow().UtcDateTime));
         await db.SaveChangesAsync(ct);
+        await routes.MarkGoneAsync(RouteTargetTypes.BlogPost, id, ct);
+        await tx.CommitAsync(ct);
+        await routes.CompleteAsync(ct);
         return Result.Success();
     }
 

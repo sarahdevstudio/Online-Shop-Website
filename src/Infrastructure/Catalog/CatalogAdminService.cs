@@ -2,15 +2,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Shop.Application.Catalog;
 using Shop.Application.Common;
+using Shop.Application.Routing;
 using Shop.Domain.Catalog;
 using Shop.Domain.Common;
 using Shop.Domain.Inventory;
+using Shop.Domain.Routing;
 using Shop.Infrastructure.Persistence;
 
 namespace Shop.Infrastructure.Catalog;
 
 internal sealed class CatalogAdminService(
-    ShopDbContext db, IMediaStorage media, IOptions<MediaOptions> mediaOptions, ICurrentUser currentUser, TimeProvider clock) : ICatalogAdminService
+    ShopDbContext db, IMediaStorage media, IOptions<MediaOptions> mediaOptions, ICurrentUser currentUser, TimeProvider clock,
+    IRouteService routes) : ICatalogAdminService
 {
     public const int AdminPageSize = 50;
 
@@ -42,9 +45,14 @@ internal sealed class CatalogAdminService(
             return SlugTaken;
         }
 
+        if (await routes.CheckAvailableForNewAsync(RouteTargetTypes.Category, request.Slug, request.Path, ct) is { IsSuccess: false } pathError)
+        {
+            return pathError.Error!;
+        }
+
         var category = Category.Create(request.Name, request.Slug, request.ParentId, request.Description, request.SortOrder, request.IsActive);
         db.Categories.Add(category);
-        return await SaveAsync(() => ToDto(category), ("UX_Categories_Slug", SlugTaken), ct);
+        return await SaveNewAsync(RouteTargetTypes.Category, () => category.Id, category.Slug, request.Path, () => ToDto(category), [("UX_Categories_Slug", SlugTaken)], ct);
     }
 
     public async Task<Result<AdminCategoryDto>> UpdateCategoryAsync(int id, CategoryRequest request, CancellationToken ct)
@@ -78,8 +86,13 @@ internal sealed class CatalogAdminService(
             return Result.Failure(Error.Conflict("category_not_empty", "api.error.category-not-empty"));
         }
 
+        // Hard delete: its addresses answer 410 from now on, in the same transaction.
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
         db.Categories.Remove(category);
         await db.SaveChangesAsync(ct);
+        await routes.MarkGoneAsync(RouteTargetTypes.Category, id, ct);
+        await tx.CommitAsync(ct);
+        await routes.CompleteAsync(ct);
         return Result.Success();
     }
 
@@ -295,11 +308,17 @@ internal sealed class CatalogAdminService(
             return SkuTaken;
         }
 
+        if (await routes.CheckAvailableForNewAsync(RouteTargetTypes.Product, request.Slug, request.Path, ct) is { IsSuccess: false } pathError)
+        {
+            return pathError.Error!;
+        }
+
         var product = Product.Create(request.CategoryId, request.BrandId, references.BrandName, request.Name, request.Slug,
             request.Description, request.Status, clock.GetUtcNow().UtcDateTime);
         product.Variants.AddRange(variants.Select(v => ProductVariant.Create(v.Sku, v.Price, v.CompareAtPrice, v.Stock, v.IsActive, v.SortOrder)));
         db.Products.Add(product);
-        return await SaveAsync(() => ToDto(product), [("UX_Products_Slug", SlugTaken), ("UX_ProductVariants_Sku", SkuTaken)], ct);
+        return await SaveNewAsync(RouteTargetTypes.Product, () => product.Id, product.Slug, request.Path, () => ToDto(product),
+            [("UX_Products_Slug", SlugTaken), ("UX_ProductVariants_Sku", SkuTaken)], ct);
     }
 
     public async Task<Result<AdminProductDto>> UpdateProductAsync(int id, ProductRequest request, CancellationToken ct)
@@ -544,6 +563,28 @@ internal sealed class CatalogAdminService(
     {
         var query = db.Products.Include(p => p.Variants).Include(p => p.Images).Include(p => p.AttributeValues).AsSplitQuery();
         return (tracking ? query : query.AsNoTracking()).SingleOrDefaultAsync(p => p.Id == id, ct);
+    }
+
+    /// <summary>Saves a new entity and gives it its first route in ONE transaction: no entity without a URL, no URL without an entity.</summary>
+    private async Task<Result<T>> SaveNewAsync<T>(
+        string routeType, Func<int> id, string slug, string? path, Func<T> onSuccess, (string Index, Error Error)[] uniques, CancellationToken ct)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var saved = await SaveAsync(onSuccess, uniques, ct);
+        if (!saved.IsSuccess)
+        {
+            return saved;
+        }
+
+        var route = await routes.AddForNewAsync(routeType, id(), slug, path, ct);
+        if (!route.IsSuccess)
+        {
+            return route.Error!; // the transaction is rolled back: the entity is not created either
+        }
+
+        await tx.CommitAsync(ct);
+        await routes.CompleteAsync(ct);
+        return saved;
     }
 
     private Task<Result<T>> SaveAsync<T>(Func<T> onSuccess, (string Index, Error Error) unique, CancellationToken ct) =>

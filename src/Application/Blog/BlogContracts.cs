@@ -26,7 +26,8 @@ public sealed record AdminBlogPostDto(
     int Id, string Slug, string Title, string Excerpt, string Body, bool IsPublished, DateTime? PublishedAtUtc, DateTime UpdatedAtUtc,
     string? UpdatedByUsername, byte[] RowVersion);
 
-public sealed record CreateBlogPostRequest(string Slug, string Title, string Excerpt, string Body, bool Publish);
+/// <summary><see cref="Path"/> is the public URL path (default: <c>/blog/{slug}</c>); it can be changed later through the routes endpoint.</summary>
+public sealed record CreateBlogPostRequest(string Slug, string Title, string Excerpt, string Body, bool Publish, string? Path = null);
 
 /// <summary><see cref="RowVersion"/> is the version the editor loaded: a stale save is a 409. The slug never changes.</summary>
 public sealed record UpdateBlogPostRequest(string Title, string Excerpt, string Body, bool Publish, byte[] RowVersion);
