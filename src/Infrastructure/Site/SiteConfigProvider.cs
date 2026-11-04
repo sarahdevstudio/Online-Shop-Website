@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Shop.Application.Routing;
 using Shop.Application.Site;
 
 namespace Shop.Infrastructure.Site;
@@ -7,7 +8,7 @@ namespace Shop.Infrastructure.Site;
 /// The compiled published document, cached in memory. Publish and restore call <see cref="Invalidate"/>; the age limit is only
 /// a safety net for a manual database edit (single API instance, like the store settings).
 /// </summary>
-internal sealed class SiteConfigProvider(IServiceScopeFactory scopes, TimeProvider clock) : ISiteConfigService
+internal sealed class SiteConfigProvider(IServiceScopeFactory scopes, TimeProvider clock, IRouteTable routes) : ISiteConfigService
 {
     private static readonly TimeSpan MaxAge = TimeSpan.FromMinutes(10);
 
@@ -31,13 +32,14 @@ internal sealed class SiteConfigProvider(IServiceScopeFactory scopes, TimeProvid
             }
 
             var generationBefore = Volatile.Read(ref _generation);
+            var routesBefore = routes.Version;
             await using var scope = scopes.CreateAsyncScope();
             var document = await scope.ServiceProvider.GetRequiredService<SiteCompiler>().CompileAsync(useDrafts: false, ct);
 
             // A publish that happened while we were compiling must not be overwritten by what we read before it.
             if (generationBefore == Volatile.Read(ref _generation))
             {
-                _cached = new Cached(document, clock.GetUtcNow());
+                _cached = new Cached(document, clock.GetUtcNow(), routesBefore);
             }
 
             return document;
@@ -54,7 +56,9 @@ internal sealed class SiteConfigProvider(IServiceScopeFactory scopes, TimeProvid
         _cached = null;
     }
 
-    private SiteConfigDto? Fresh() => _cached is { } cached && clock.GetUtcNow() - cached.At < MaxAge ? cached.Document : null;
+    /// <summary>Stale after <see cref="MaxAge"/>, after a publish, and whenever the route table was rebuilt (a path changed, an entity was deleted).</summary>
+    private SiteConfigDto? Fresh() =>
+        _cached is { } cached && clock.GetUtcNow() - cached.At < MaxAge && cached.RouteVersion == routes.Version ? cached.Document : null;
 
-    private sealed record Cached(SiteConfigDto Document, DateTimeOffset At);
+    private sealed record Cached(SiteConfigDto Document, DateTimeOffset At, int RouteVersion);
 }

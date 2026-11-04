@@ -28,6 +28,12 @@ public interface IRouteTable
     /// <summary>The entity's current path, or its default path (the URL it always had) when it has no row yet.</summary>
     string PathOf(string targetType, int targetId, string slug);
 
+    /// <summary>The CURRENT path of an entity that still exists, or null when it was deleted (links to it are then hidden).</summary>
+    string? CurrentPathOf(string targetType, int targetId);
+
+    /// <summary>Changes whenever the table is rebuilt; caches built from paths compare it to know they are stale.</summary>
+    int Version { get; }
+
     Task ReloadAsync(CancellationToken ct = default);
 }
 

@@ -24,6 +24,7 @@ public enum SiteAuditAction
     Restored,
     Discarded,
     Uploaded,
+    Converted,
 }
 
 /// <summary>Conversions between the enums and the lower-case strings used in URLs and in the database.</summary>

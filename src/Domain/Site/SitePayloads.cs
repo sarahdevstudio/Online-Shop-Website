@@ -15,6 +15,19 @@ public static class SiteValues
     public static readonly IReadOnlyList<string> MediaPurposes = ["logo", "favicon", "hero", "banner", "og"];
 
     public const int MaxBlocks = 20;
+
+    /// <summary>What a link can point to besides a typed URL (the same names as the route table's target types).</summary>
+    public static readonly IReadOnlyList<string> LinkEntityTypes = ["category", "product", "contentPage", "blogPost"];
+}
+
+/// <summary>
+/// A link to an entity of the shop instead of a typed URL. It is stored as (type, id) and turned into the entity's CURRENT
+/// path when the document is compiled, so a path change moves the link without a redirect hop; a deleted entity hides it.
+/// </summary>
+public sealed record LinkEntity
+{
+    public string Type { get; init; } = string.Empty;
+    public int Id { get; init; }
 }
 
 // ---- theme ----
@@ -57,6 +70,7 @@ public sealed record HeroSlide
     public string Text { get; init; } = string.Empty;
     public string LinkLabel { get; init; } = string.Empty;
     public string? Link { get; init; }
+    public LinkEntity? Entity { get; init; }
 }
 
 public sealed record HeroData
@@ -96,6 +110,7 @@ public sealed record BannerData
     public int MediaId { get; init; }
     public string Alt { get; init; } = string.Empty;
     public string? Link { get; init; }
+    public LinkEntity? Entity { get; init; }
     public string Height { get; init; } = string.Empty;
 }
 
@@ -130,6 +145,7 @@ public sealed record AnnouncementBar
     public bool Enabled { get; init; }
     public string Text { get; init; } = string.Empty;
     public string? Link { get; init; }
+    public LinkEntity? Entity { get; init; }
     public string Style { get; init; } = "primary";
     public bool Dismissible { get; init; } = true;
 }
@@ -138,12 +154,14 @@ public sealed record MenuChild
 {
     public string Label { get; init; } = string.Empty;
     public string Link { get; init; } = string.Empty;
+    public LinkEntity? Entity { get; init; }
 }
 
 public sealed record MenuItem
 {
     public string Label { get; init; } = string.Empty;
     public string? Link { get; init; }
+    public LinkEntity? Entity { get; init; }
     public bool AllCategories { get; init; }
     public List<MenuChild> Children { get; init; } = [];
 }
@@ -152,6 +170,7 @@ public sealed record FooterLink
 {
     public string Label { get; init; } = string.Empty;
     public string Link { get; init; } = string.Empty;
+    public LinkEntity? Entity { get; init; }
 }
 
 public sealed record FooterColumn

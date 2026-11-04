@@ -805,6 +805,7 @@
   "api.validation.site-invalid": "مقدار واردشده معتبر نیست.",
   "api.validation.site-kind-invalid": "بخش نامعتبر است.",
   "api.validation.site-link": "نشانی باید مسیری داخلی مانند /about یا نشانی کامل https:// باشد.",
+  "api.validation.site-link-entity": "مقصد پیوند باید یک دسته‌بندی، محصول، صفحه یا نوشتهٔ وبلاگ باشد.",
   "api.validation.site-max-length": "حداکثر {max} نویسه مجاز است.",
   "api.validation.site-menu-max": "حداکثر {max} گزینه در منوی بالا مجاز است.",
   "api.validation.site-name-length": "نام سایت باید بین ۲ تا ۶۰ نویسه باشد.",

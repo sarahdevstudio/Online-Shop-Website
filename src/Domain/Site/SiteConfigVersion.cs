@@ -61,6 +61,12 @@ public sealed class SiteConfigVersion
         UpdatedByUserId = userId;
     }
 
+    /// <summary>
+    /// Rewrites the payload of ANY state, for the one-time conversion of typed links to entity links (the content stays the
+    /// same: a link and its entity lead to the same page). Nothing else may change a published or archived payload.
+    /// </summary>
+    public void ReplacePayloadForConversion(string payload) => Payload = payload;
+
     public void Publish(int version, Guid? userId, DateTime utcNow)
     {
         if (State != SiteState.Draft)

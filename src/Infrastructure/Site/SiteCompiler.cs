@@ -2,8 +2,10 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Shop.Application.Catalog;
+using Shop.Application.Routing;
 using Shop.Application.Site;
 using Shop.Domain.Catalog;
+using Shop.Domain.Routing;
 using Shop.Domain.Site;
 using Shop.Infrastructure.Persistence;
 
@@ -14,7 +16,7 @@ namespace Shop.Infrastructure.Site;
 /// slugs, disabled blocks and anything that can no longer be resolved are left out. A kind without a usable version falls back
 /// to the built-in defaults, so the document is always complete.
 /// </summary>
-internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media)
+internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media, IRouteTable routes)
 {
     public async Task<SiteConfigDto> CompileAsync(bool useDrafts, CancellationToken ct)
     {
@@ -70,9 +72,62 @@ internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media)
         AddSocial("pinterest", chrome.Social.Pinterest);
         AddSocial("youtube", chrome.Social.Youtube);
         AddSocial("linkedin", chrome.Social.Linkedin);
-        var chromeDto = new SiteChromeDto(chrome.Announcement, chrome.HeaderMenu, chrome.Footer, social);
+        var chromeDto = new SiteChromeDto(ResolveAnnouncement(chrome.Announcement), ResolveMenu(chrome.HeaderMenu), ResolveFooter(chrome.Footer), social);
 
         return new SiteConfigDto(VersionOf(rows, useDrafts), themeDto, await CompileHomeAsync(home, Image, ct), chromeDto, seoDto, badges);
+    }
+
+    /// <summary>
+    /// The URL a link points to NOW: the entity's current path (so a path change shows up with no redirect hop), the typed URL
+    /// for a custom link, or null when the entity was deleted (the caller hides the link).
+    /// </summary>
+    private string? Resolve(string? link, LinkEntity? entity) =>
+        entity is null ? (string.IsNullOrEmpty(link) ? null : link) : routes.CurrentPathOf(entity.Type, entity.Id);
+
+    private AnnouncementBar ResolveAnnouncement(AnnouncementBar bar) => bar with { Link = Resolve(bar.Link, bar.Entity), Entity = null };
+
+    private List<MenuItem> ResolveMenu(List<MenuItem> menu)
+    {
+        var result = new List<MenuItem>();
+        foreach (var item in menu)
+        {
+            var children = item.Children
+                .Select(c => (Child: c, Link: Resolve(c.Link, c.Entity)))
+                .Where(c => c.Link is not null)
+                .Select(c => c.Child with { Link = c.Link!, Entity = null })
+                .ToList();
+            var link = Resolve(item.Link, item.Entity);
+            // An item that led nowhere without its link (no children, not the category list) is hidden with it.
+            if (link is null && children.Count == 0 && !item.AllCategories)
+            {
+                continue;
+            }
+
+            result.Add(item with { Link = link, Entity = null, Children = children });
+        }
+
+        return result;
+    }
+
+    private FooterContent ResolveFooter(FooterContent footer)
+    {
+        var columns = new List<FooterColumn>();
+        foreach (var column in footer.Columns)
+        {
+            var links = column.Links
+                .Select(l => (Link: l, Url: Resolve(l.Link, l.Entity)))
+                .Where(l => l.Url is not null)
+                .Select(l => l.Link with { Link = l.Url!, Entity = null })
+                .ToList();
+            if (links.Count == 0 && column.Links.Count > 0)
+            {
+                continue;
+            }
+
+            columns.Add(column with { Links = links });
+        }
+
+        return footer with { Columns = columns };
     }
 
     private async Task<SiteHomeDto> CompileHomeAsync(HomePayload home, Func<int?, SiteImageRefDto?> image, CancellationToken ct)
@@ -90,7 +145,7 @@ internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media)
                 ProductRowData row => await CompileRowAsync(row, byId, ct),
                 TextBlockData text => new SiteTextDataDto(text.Heading, text.Body),
                 BannerData banner => image(banner.MediaId) is { } bannerImage
-                    ? new SiteBannerDataDto(bannerImage, banner.Alt, banner.Link, banner.Height)
+                    ? new SiteBannerDataDto(bannerImage, banner.Alt, Resolve(banner.Link, banner.Entity), banner.Height)
                     : null,
                 _ => null,
             };
@@ -103,7 +158,7 @@ internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media)
         return new SiteHomeDto(blocks);
     }
 
-    private static SiteHeroDataDto? CompileHero(HeroData hero, Func<int?, SiteImageRefDto?> image)
+    private SiteHeroDataDto? CompileHero(HeroData hero, Func<int?, SiteImageRefDto?> image)
     {
         var slides = new List<SiteHeroSlideDto>();
         foreach (var slide in hero.Slides)
@@ -115,7 +170,8 @@ internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media)
                 continue;
             }
 
-            slides.Add(new SiteHeroSlideDto(picture, slide.Alt, slide.Title, slide.Text, slide.LinkLabel, slide.Link));
+            var link = Resolve(slide.Link, slide.Entity);
+            slides.Add(new SiteHeroSlideDto(picture, slide.Alt, slide.Title, slide.Text, link is null ? string.Empty : slide.LinkLabel, link));
         }
 
         return slides.Count == 0 ? null : new SiteHeroDataDto(hero.AutoplaySeconds, slides);
@@ -151,7 +207,7 @@ internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media)
         {
             case "category":
                 return row.CategoryId is { } id && byId.TryGetValue(id, out var category)
-                    ? new SiteProductRowDataDto(row.Title, row.Source, row.Limit, category.Slug, [], $"/category/{category.Slug}")
+                    ? new SiteProductRowDataDto(row.Title, row.Source, row.Limit, category.Slug, [], routes.CurrentPathOf(RouteTargetTypes.Category, category.Id) ?? RouteTargetTypes.DefaultPath(RouteTargetTypes.Category, category.Slug))
                     : null;
             case "handpicked":
                 var found = await db.Products.AsNoTracking()

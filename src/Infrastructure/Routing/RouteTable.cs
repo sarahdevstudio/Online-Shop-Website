@@ -63,6 +63,17 @@ public sealed class RouteTable(IServiceScopeFactory scopes, ILogger<RouteTable> 
     public string PathOf(string targetType, int targetId, string slug) =>
         _snapshot.CurrentPath.TryGetValue((targetType, targetId), out var path) ? path : RouteTargetTypes.DefaultPath(targetType, slug);
 
+    public string? CurrentPathOf(string targetType, int targetId)
+    {
+        var snapshot = _snapshot;
+        var key = (targetType, targetId);
+        return snapshot.Slugs.ContainsKey(key) && snapshot.CurrentPath.TryGetValue(key, out var path) ? path : null;
+    }
+
+    private int _version;
+
+    public int Version => Volatile.Read(ref _version);
+
     public async Task ReloadAsync(CancellationToken ct = default)
     {
         await using var scope = scopes.CreateAsyncScope();
@@ -105,6 +116,7 @@ public sealed class RouteTable(IServiceScopeFactory scopes, ILogger<RouteTable> 
 
         _snapshot = new Snapshot(
             byPath, current, slugs, rows.Count, rows.Count == 0 ? 0 : rows.Max(r => r.Id), rows.Count == 0 ? DateTime.MinValue : rows.Max(r => r.UpdatedAtUtc));
+        Interlocked.Increment(ref _version);
     }
 
     /// <summary>Rebuilds only when the table changed since the last build (one aggregate query).</summary>

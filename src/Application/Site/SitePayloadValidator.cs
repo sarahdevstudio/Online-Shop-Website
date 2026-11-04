@@ -5,12 +5,17 @@ using Shop.Domain.Site;
 namespace Shop.Application.Site;
 
 /// <summary>The ids a payload refers to; the service checks they exist before validating.</summary>
-public sealed record SiteReferenceIds(HashSet<int> MediaIds, HashSet<int> CategoryIds, HashSet<int> ProductIds);
+public sealed record SiteReferenceIds(HashSet<int> MediaIds, HashSet<int> CategoryIds, HashSet<int> ProductIds)
+{
+    /// <summary>(type, id) of every entity a link points to.</summary>
+    public HashSet<(string Type, int Id)> LinkEntities { get; init; } = [];
+}
 
 /// <summary>What exists: media id → purpose, category ids, product ids.</summary>
 public sealed record SiteReferences(IReadOnlyDictionary<int, string> Media, IReadOnlySet<int> CategoryIds, IReadOnlySet<int> ProductIds)
 {
     public static SiteReferences None { get; } = new(new Dictionary<int, string>(), new HashSet<int>(), new HashSet<int>());
+
 }
 
 public sealed record SiteValidationResult(object Payload, IReadOnlyDictionary<string, string[]> Errors)
@@ -67,8 +72,27 @@ public static partial class SitePayloadValidator
         var media = new HashSet<int>();
         var categories = new HashSet<int>();
         var products = new HashSet<int>();
+        var entities = new HashSet<(string, int)>();
+        void AddEntity(LinkEntity? entity)
+        {
+            if (entity is not null)
+            {
+                entities.Add((entity.Type, entity.Id));
+            }
+        }
+
         switch (payload)
         {
+            case ChromePayload chrome:
+                AddEntity(chrome.Announcement.Entity);
+                foreach (var item in chrome.HeaderMenu)
+                {
+                    AddEntity(item.Entity);
+                    item.Children.ForEach(c => AddEntity(c.Entity));
+                }
+
+                chrome.Footer.Columns.ForEach(c => c.Links.ForEach(l => AddEntity(l.Entity)));
+                break;
             case ThemePayload theme:
                 AddIfSet(media, theme.Logo?.MediaId);
                 AddIfSet(media, theme.Favicon?.MediaId);
@@ -85,11 +109,13 @@ public static partial class SitePayloadValidator
                             foreach (var slide in hero.Slides)
                             {
                                 AddIfSet(media, slide.MediaId);
+                                AddEntity(slide.Entity);
                             }
 
                             break;
                         case BannerData banner:
                             AddIfSet(media, banner.MediaId);
+                            AddEntity(banner.Entity);
                             break;
                         case CategoryTilesData tiles:
                             categories.UnionWith(tiles.Items.Select(i => i.CategoryId));
@@ -104,7 +130,7 @@ public static partial class SitePayloadValidator
                 break;
         }
 
-        return new SiteReferenceIds(media, categories, products);
+        return new SiteReferenceIds(media, categories, products) { LinkEntities = entities };
     }
 
     private static void AddIfSet(HashSet<int> set, int? id)
@@ -124,7 +150,7 @@ public static partial class SitePayloadValidator
         {
             SiteKind.Theme => ValidateTheme((ThemePayload)payload, references, errors),
             SiteKind.Home => ValidateHome((HomePayload)payload, references, errors),
-            SiteKind.Chrome => ValidateChrome((ChromePayload)payload, errors),
+            SiteKind.Chrome => ValidateChrome((ChromePayload)payload, references, errors),
             SiteKind.Seo => ValidateSeo((SeoPayload)payload, references, errors),
             SiteKind.Badges => ValidateBadges((BadgesPayload)payload, errors),
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
@@ -171,6 +197,32 @@ public static partial class SitePayloadValidator
         }
 
         return link;
+    }
+
+    /// <summary>
+    /// A link that is either a typed URL or a reference to an entity (the entity wins; the URL is then dropped). With
+    /// <paramref name="required"/> one of the two must be present. An entity that has been deleted since is NOT an error: the
+    /// link is hidden when the document is compiled and the editor warns, so an old version can still be restored.
+    /// </summary>
+    private static (string? Link, LinkEntity? Entity) LinkOrEntity(
+        string? value, LinkEntity? entity, string path, SiteReferences refs, Errors errors, bool required)
+    {
+        if (entity is null)
+        {
+            return (required ? RequiredLink(value, path, errors) : OptionalLink(value, path, errors), null);
+        }
+
+        var type = entity.Type?.Trim() ?? string.Empty;
+        if (!SiteValues.LinkEntityTypes.Contains(type, StringComparer.Ordinal))
+        {
+            errors.Add(path, "api.validation.site-link-entity");
+        }
+        else if (entity.Id <= 0)
+        {
+            errors.Add(path, "api.validation.site-link-entity");
+        }
+
+        return (required ? string.Empty : null, new LinkEntity { Type = type, Id = entity.Id });
     }
 
     private static string RequiredLink(string? value, string path, Errors errors)
@@ -322,8 +374,8 @@ public static partial class SitePayloadValidator
             var title = RequiredText(slide.Title, 80, $"{p}.title", errors, required: false);
             var text = RequiredText(slide.Text, 200, $"{p}.text", errors, required: false);
             var label = RequiredText(slide.LinkLabel, 30, $"{p}.linkLabel", errors, required: false);
-            var link = OptionalLink(slide.Link, $"{p}.link", errors);
-            if (link is not null && label.Length == 0)
+            var (link, slideEntity) = LinkOrEntity(slide.Link, slide.Entity, $"{p}.link", refs, errors, required: false);
+            if ((link is not null || slideEntity is not null) && label.Length == 0)
             {
                 errors.Add($"{p}.linkLabel", Required);
             }
@@ -354,6 +406,7 @@ public static partial class SitePayloadValidator
                 Text = text,
                 LinkLabel = label,
                 Link = link,
+                Entity = slideEntity,
             });
         }
 
@@ -457,19 +510,19 @@ public static partial class SitePayloadValidator
     {
         CheckMedia(data.MediaId, $"{path}.mediaId", refs, errors);
         var alt = RequiredText(data.Alt, SiteMedia.AltMaxLength, $"{path}.alt", errors);
-        var link = OptionalLink(data.Link, $"{path}.link", errors);
+        var (link, entity) = LinkOrEntity(data.Link, data.Entity, $"{path}.link", refs, errors, required: false);
         var height = data.Height?.Trim() ?? string.Empty;
         if (!SiteValues.BannerHeights.Contains(height))
         {
             errors.Add($"{path}.height", "api.validation.site-banner-height");
         }
 
-        return new BannerData { MediaId = data.MediaId, Alt = alt, Link = link, Height = height };
+        return new BannerData { MediaId = data.MediaId, Alt = alt, Link = link, Entity = entity, Height = height };
     }
 
     // ---------------------------------------------------------------- chrome
 
-    private static ChromePayload ValidateChrome(ChromePayload chrome, Errors errors)
+    private static ChromePayload ValidateChrome(ChromePayload chrome, SiteReferences refs, Errors errors)
     {
         var bar = chrome.Announcement;
         var style = bar.Style?.Trim() ?? string.Empty;
@@ -479,11 +532,13 @@ public static partial class SitePayloadValidator
         }
 
         var barText = RequiredText(bar.Text, 140, "announcement.text", errors, required: bar.Enabled);
+        var (barLink, barEntity) = LinkOrEntity(bar.Link, bar.Entity, "announcement.link", refs, errors, required: false);
         var announcement = new AnnouncementBar
         {
             Enabled = bar.Enabled,
             Text = barText,
-            Link = OptionalLink(bar.Link, "announcement.link", errors),
+            Link = barLink,
+            Entity = barEntity,
             Style = style,
             Dismissible = bar.Dismissible,
         };
@@ -499,7 +554,7 @@ public static partial class SitePayloadValidator
             var item = chrome.HeaderMenu[i];
             var p = $"headerMenu[{i}]";
             var label = RequiredText(item.Label, 30, $"{p}.label", errors);
-            var link = OptionalLink(item.Link, $"{p}.link", errors);
+            var (link, itemEntity) = LinkOrEntity(item.Link, item.Entity, $"{p}.link", refs, errors, required: false);
             var children = new List<MenuChild>();
             if (!item.AllCategories)
             {
@@ -511,20 +566,22 @@ public static partial class SitePayloadValidator
                 for (var c = 0; c < item.Children.Count; c++)
                 {
                     var child = item.Children[c];
+                    var (childLink, childEntity) = LinkOrEntity(child.Link, child.Entity, $"{p}.children[{c}].link", refs, errors, required: true);
                     children.Add(new MenuChild
                     {
                         Label = RequiredText(child.Label, 30, $"{p}.children[{c}].label", errors),
-                        Link = RequiredLink(child.Link, $"{p}.children[{c}].link", errors),
+                        Link = childLink ?? string.Empty,
+                        Entity = childEntity,
                     });
                 }
             }
 
-            if (link is null && children.Count == 0 && !item.AllCategories)
+            if (link is null && itemEntity is null && children.Count == 0 && !item.AllCategories)
             {
                 errors.Add($"{p}.link", Required);
             }
 
-            menu.Add(new MenuItem { Label = label, Link = link, AllCategories = item.AllCategories, Children = children });
+            menu.Add(new MenuItem { Label = label, Link = link, Entity = itemEntity, AllCategories = item.AllCategories, Children = children });
         }
 
         var about = RequiredText(chrome.Footer.About, 300, "footer.about", errors, required: false);
@@ -544,10 +601,15 @@ public static partial class SitePayloadValidator
                 errors.Add($"{p}.links", Msg.Of("api.validation.site-footer-links-max", ("max", Fa(8))));
             }
 
-            var links = column.Links.Select((link, l) => new FooterLink
+            var links = column.Links.Select((link, l) =>
             {
-                Label = RequiredText(link.Label, 30, $"{p}.links[{l}].label", errors),
-                Link = RequiredLink(link.Link, $"{p}.links[{l}].link", errors),
+                var (target, entity) = LinkOrEntity(link.Link, link.Entity, $"{p}.links[{l}].link", refs, errors, required: true);
+                return new FooterLink
+                {
+                    Label = RequiredText(link.Label, 30, $"{p}.links[{l}].label", errors),
+                    Link = target ?? string.Empty,
+                    Entity = entity,
+                };
             }).ToList();
             columns.Add(new FooterColumn { Title = title, Links = links });
         }
