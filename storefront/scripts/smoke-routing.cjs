@@ -231,7 +231,7 @@ async function savePathForm(page) {
   eq('a hard-deleted post answers 410 (current path)', gone.status, 410);
   eq('… and 410 on its old path', (await raw(context, `/blog/${slug}`)).status, 410);
   const goneBody = await context.request.get(`${BASE}/guides/${slug}`);
-  check('… with the "gone" page', (await goneBody.text()).includes('/'), `status ${goneBody.status()}`);
+  check('… with the "gone" page text', (await goneBody.text()).includes('این صفحه دیگر وجود ندارد'), `status ${goneBody.status()}`);
   await page.goto(`${BASE}/guides/${slug}`);
   await shot(page, '07-gone-410');
   eq('an unknown path answers 404', (await raw(context, `/nothing-here-${RUN}`)).status, 404);

@@ -31,19 +31,22 @@ function adminGate(request: NextRequest): NextResponse {
 /**
  * A permanently deleted category or post answers 410, not 404 (docs/11 C-3). A Next page cannot choose its status, so the
  * proxy asks the API (an in-memory lookup there) about public-looking paths and, for a deleted one, rewrites to the /gone page
- * with status 410. Answers are kept briefly per worker; any failure means "not gone": the catch-all page then answers 404.
+ * with status 410. "Gone" is permanent, so it is remembered for a minute; "not gone" is never remembered (a post deleted a
+ * second ago must already answer 410). If the API cannot answer, lookups pause for a few seconds so a dead API does not delay
+ * every request, and the catch-all page then answers 404 for such paths.
  */
-// Short for "not gone" (an entity may be deleted any second and must turn into a 410 quickly), long for "gone" (permanent).
-const NOT_GONE_TTL_MS = 3_000;
 const GONE_TTL_MS = 60_000;
+const API_PAUSE_MS = 5_000;
 const GONE_CACHE_MAX = 1000;
-const goneCache = new Map<string, { gone: boolean; at: number }>();
+const goneCache = new Map<string, number>();
+let apiPausedUntil = 0;
 
 async function isGone(pathname: string): Promise<boolean> {
   if (!isResolvablePath(pathname) || isReservedPath(pathname)) return false;
   const now = Date.now();
-  const hit = goneCache.get(pathname);
-  if (hit && now - hit.at < (hit.gone ? GONE_TTL_MS : NOT_GONE_TTL_MS)) return hit.gone;
+  const goneAt = goneCache.get(pathname);
+  if (goneAt !== undefined && now - goneAt < GONE_TTL_MS) return true;
+  if (now < apiPausedUntil) return false;
   const base = process.env.API_BASE_URL ?? (process.env.NODE_ENV === 'development' ? 'http://localhost:5167' : '');
   if (!base) return false;
   try {
@@ -52,13 +55,17 @@ async function isGone(pathname: string): Promise<boolean> {
       cache: 'no-store',
       signal: AbortSignal.timeout(1500),
     });
-    if (!response.ok) return false;
+    if (!response.ok) throw new Error(`resolve returned ${response.status}`);
     const body = (await response.json()) as { result?: { kind?: string } | null };
-    const gone = body.result?.kind === 'gone';
+    if (body.result?.kind !== 'gone') {
+      goneCache.delete(pathname);
+      return false;
+    }
     if (goneCache.size >= GONE_CACHE_MAX) goneCache.clear();
-    goneCache.set(pathname, { gone, at: now });
-    return gone;
+    goneCache.set(pathname, now);
+    return true;
   } catch {
+    apiPausedUntil = now + API_PAUSE_MS;
     return false;
   }
 }

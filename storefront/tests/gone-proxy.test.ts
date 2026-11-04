@@ -48,35 +48,37 @@ describe('410 for permanently deleted paths (decision C-3)', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('a failing or slow API never turns a page into a 410', async () => {
-    fetchMock.mockRejectedValueOnce(new Error('timeout'));
-    expect((await proxy(request('/shop/api-down'))).status).toBe(200);
+  it('a failing or slow API never turns a page into a 410, and lookups pause briefly instead of slowing every request', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-11-04T09:00:00Z'));
+      fetchMock.mockRejectedValueOnce(new Error('timeout'));
+      expect((await proxy(request('/shop/api-down'))).status).toBe(200);
 
-    fetchMock.mockResolvedValueOnce(new Response('boom', { status: 500 }));
-    expect((await proxy(request('/shop/api-500'))).status).toBe(200);
+      expect((await proxy(request('/shop/api-down-too'))).status).toBe(200); // paused: no second 1.5 s wait
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      vi.setSystemTime(new Date('2026-11-04T09:00:06Z'));
+      fetchMock.mockResolvedValueOnce(new Response('boom', { status: 500 }));
+      expect((await proxy(request('/shop/api-500'))).status).toBe(200);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
-  it('remembers an answer for a short time instead of asking again', async () => {
-    fetchMock.mockResolvedValue(answer('gone'));
-
-    await proxy(request('/shop/cached-gone'));
-    await proxy(request('/shop/cached-gone'));
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it('forgets "not gone" within seconds, so a just-deleted post turns into a 410 quickly (and keeps "gone" for longer)', async () => {
+  it('remembers "gone" (permanent) for a minute, but never "not gone": a just-deleted post answers 410 at once', async () => {
     vi.useFakeTimers();
     try {
       vi.setSystemTime(new Date('2026-11-04T10:00:00Z'));
       fetchMock.mockResolvedValueOnce(answer('blogPost'));
       expect((await proxy(request('/blog/about-to-go'))).status).toBe(200);
 
-      vi.setSystemTime(new Date('2026-11-04T10:00:04Z')); // 4 s later: the post was deleted meanwhile
+      vi.setSystemTime(new Date('2026-11-04T10:00:01Z')); // deleted one second later
       fetchMock.mockResolvedValueOnce(answer('gone'));
       expect((await proxy(request('/blog/about-to-go'))).status).toBe(410);
 
-      vi.setSystemTime(new Date('2026-11-04T10:00:30Z')); // "gone" is permanent: no new call within a minute
+      vi.setSystemTime(new Date('2026-11-04T10:00:30Z')); // gone is remembered: no new call
       expect((await proxy(request('/blog/about-to-go'))).status).toBe(410);
       expect(fetchMock).toHaveBeenCalledTimes(2);
     } finally {
