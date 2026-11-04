@@ -1,0 +1,97 @@
+/* The header search box and its suggestion list. Logical properties only (RTL first). */
+.root {
+  position: relative;
+  display: block;
+  min-inline-size: 0;
+}
+
+.root :global(.ui-control) {
+  padding-inline-end: calc(var(--control-height) + var(--space-1));
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+}
+
+.root :global(.ui-control):focus-visible {
+  border-radius: var(--radius-full);
+}
+
+.submit {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  block-size: var(--control-height);
+  display: grid;
+  place-items: center;
+  inline-size: var(--control-height);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.submit:hover {
+  color: var(--color-primary);
+}
+
+.submit:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.list {
+  position: absolute;
+  z-index: calc(var(--z-header) + 1);
+  inset-inline: 0;
+  inset-block-start: calc(100% + var(--space-1));
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  max-block-size: min(70vh, 26rem);
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md, 0 8px 24px rgb(0 0 0 / 0.15));
+}
+
+.list[hidden] {
+  display: none;
+}
+
+.group {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.groupTitle,
+.note {
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text-muted);
+}
+
+.option {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-block-size: 44px;
+  align-items: center;
+}
+
+.activeOption {
+  background: var(--color-primary-soft);
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.detail {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  font-size: var(--font-size-sm, 0.875rem);
+}

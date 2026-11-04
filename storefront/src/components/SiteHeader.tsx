@@ -2,9 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Form, TextField } from '@/components/form';
+import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { SearchBox } from './SearchBox';
 import { Icon } from './Icon';
 import { formatNumber } from '@/lib/format';
 import { compareMessages } from '@/lib/compare-messages';
@@ -42,7 +42,6 @@ interface SiteHeaderProps {
 /** The page must contain <main id="main" tabIndex={-1}> as the skip-link target. */
 export function SiteHeader({ brandName, logo = null, menu = [], cartCount = 0, compareCount = 0 }: SiteHeaderProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [openSub, setOpenSub] = useState<number | null>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -61,12 +60,6 @@ export function SiteHeader({ brandName, logo = null, menu = [], cartCount = 0, c
     document.addEventListener('pointerdown', onPointer);
     return () => document.removeEventListener('pointerdown', onPointer);
   }, [openSub]);
-
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const value = String(new FormData(event.currentTarget).get('q') ?? '').trim();
-    if (value) router.push(`/search?q=${encodeURIComponent(value)}`);
-  }
 
   const linkClass = (href: string | null) => (href && isActive(href) ? styles.active : undefined);
 
@@ -198,12 +191,7 @@ export function SiteHeader({ brandName, logo = null, menu = [], cartCount = 0, c
           )}
         </Link>
 
-        <Form className={styles.search} role="search" onSubmit={onSubmit}>
-          <TextField name="q" label={messages.searchLabel} hideLabel type="search" autoComplete="off" enterKeyHint="search" placeholder={messages.searchPlaceholder} />
-          <button type="submit" className={styles.searchBtn} aria-label={messages.searchSubmit}>
-            <Icon name="search" />
-          </button>
-        </Form>
+        <SearchBox className={styles.search} />
 
         <div className={styles.actions}>
           {compareCount > 0 && (

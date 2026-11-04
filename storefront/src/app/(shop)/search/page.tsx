@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import { getProducts } from '@/lib/catalog';
 import { isPageInRange, pageOneRedirect, parsePageParam, type SearchParams } from '@/lib/paging';
 import { messages } from '@/lib/messages';
+import { suggestMessages } from '@/lib/suggest-messages';
 import { pageMetadata } from '@/lib/seo';
 
 export async function generateMetadata() {
@@ -19,12 +20,13 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const pageNumber = typeof query.page === 'string' || query.page === undefined ? parsePageParam(query.page) : null;
   if (pageNumber === null) notFound();
   // Only the q param is sent to the API (cut to its length limit); the page stays noindex.
-  const result = (await getProducts({ q, page: pageNumber })) ?? { items: [], total: 0, page: pageNumber, pageCount: 1 };
+  const result = (await getProducts({ q, page: pageNumber })) ?? { items: [], total: 0, page: pageNumber, pageCount: 1, fuzzyMatched: false };
   if (!isPageInRange(pageNumber, result.pageCount)) notFound();
 
   return (
     <div className="ui-container ui-section ui-stack">
       <h1 className="ui-heading-2">{q ? messages.searchHeading(q) : messages.searchTitle}</h1>
+      {result.fuzzyMatched && <p role="status">{suggestMessages.fuzzyNotice(q)}</p>}
       {result.items.length === 0 ? (
         <p>{messages.emptyTitle}</p>
       ) : (

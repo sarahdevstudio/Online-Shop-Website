@@ -61,6 +61,8 @@ interface ProductListDto {
   pageSize: number;
   total: number;
   facets?: FacetsDto;
+  /** Nothing contained the typed words: these are the nearest spellings (typo tolerance). */
+  fuzzyMatched?: boolean;
 }
 
 export interface VariantDto {
@@ -118,6 +120,8 @@ export interface ProductPage {
   pageCount: number;
   /** Counts per option; a facet ignores its own selection (OR within, AND across). */
   facets: FacetsDto;
+  /** The typo-tolerant fallback produced this list (the search page says so). */
+  fuzzyMatched: boolean;
 }
 
 export const PAGE_SIZE = 24;
@@ -143,6 +147,7 @@ export function toProductPage(dto: ProductListDto): ProductPage {
     page: dto.page,
     pageCount: Math.max(1, Math.ceil(dto.total / dto.pageSize)),
     facets: dto.facets ?? { brands: [], attributes: [], price: null },
+    fuzzyMatched: dto.fuzzyMatched === true,
   };
 }
 

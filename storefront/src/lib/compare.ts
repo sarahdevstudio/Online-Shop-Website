@@ -1,5 +1,6 @@
 import { formatNumber } from './format';
 import { compareMessages as m } from './compare-messages';
+import { messages } from './messages';
 import type { ProductDetailDto } from './catalog';
 
 /**
@@ -82,7 +83,7 @@ export function buildComparison(products: readonly ProductDetailDto[]): Comparis
   const labels: string[] = [];
   const byProduct = products.map((p) => {
     const values = new Map<string, string>();
-    for (const axis of p.axes) values.set(axis.name, axis.options.map((o) => (axis.unit ? `${o.value} ${axis.unit}` : o.value)).join('، '));
+    for (const axis of p.axes) values.set(axis.name, axis.options.map((o) => (axis.unit ? `${o.value} ${axis.unit}` : o.value)).join(messages.listSeparator));
     for (const spec of p.specs) values.set(spec.name, spec.unit ? `${spec.value} ${spec.unit}` : spec.value);
     for (const label of values.keys()) if (!labels.includes(label)) labels.push(label);
     return values;
