@@ -1045,6 +1045,115 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.ToTable("OrderStatusLogs", (string)null);
                 });
 
+            modelBuilder.Entity("Shop.Domain.Routing.RouteAuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<Guid?>("AdminUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NewPath")
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("OldPath")
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AtUtc")
+                        .HasDatabaseName("IX_RouteAuditLogs_AtUtc");
+
+                    b.HasIndex("TargetType", "TargetId", "AtUtc")
+                        .HasDatabaseName("IX_RouteAuditLogs_Target");
+
+                    b.ToTable("RouteAuditLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Shop.Domain.Routing.RouteEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCurrent")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsGone")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)")
+                        .UseCollation("Latin1_General_100_CI_AS");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Path")
+                        .IsUnique()
+                        .HasDatabaseName("UX_RoutePaths_Path");
+
+                    b.HasIndex("TargetType", "TargetId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_RoutePaths_Current")
+                        .HasFilter("[IsCurrent] = 1");
+
+                    b.ToTable("RoutePaths", (string)null);
+                });
+
             modelBuilder.Entity("Shop.Domain.Settings.SettingsAuditLog", b =>
                 {
                     b.Property<int>("Id")

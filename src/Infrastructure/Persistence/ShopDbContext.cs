@@ -9,6 +9,7 @@ using Shop.Domain.Inventory;
 using Shop.Domain.Orders;
 using Shop.Domain.Settings;
 using Shop.Domain.Site;
+using Shop.Domain.Routing;
 using Shop.Domain.Translations;
 using Shop.Infrastructure.Identity;
 
@@ -43,6 +44,8 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     public DbSet<SiteAuditLog> SiteAuditLogs => Set<SiteAuditLog>();
     public DbSet<Translation> Translations => Set<Translation>();
     public DbSet<TranslationAuditLog> TranslationAuditLogs => Set<TranslationAuditLog>();
+    public DbSet<RouteEntry> RoutePaths => Set<RouteEntry>();
+    public DbSet<RouteAuditLog> RouteAuditLogs => Set<RouteAuditLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
