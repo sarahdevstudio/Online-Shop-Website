@@ -85,6 +85,9 @@ describe('fonts', () => {
   it('preloads exactly one regular-weight file', () => {
     expect(fontPreload('vazirmatn')).toEqual({ href: '/fonts/vazirmatn/vazirmatn-arabic-wght-normal.woff2', type: 'font/woff2' });
     expect(fontPreload('sahel').href).toBe('/fonts/sahel/Sahel.woff2');
+    // the default font is the subset one: Persian digits and the ZWNJ are covered, the weight axis is the one the shop uses
+    expect(fontFaceCss('vazirmatn')).toContain('U+06F0-06F9');
+    expect(fontFaceCss('vazirmatn')).toContain('font-weight:400 700');
     // the two-subset families also preload the Latin subset every page uses; the multi-weight families only the regular file
     expect(fontPreloads('vazirmatn').map((p) => p.href)).toEqual(['/fonts/vazirmatn/vazirmatn-arabic-wght-normal.woff2', '/fonts/vazirmatn/vazirmatn-latin-wght-normal.woff2']);
     expect(fontPreloads('sahel').map((p) => p.href)).toEqual(['/fonts/sahel/Sahel.woff2']);

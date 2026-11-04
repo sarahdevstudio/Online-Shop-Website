@@ -53,6 +53,12 @@ const ARABIC_RANGE =
 const LATIN_RANGE =
   'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD';
 
+// Vazirmatn is subset to what the shop writes (scripts/perf/subset-vazirmatn.py lists the same code points) and its weight axis is
+// 400-700, which is all the style sheets use: 81 KB became 36 KB. A character outside these ranges uses the next family of the stack.
+const VAZIRMATN_ARABIC_RANGE =
+  'U+060C,U+061B,U+061F,U+0621-063A,U+0640-0655,U+0660-066D,U+0670,U+067E,U+0686,U+0698,U+06A9,U+06AF,U+06BE,U+06C0,U+06CC,U+06D4-06D5,U+06F0-06F9,U+200C-200F,U+FDFC';
+const VAZIRMATN_LATIN_RANGE = 'U+0020-007E,U+00A0,U+00A9,U+00AB,U+00BB,U+00D7,U+2013-2014,U+2018-2019,U+201C-201D,U+2022,U+2026,U+2212';
+
 interface FontFile {
   file: string;
   weight: string;
@@ -73,8 +79,8 @@ const FONTS: Record<FontId, FontSpec> = {
     family: 'Vazirmatn',
     folder: 'vazirmatn',
     files: [
-      { file: 'vazirmatn-arabic-wght-normal.woff2', weight: '100 900', range: ARABIC_RANGE, variable: true },
-      { file: 'vazirmatn-latin-wght-normal.woff2', weight: '100 900', range: LATIN_RANGE, variable: true },
+      { file: 'vazirmatn-arabic-wght-normal.woff2', weight: '400 700', range: VAZIRMATN_ARABIC_RANGE, variable: true },
+      { file: 'vazirmatn-latin-wght-normal.woff2', weight: '400 700', range: VAZIRMATN_LATIN_RANGE, variable: true },
     ],
     preload: 'vazirmatn-arabic-wght-normal.woff2',
   },
@@ -142,7 +148,7 @@ export function fontPreload(font: FontId): { href: string; type: 'font/woff2' } 
 export function fontPreloads(font: FontId): Array<{ href: string; type: 'font/woff2' }> {
   const spec = FONTS[font];
   const hrefs = new Set([fontUrl(spec, spec.preload)]);
-  for (const f of spec.files) if (f.variable && f.range === LATIN_RANGE) hrefs.add(fontUrl(spec, f.file));
+  for (const f of spec.files) if (f.variable && f.file.includes('-latin-')) hrefs.add(fontUrl(spec, f.file));
   return [...hrefs].map((href) => ({ href, type: 'font/woff2' }));
 }
 
