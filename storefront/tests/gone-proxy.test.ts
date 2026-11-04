@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { proxy } from '../src/proxy';
 
+// The proxy also asks the API about the analytics id for the CSP; these tests count the API calls for the 410 lookup only.
+vi.mock('../src/lib/analytics-config', () => ({ analyticsCspExtra: async () => undefined }));
+
 const request = (path: string, method = 'GET') => new NextRequest(`http://localhost:3000${path}`, { method });
 
 const answer = (kind: string) => new Response(JSON.stringify({ result: { kind } }), { status: 200, headers: { 'content-type': 'application/json' } });
