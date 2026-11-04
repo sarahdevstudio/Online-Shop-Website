@@ -899,7 +899,7 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
     /// <summary>A whole number; Persian digits and thousands separators (, ٬ space) are accepted. Null for anything else.</summary>
     private static long? ParseWhole(string value)
     {
-        var text = ToAscii(value).Replace(",", string.Empty).Replace("٬", string.Empty).Replace(" ", string.Empty);
+        var text = ToAscii(value).Replace(",", string.Empty).Replace("\u066C", string.Empty).Replace(" ", string.Empty); // \u066C is the Arabic thousands separator
         return long.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var number) ? number : null;
     }
 }
