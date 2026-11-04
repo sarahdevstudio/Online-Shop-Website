@@ -16,6 +16,7 @@ import { messages } from '@/lib/messages';
 import type { SearchParams } from '@/lib/paging';
 import { absoluteUrl, pageMetadata, productJsonLd, withSeoOverrides, type Availability } from '@/lib/seo';
 import { getEntitySeo } from '@/lib/entity-seo';
+import { CompareButton } from '@/components/CompareButton';
 import { FaqSection } from '@/components/FaqSection';
 import { seoDefaults } from '@/lib/site-config';
 import { pickVariant, selectionFromParams, variantQuery } from '@/lib/variants';
@@ -126,6 +127,8 @@ export async function ProductView({ slug, searchParams }: Props) {
               </>
             )
           )}
+
+          <CompareButton slug={product.slug} returnTo={basePath} />
 
           <section aria-labelledby="specs" className="ui-stack">
             <h2 id="specs" className="ui-heading-4">

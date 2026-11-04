@@ -18,6 +18,7 @@ public static class ReservedPaths
         "api",            // storefront route handlers
         "cart",
         "checkout",
+        "compare",        // product comparison (a cookie-backed personal list)
         "favicon.ico",
         "fonts",          // storefront/public/fonts
         "gone",           // the page behind every 410 response

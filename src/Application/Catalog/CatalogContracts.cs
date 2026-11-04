@@ -36,7 +36,7 @@ public sealed record ProductFacetsDto(
     IReadOnlyList<FacetOptionDto> Brands, IReadOnlyList<AttributeFacetDto> Attributes, PriceRangeDto? Price);
 
 public sealed record ProductListDto(
-    IReadOnlyList<ProductCardDto> Items, int Page, int PageSize, int Total, ProductFacetsDto Facets);
+    IReadOnlyList<ProductCardDto> Items, int Page, int PageSize, int Total, ProductFacetsDto Facets, bool FuzzyMatched = false);
 
 public sealed record VariantDto(
     int Id, string Sku, long Price, long? CompareAtPrice, bool InStock, IReadOnlyDictionary<string, string> Attributes);

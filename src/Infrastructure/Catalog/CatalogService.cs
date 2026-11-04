@@ -10,7 +10,7 @@ using Shop.Infrastructure.Persistence;
 
 namespace Shop.Infrastructure.Catalog;
 
-internal sealed class CatalogService(ShopDbContext db, IMediaStorage media, IRouteTable routes) : ICatalogService
+internal sealed class CatalogService(ShopDbContext db, IMediaStorage media, IRouteTable routes, Shop.Application.Search.ICatalogSearch search) : ICatalogService
 {
     private static readonly Error CategoryNotFound = Error.NotFound("category_not_found", "api.error.category-not-found-short");
     private static readonly Error ProductNotFound = Error.NotFound("product_not_found", "api.error.product-not-found-short");
@@ -99,6 +99,22 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media, IRou
 
         var matching = Apply(filter, except: null);
         var total = await matching.CountAsync(ct);
+
+        // Nothing contains the typed words: offer the nearest spellings (typo tolerance) instead of an empty page. The ids come from
+        // the in-memory index; the same filters, facets and sorting then apply to them as to any other listing.
+        var fuzzyMatched = false;
+        if (total == 0 && filter.Tokens.Length > 0)
+        {
+            var fuzzyIds = await search.FuzzyProductIdsAsync(query.Q, 200, ct);
+            if (fuzzyIds.Count > 0)
+            {
+                filter = filter.WithFuzzy(fuzzyIds.ToList());
+                matching = Apply(filter, except: null);
+                total = await matching.CountAsync(ct);
+                fuzzyMatched = total > 0;
+            }
+        }
+
         var ordered = query.Sort switch
         {
             ProductSort.PriceAsc => matching.OrderBy(MinPrice).ThenBy(p => p.Id),
@@ -140,7 +156,7 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media, IRou
         var attributeFacets = await AttributeFacetsAsync(filter, attributes, ct);
         var price = await PriceRangeAsync(filter, ct);
 
-        return new ProductListDto(items, query.Page, query.PageSize, total, new ProductFacetsDto(brandFacet, attributeFacets, price));
+        return new ProductListDto(items, query.Page, query.PageSize, total, new ProductFacetsDto(brandFacet, attributeFacets, price), fuzzyMatched);
     }
 
     public async Task<Result<ProductDetailDto>> GetProductAsync(string slug, CancellationToken ct)
@@ -239,6 +255,15 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media, IRou
     {
         public List<int>? CategoryIds { get; init; }
         public string[] Tokens { get; init; } = [];
+
+        /// <summary>Set by the typo-tolerant fallback: only these products match, and the typed words are not looked for.</summary>
+        public List<int>? FuzzyIds { get; init; }
+
+        public ListFilter WithFuzzy(List<int> ids) => new()
+        {
+            CategoryIds = CategoryIds, Tokens = [], FuzzyIds = ids, InStock = InStock, Discounted = Discounted, MinPrice = MinPrice,
+            MaxPrice = MaxPrice, BrandIds = BrandIds, Attributes = Attributes,
+        };
         public bool InStock { get; init; }
         public bool Discounted { get; init; }
         public long? MinPrice { get; init; }
@@ -264,6 +289,11 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media, IRou
         foreach (var token in filter.Tokens)
         {
             query = query.Where(p => p.SearchKey.Contains(token));
+        }
+
+        if (filter.FuzzyIds is { } fuzzyIds)
+        {
+            query = query.Where(p => fuzzyIds.Contains(p.Id));
         }
 
         if (filter.InStock)

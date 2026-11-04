@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
 import { AnnouncementBar } from '@/components/AnnouncementBar';
 import { Analytics } from '@/components/Analytics';
+import { COMPARE_COOKIE, parseCompare } from '@/lib/compare';
 import { JsonLd } from '@/components/JsonLd';
 import { PreviewBanner } from '@/components/PreviewBanner';
 import { SiteFooter, type FooterGroup } from '@/components/SiteFooter';
@@ -36,6 +37,7 @@ export async function ShopChrome({ children }: { children: ReactNode }) {
   const instagram = info?.instagramHandle || undefined;
   const sameAs = [...social.map((s) => s.href), ...(instagram ? [`https://www.instagram.com/${instagram}/`] : [])];
   const announcement = chrome.announcement;
+  const compareCount = parseCompare((await cookies()).get(COMPARE_COOKIE)?.value).length;
   const showAnnouncement = announcement.enabled && !isAnnouncementDismissed((await cookies()).get(ANNOUNCEMENT_COOKIE)?.value, announcement.text);
 
   return (
@@ -46,7 +48,7 @@ export async function ShopChrome({ children }: { children: ReactNode }) {
       {/* Analytics: only with a configured id, never in a draft preview, started after the first interaction or idle time. */}
       {seo.ga4Id && !preview && <Analytics id={seo.ga4Id} />}
       {showAnnouncement && <AnnouncementBar text={announcement.text} href={announcement.link} style={announcement.style} dismissible={announcement.dismissible} />}
-      <SiteHeader brandName={seo.siteName} logo={theme.logo} menu={buildMenu(chrome.headerMenu, categories)} cartCount={cartCount} />
+      <SiteHeader brandName={seo.siteName} logo={theme.logo} menu={buildMenu(chrome.headerMenu, categories)} cartCount={cartCount} compareCount={compareCount} />
       <main id="main" tabIndex={-1}>
         {children}
       </main>

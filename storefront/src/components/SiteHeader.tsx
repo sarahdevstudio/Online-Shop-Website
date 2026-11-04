@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Form, TextField } from '@/components/form';
 import { Icon } from './Icon';
 import { formatNumber } from '@/lib/format';
+import { compareMessages } from '@/lib/compare-messages';
 import { messages } from '@/lib/messages';
 import styles from './SiteHeader.module.css';
 
@@ -34,10 +35,12 @@ interface SiteHeaderProps {
   logo?: HeaderLogo | null;
   menu?: readonly MenuNode[];
   cartCount?: number;
+  /** Products in the comparison list (cookie); the link shows only when there are some. */
+  compareCount?: number;
 }
 
 /** The page must contain <main id="main" tabIndex={-1}> as the skip-link target. */
-export function SiteHeader({ brandName, logo = null, menu = [], cartCount = 0 }: SiteHeaderProps) {
+export function SiteHeader({ brandName, logo = null, menu = [], cartCount = 0, compareCount = 0 }: SiteHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -203,6 +206,14 @@ export function SiteHeader({ brandName, logo = null, menu = [], cartCount = 0 }:
         </Form>
 
         <div className={styles.actions}>
+          {compareCount > 0 && (
+            <Link className={styles.iconBtn} href="/compare" aria-label={compareMessages.navWithCount(formatNumber(compareCount))}>
+              <Icon name="compare" />
+              <span className={styles.count} aria-hidden="true">
+                {formatNumber(compareCount)}
+              </span>
+            </Link>
+          )}
           <Link className={styles.iconBtn} href="/cart" aria-label={cartLabel}>
             <Icon name="cart" />
             {cartCount > 0 && (

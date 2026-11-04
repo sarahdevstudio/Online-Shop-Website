@@ -10,6 +10,7 @@ export const RESERVED_SEGMENTS = [
   'api',
   'cart',
   'checkout',
+  'compare',
   'favicon.ico',
   'fonts',
   'gone',

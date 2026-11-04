@@ -40,9 +40,11 @@ public static class DependencyInjection
         }
 
         services.AddSingleton<Shop.Infrastructure.Site.LinkStateInterceptor>();
+        services.AddSingleton<Shop.Application.Search.ICatalogSearch, Shop.Infrastructure.Search.CatalogSearchIndex>();
+        services.AddSingleton<Shop.Infrastructure.Search.CatalogSearchInterceptor>();
         services.AddDbContext<ShopDbContext>((sp, options) => options
             .UseSqlServer(connectionString)
-            .AddInterceptors(sp.GetRequiredService<Shop.Infrastructure.Site.LinkStateInterceptor>()));
+            .AddInterceptors(sp.GetRequiredService<Shop.Infrastructure.Site.LinkStateInterceptor>(), sp.GetRequiredService<Shop.Infrastructure.Search.CatalogSearchInterceptor>()));
 
         services.AddIdentityCore<ApplicationUser>(options =>
             {

@@ -1,0 +1,81 @@
+/* The comparison table: scrolls sideways on a phone, the first column (the attribute name) stays in view. Logical properties only. */
+.scroll {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  inline-size: 100%;
+  min-inline-size: max-content;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem 1rem;
+  text-align: start;
+  vertical-align: top;
+  border-block-end: 1px solid var(--color-border);
+  min-inline-size: 9rem;
+}
+
+.table thead th {
+  vertical-align: bottom;
+  background: var(--color-surface-muted);
+}
+
+/* The sticky attribute-name column. */
+.table tbody th,
+.table thead th:first-child {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  background: var(--color-surface);
+  border-inline-end: 1px solid var(--color-border);
+  font-weight: 600;
+  min-inline-size: 7.5rem;
+  max-inline-size: 10rem;
+}
+
+.table thead th:first-child {
+  background: var(--color-surface-muted);
+  z-index: 2;
+}
+
+.diff th,
+.diff td {
+  background: var(--color-primary-soft);
+}
+
+.diffMark {
+  display: inline-block;
+  margin-inline-start: 0.4rem;
+  padding: 0 0.4rem;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-primary);
+}
+
+.product {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+.product img {
+  inline-size: 6rem;
+  block-size: 6rem;
+  object-fit: contain;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
