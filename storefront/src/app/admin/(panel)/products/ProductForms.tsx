@@ -5,7 +5,7 @@ import { Button } from '@/components/Button';
 import { Form, FormActions, FormGrid, FormSection, RequiredNote, SubmitButton, TextField } from '@/components/form';
 import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
-import type { AdminBrand, AdminCategory, AdminProduct } from '@/lib/admin/types';
+import type { AdminBrand, AdminCategory, AdminProduct, RouteTarget } from '@/lib/admin/types';
 import { formatNumber } from '@/lib/format';
 import { FormBanner } from '../../_components/FormBits';
 import { createProductAction, updateProductAction } from './actions';
@@ -55,7 +55,7 @@ export function NewProductForm({ categories, brands }: FormProps) {
   );
 }
 
-export function EditProductForm({ product, categories, brands }: FormProps & { product: AdminProduct }) {
+export function EditProductForm({ product, categories, brands, route }: FormProps & { product: AdminProduct; route: RouteTarget }) {
   const [state, action] = useActionState(updateProductAction, INITIAL_FORM_STATE);
   return (
     <Form action={action} errors={state.errors} banner={<FormBanner state={state} />}>
@@ -63,7 +63,7 @@ export function EditProductForm({ product, categories, brands }: FormProps & { p
       <RequiredNote />
       <div key={product.updatedAtUtc}>
         <FormGrid>
-          <GeneralFields categories={categories} brands={brands} product={product} />
+          <GeneralFields categories={categories} brands={brands} product={product} route={route} />
         </FormGrid>
       </div>
       <FormActions>

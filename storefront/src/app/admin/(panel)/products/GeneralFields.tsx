@@ -2,16 +2,19 @@
 
 import { SelectField, TextAreaField, TextField, FormBlock } from '@/components/form';
 import { adminMessages } from '@/lib/admin/messages';
-import type { AdminBrand, AdminCategory, AdminProduct } from '@/lib/admin/types';
+import type { AdminBrand, AdminCategory, AdminProduct, RouteTarget } from '@/lib/admin/types';
+import { PathField } from '../../_components/PathField';
 
 interface Props {
   categories: AdminCategory[];
   brands: AdminBrand[];
   product?: AdminProduct;
+  /** The product's current route (edit). */
+  route?: RouteTarget;
 }
 
 /** Name, slug (create only), category, brand, status, description: shared by the create and edit forms. Rendered inside a <FormGrid>. */
-export function GeneralFields({ categories, brands, product }: Props) {
+export function GeneralFields({ categories, brands, product, route }: Props) {
   const roots = categories.filter((c) => c.parentId === null);
   const t = adminMessages.products;
   return (
@@ -57,6 +60,7 @@ export function GeneralFields({ categories, brands, product }: Props) {
         ))}
       </SelectField>
       <TextAreaField name="description" label={t.description} defaultValue={product?.description} />
+      <PathField key={route?.rowVersion ?? 'new'} route={route} defaultPattern="/product/<slug>" />
     </>
   );
 }

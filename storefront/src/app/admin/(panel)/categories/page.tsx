@@ -1,12 +1,13 @@
 import { adminGet } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
-import type { AdminCategory } from '@/lib/admin/types';
+import type { AdminCategory, RouteTarget } from '@/lib/admin/types';
 import { CategoryForm, DeleteCategoryForm } from './CategoryForms';
 import styles from '../../admin.module.css';
 
 export default async function CategoriesPage() {
   const categories = (await adminGet<AdminCategory[]>('/admin/categories')) ?? [];
   const roots = categories.filter((c) => c.parentId === null);
+  const routes = new Map((await Promise.all(categories.map((c) => adminGet<RouteTarget>(`/admin/routes/category/${c.id}`)))).flatMap((r) => (r ? [[r.id, r] as const] : [])));
   return (
     <>
       <h1 className="ui-heading-2">{adminMessages.taxonomy.categories}</h1>
@@ -20,7 +21,7 @@ export default async function CategoriesPage() {
             {category.name} <span className={`${styles.muted} ${styles.ltr}`}>{category.slug}</span>
             {!category.isActive && <span className={styles.badge}> {adminMessages.no}</span>}
           </summary>
-          <CategoryForm category={category} roots={roots} />
+          <CategoryForm category={category} roots={roots} route={routes.get(category.id)} />
           <DeleteCategoryForm id={category.id} />
         </details>
       ))}

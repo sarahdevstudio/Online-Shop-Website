@@ -6,6 +6,7 @@ import { adminFetch } from '@/lib/admin/api';
 import { failState, okState, problemState, submittedFrom, type FormState } from '@/lib/admin/form-state';
 import { checked, id as readId, text, whole } from '@/lib/admin/form-input';
 import { adminMessages } from '@/lib/admin/messages';
+import { applyPathChange } from '@/lib/admin/route-actions';
 import type { AdminAttribute, AdminProduct } from '@/lib/admin/types';
 
 const STATUSES = ['draft', 'published', 'archived'];
@@ -47,7 +48,7 @@ export async function createProductAction(_previous: FormState, formData: FormDa
   for (let i = 0; formData.has(`variants.${i}.sku`); i++) {
     variants.push({ ...variantFrom(formData, `variants.${i}.`), isActive: true, sortOrder: i });
   }
-  const result = await adminFetch<AdminProduct>('POST', '/admin/products', { body: { ...productBody(formData), slug: text(formData, 'slug'), variants } });
+  const result = await adminFetch<AdminProduct>('POST', '/admin/products', { body: { ...productBody(formData), slug: text(formData, 'slug'), path: text(formData, 'path') || null, variants } });
   if (!result.ok) return problemState(result.problem, submitted);
   redirect(`/admin/products/${result.body.id}`);
 }
@@ -55,8 +56,12 @@ export async function createProductAction(_previous: FormState, formData: FormDa
 export async function updateProductAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const productId = readId(formData);
   if (productId === null) return failState(adminMessages.failed);
+  const submitted = submittedFrom(formData);
+  // The URL first: a refused path (taken, reserved, malformed) stops here and nothing else is saved.
+  const path = await applyPathChange('product', productId, formData, submitted);
+  if (!path.ok) return path.state;
   const result = await adminFetch<AdminProduct>('PUT', `/admin/products/${productId}`, { body: { ...productBody(formData), slug: null, variants: null } });
-  if (!result.ok) return problemState(result.problem, submittedFrom(formData));
+  if (!result.ok) return problemState(result.problem, submitted);
   revalidatePath(`/admin/products/${productId}`);
   return okState(adminMessages.saved);
 }

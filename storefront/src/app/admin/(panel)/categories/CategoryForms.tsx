@@ -4,12 +4,13 @@ import { useActionState } from 'react';
 import { CheckField, Form, FormActions, FormBlock, FormGrid, FormSection, RequiredNote, SelectField, SubmitButton, TextAreaField, TextField } from '@/components/form';
 import { INITIAL_FORM_STATE } from '@/lib/admin/form-state';
 import { adminMessages } from '@/lib/admin/messages';
-import type { AdminCategory } from '@/lib/admin/types';
+import type { AdminCategory, RouteTarget } from '@/lib/admin/types';
+import { PathField } from '../../_components/PathField';
 import { FormBanner } from '../../_components/FormBits';
 import { deleteCategoryAction, saveCategoryAction } from './actions';
 
 /** Create (no `category`, with a `title`) or edit a category. */
-export function CategoryForm({ category, roots, title }: { category?: AdminCategory; roots: AdminCategory[]; title?: string }) {
+export function CategoryForm({ category, roots, title, route }: { category?: AdminCategory; roots: AdminCategory[]; title?: string; route?: RouteTarget }) {
   const [state, action] = useActionState(saveCategoryAction, INITIAL_FORM_STATE);
   const parents = roots.filter((r) => r.id !== category?.id);
   return (
@@ -36,6 +37,7 @@ export function CategoryForm({ category, roots, title }: { category?: AdminCateg
           </SelectField>
           <TextField name="sortOrder" label={adminMessages.products.sortOrder} defaultValue={category?.sortOrder ?? 0} inputMode="numeric" ltr autoComplete="off" />
           <TextAreaField name="description" label={adminMessages.products.description} defaultValue={category?.description} rows={3} />
+          <PathField key={route?.rowVersion ?? 'new'} route={route} defaultPattern="/category/<slug>" />
           <CheckField name="isActive" label={adminMessages.active} defaultChecked={category?.isActive ?? true} full />
         </FormGrid>
         <FormActions>
