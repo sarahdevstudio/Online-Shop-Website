@@ -2,7 +2,7 @@ DELETE /api/v1/admin/blog/{id:int} | auth: Blog.Manage | - | rate: - | -
 DELETE /api/v1/admin/brands/{id:int} | auth: Catalog.Manage | - | rate: - | -
 DELETE /api/v1/admin/categories/{id:int} | auth: Catalog.Manage | - | rate: - | -
 DELETE /api/v1/admin/images/{id:int} | auth: Catalog.Manage | - | rate: - | -
-DELETE /api/v1/admin/routes/{id:int} | auth: Routes.Manage+roles:Admin | - | rate: - | -
+DELETE /api/v1/admin/routes/{id:int} | auth: Routes.Manage+authenticated | - | rate: - | -
 DELETE /api/v1/store/cart/items/{variantId:int} | auth:  | anonymous | rate: store-cart | storefront
 GET /api/v1/admin/attributes | auth: Catalog.Manage | - | rate: - | -
 GET /api/v1/admin/blog | auth: Blog.Manage | - | rate: - | -
@@ -19,9 +19,9 @@ GET /api/v1/admin/orders/{id:int} | auth: Orders.Manage | - | rate: - | -
 GET /api/v1/admin/ping | auth: Settings.Manage | - | rate: - | -
 GET /api/v1/admin/products | auth: Catalog.Manage | - | rate: - | -
 GET /api/v1/admin/products/{id:int} | auth: Catalog.Manage | - | rate: - | -
-GET /api/v1/admin/routes/audit | auth: Routes.Manage+roles:Admin | - | rate: - | -
-GET /api/v1/admin/routes/redirects | auth: Routes.Manage+roles:Admin | - | rate: - | -
-GET /api/v1/admin/routes/{type}/{id:int} | auth: roles:Admin | - | rate: - | -
+GET /api/v1/admin/routes/audit | auth: Routes.Manage+authenticated | - | rate: - | -
+GET /api/v1/admin/routes/redirects | auth: Routes.Manage+authenticated | - | rate: - | -
+GET /api/v1/admin/routes/{type}/{id:int} | auth: authenticated | - | rate: - | -
 GET /api/v1/admin/settings | auth: Settings.Manage | - | rate: - | -
 GET /api/v1/admin/settings/audit | auth: Settings.Manage | - | rate: - | -
 GET /api/v1/admin/site | auth: Site.Manage | - | rate: - | -
@@ -86,7 +86,7 @@ PUT /api/v1/admin/content-pages/{slug} | auth: Content.Manage | - | rate: - | -
 PUT /api/v1/admin/products/{id:int} | auth: Catalog.Manage | - | rate: - | -
 PUT /api/v1/admin/products/{id:int}/attributes | auth: Catalog.Manage | - | rate: - | -
 PUT /api/v1/admin/products/{id:int}/images/order | auth: Catalog.Manage | - | rate: - | -
-PUT /api/v1/admin/routes/{type}/{id:int} | auth: roles:Admin | - | rate: - | -
+PUT /api/v1/admin/routes/{type}/{id:int} | auth: authenticated | - | rate: - | -
 PUT /api/v1/admin/settings | auth: Settings.Manage | - | rate: - | -
 PUT /api/v1/admin/site/{kind}/draft | auth: Site.Manage | - | rate: - | -
 PUT /api/v1/admin/translations/{id:int} | auth: Translations.Manage | - | rate: - | -

@@ -14,7 +14,7 @@ namespace Shop.Api.Controllers;
 /// </summary>
 [Route("api/v1/admin/routes")]
 [Tags("Admin routes")]
-[Authorize(Roles = Roles.Admin)]
+[Authorize]
 public sealed class AdminRoutesController(IRouteService routes, ICurrentUser currentUser) : ApiControllerBase
 {
     private static string? PermissionFor(string type) => type switch
