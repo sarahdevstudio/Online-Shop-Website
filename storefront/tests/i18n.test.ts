@@ -46,11 +46,10 @@ describe('t() and tf()', () => {
 });
 
 describe('no hard-coded Persian text', () => {
-  /** Files that legitimately hold Persian-script characters that are not UI text: digit tables, character classes, a Persian-only filter. */
+  /** Files that legitimately hold Persian-script characters that are not UI text: digit tables, character classes. */
   const ALLOWED: Record<string, string> = {
     'lib/format.ts': 'Persian/Arabic digit tables and separators used for number formatting',
     'lib/contrast.ts': 'Persian digit table for ratios',
-    'lib/persian-only.ts': 'the Persian-script character class that guards against English text reaching visitors',
     'app/admin/(panel)/site/home/HomeEditor.tsx': 'a character class that splits product ids on Persian and Latin commas',
   };
 

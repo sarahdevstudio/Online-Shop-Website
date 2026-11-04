@@ -104,7 +104,8 @@ describe('form input parsing', () => {
     expect(values.fullName).toBe('علی');
     expect(values.mobile).toBe('۰۹۱۲۳۴۵۶۷۸۹'); // shown again exactly as typed
     expect(values.address).toBe('');
-    expect(mapApiErrors({ FullName: ['الف', 'ب'], PostalCode: ['x'], Empty: [] })).toEqual({ fullName: 'الف', postalCode: messages.invalidValue }); // English text never shows
+    expect(mapApiErrors({ FullName: ['الف', 'ب'], PostalCode: ['x'], Empty: [] })).toEqual({ fullName: 'الف', postalCode: 'x' }); // the API's text is shown as received
+    expect(mapApiErrors({ PostalCode: [''] })).toEqual({ postalCode: messages.invalidValue }); // ours only when there is none
     expect(mapApiErrors(null)).toEqual({});
   });
 

@@ -4,7 +4,6 @@ import { requestTooLarge } from '@/lib/admin/image-upload';
 import { adminMessages } from '@/lib/admin/messages';
 import { siteMessages } from '@/lib/admin/site-messages';
 import type { SiteUploadResult } from '@/lib/admin/site-types';
-import { persianOr } from '@/lib/persian-only';
 
 /**
  * Site image upload (logo, favicon, hero, banner, share image). Same-origin multipart post with the `admin_session` cookie,
@@ -33,7 +32,7 @@ export async function POST(request: Request) {
   });
   if (!result.ok) {
     const first = Object.values(result.problem.errors ?? {})[0]?.[0];
-    const message = result.status === 413 ? siteMessages.upload.tooBig : persianOr(first ?? result.problem.detail, siteMessages.upload.failed);
+    const message = result.status === 413 ? siteMessages.upload.tooBig : (first || result.problem.detail) ?? siteMessages.upload.failed;
     return NextResponse.json({ ok: false, message }, { status: result.status === 413 ? 413 : 400 });
   }
   return NextResponse.json({ ok: true, message: siteMessages.upload.uploaded, image: result.body }, { status: 201 });

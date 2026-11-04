@@ -1,4 +1,3 @@
-import { persianOr } from '../persian-only';
 import { adminMessages } from './messages';
 
 /** The API's `Media:MaxImageBytes` default (5 MB). The API is the authority; these only give fast, clear feedback. */
@@ -16,6 +15,6 @@ export function uploadErrorMessage(status: number, errors: Record<string, string
   if (status === 413) return adminMessages.products.imageTooBig;
   // The API's own message for the file (size, type...) is the accurate one and is editable in the translation editor.
   const file = (errors?.file ?? errors?.File ?? [])[0];
-  if (status === 400 && file) return persianOr(file, adminMessages.products.imageFailed);
+  if (status === 400 && file) return file;
   return adminMessages.products.imageFailed;
 }
