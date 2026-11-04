@@ -29,7 +29,7 @@ public sealed record PaymentMethodsDto(bool CardToCard, bool CashOnDelivery);
 /// or "price_changed" (<see cref="PreviousPrice"/> is what the customer last saw); null when all is well.
 /// </summary>
 public sealed record CartLineDto(
-    int VariantId, string ProductName, string ProductSlug, string? VariantLabel, string Sku, string? ImageUrl,
+    int VariantId, string ProductName, string ProductSlug, string ProductPath, string? VariantLabel, string Sku, string? ImageUrl,
     long UnitPrice, int Quantity, int MaxQuantity, long LineTotal, bool Available, string? Notice, long? PreviousPrice);
 
 public sealed record CartDto(

@@ -6,7 +6,7 @@ namespace Shop.IntegrationTests;
 
 public sealed record CartLineBody(
     int VariantId, string ProductName, string? VariantLabel, string Sku, long UnitPrice, int Quantity, int MaxQuantity,
-    long LineTotal, bool Available, string? Notice, long? PreviousPrice);
+    long LineTotal, bool Available, string? Notice, long? PreviousPrice, string? ProductPath = null);
 
 public sealed record CartBody(
     CartLineBody[] Lines, int ItemCount, long Subtotal, long ShippingFee, long Total, long? FreeShippingThreshold, bool HasBlockingIssue);

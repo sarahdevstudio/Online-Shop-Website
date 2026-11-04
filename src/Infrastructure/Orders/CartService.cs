@@ -10,7 +10,8 @@ using Shop.Infrastructure.Persistence;
 namespace Shop.Infrastructure.Orders;
 
 internal sealed class CartService(
-    ShopDbContext db, IMediaStorage media, IStoreSettings settings, IOptions<CheckoutOptions> options, TimeProvider clock) : ICartService
+    ShopDbContext db, IMediaStorage media, IStoreSettings settings, IOptions<CheckoutOptions> options, TimeProvider clock,
+    Shop.Application.Routing.IRouteTable routes) : ICartService
 {
     private CheckoutOptions Options => options.Value;
 
@@ -159,7 +160,8 @@ internal sealed class CartService(
                 : info.Price != item.SeenPrice ? "price_changed"
                 : null;
             lines.Add(new CartLineDto(
-                item.VariantId, info.ProductName, info.ProductSlug, info.Label, info.Sku,
+                item.VariantId, info.ProductName, info.ProductSlug,
+                routes.PathOf(Shop.Domain.Routing.RouteTargetTypes.Product, info.ProductId, info.ProductSlug), info.Label, info.Sku,
                 info.ImagePath is null ? null : media.GetUrl(info.ImagePath),
                 info.Price, item.Quantity, max,
                 info.Purchasable ? info.Price * item.Quantity : 0,

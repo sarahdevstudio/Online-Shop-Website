@@ -22,7 +22,7 @@ public sealed record RoutePageBody<T>(T[] Items, int Page, int PageSize, int Tot
 public sealed record RouteAuditBody(string TargetType, int TargetId, string Action, string? OldPath, string? NewPath, string? AdminUsername);
 
 /// <summary>Dynamic routing through the real API: redirects, no chains, conflicts, reserved paths, 410 vs 404, permissions, caching.</summary>
-public sealed class RoutesTests(ApiFixture fixture) : CatalogTestBase(fixture)
+public sealed class RoutesTests(ApiFixture fixture) : StoreTestBase(fixture)
 {
     private const string Routes = "/api/v1/admin/routes";
 
@@ -504,6 +504,20 @@ public sealed class RoutesTests(ApiFixture fixture) : CatalogTestBase(fixture)
         var pages = await GetOkAsync<JsonElement>(anon, "/api/v1/catalog/pages");
         Assert.Contains(pages.EnumerateArray(), p => p.GetProperty("slug").GetString() == "about" && p.GetProperty("path").GetString() == "/about");
         Assert.Equal("/about", (await GetOkAsync<JsonElement>(anon, "/api/v1/catalog/pages/about")).GetProperty("path").GetString());
+    }
+
+    [Fact]
+    public async Task ACartLine_LinksToTheProductsCurrentPath()
+    {
+        var admin = await LoginAdminAsync();
+        var (product, slug) = await NewProductAsync(admin);
+        var shopper = NewShopper();
+        Assert.True((await shopper.AddAsync(product.Variants[0].Id, 1)).IsSuccessStatusCode);
+        Assert.Equal($"/product/{slug}", (await shopper.CartAsync()).Lines.Single().ProductPath);
+
+        await ChangeOkAsync(admin, "product", product.Id, $"/lustre/{slug}");
+
+        Assert.Equal($"/lustre/{slug}", (await shopper.CartAsync()).Lines.Single().ProductPath);
     }
 
     private async Task<(AdminProductBody Product, string Slug)> NewProductInAsync(HttpClient admin, int categoryId)

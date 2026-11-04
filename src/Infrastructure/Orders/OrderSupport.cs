@@ -23,7 +23,7 @@ internal static class Tokens
 
 /// <summary>A variant as the cart and checkout need it: live price and stock, and whether it can be bought at all.</summary>
 internal sealed record VariantInfo(
-    int VariantId, string ProductName, string ProductSlug, string Sku, long Price, int Stock, bool Purchasable,
+    int VariantId, int ProductId, string ProductName, string ProductSlug, string Sku, long Price, int Stock, bool Purchasable,
     string? Label, string? ImagePath)
 {
     /// <summary>The most of this variant a customer may hold: the stock, capped by the per-line maximum from the store settings.</summary>
@@ -68,7 +68,7 @@ internal static class VariantInfoLoader
         return rows.ToDictionary(
             r => r.Id,
             r => new VariantInfo(
-                r.Id, r.Name, r.Slug, r.Sku, r.Price, r.Stock,
+                r.Id, r.ProductId, r.Name, r.Slug, r.Sku, r.Price, r.Stock,
                 r.IsActive && r.Status == ProductStatus.Published && r.Stock > 0,
                 labels.GetValueOrDefault(r.Id),
                 firstImage.GetValueOrDefault(r.ProductId)));
