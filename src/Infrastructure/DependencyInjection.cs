@@ -81,6 +81,9 @@ public static class DependencyInjection
         services.AddScoped<IAdminSettingsService, AdminSettingsService>();
         services.AddScoped<Shop.Application.Staff.IStaffService, Shop.Infrastructure.Staff.StaffService>();
         services.AddScoped<Shop.Application.Catalog.Transfer.ICatalogTransferService, Shop.Infrastructure.Catalog.CatalogTransferService>();
+        services.AddScoped<Shop.Infrastructure.Seo.SeoService>();
+        services.AddScoped<Shop.Application.Seo.IAdminSeoService>(sp => sp.GetRequiredService<Shop.Infrastructure.Seo.SeoService>());
+        services.AddScoped<Shop.Application.Seo.IPublicSeoService>(sp => sp.GetRequiredService<Shop.Infrastructure.Seo.SeoService>());
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IAdminOrderService, AdminOrderService>();

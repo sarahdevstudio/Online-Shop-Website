@@ -154,6 +154,11 @@ export const siteMessages = {
     get swatches() { return t('admin.site.theme.swatches'); },
   },
   seo: {
+    get analyticsTitle() { return t('admin.site.seo.analytics-title'); },
+    get searchConsole() { return t('admin.site.seo.search-console'); },
+    get searchConsoleHint() { return t('admin.site.seo.search-console-hint'); },
+    get ga4() { return t('admin.site.seo.ga4'); },
+    get ga4Hint() { return t('admin.site.seo.ga4-hint'); },
     get titleSample() { return t('admin.site.seo.title-sample'); },
     get title() { return t('admin.site.seo.title'); },
     get siteName() { return t('admin.site.seo.site-name'); },

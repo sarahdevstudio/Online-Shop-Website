@@ -65,7 +65,7 @@ internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media, IRoute
             theme.Logo is { } logo && Image(logo.MediaId) is { } logoImage ? new SiteLogoDto(logoImage.Url, logo.Alt, logoImage.Width, logoImage.Height) : null,
             Image(theme.Favicon?.MediaId));
 
-        var seoDto = new SiteSeoDto(seo.SiteName, seo.TitleTemplate, seo.HomeTitle, seo.DefaultDescription, Image(seo.DefaultOgMediaId));
+        var seoDto = new SiteSeoDto(seo.SiteName, seo.TitleTemplate, seo.HomeTitle, seo.DefaultDescription, Image(seo.DefaultOgMediaId), seo.SearchConsoleToken, seo.Ga4Id);
 
         var social = new Dictionary<string, string>();
         void AddSocial(string key, string? url)

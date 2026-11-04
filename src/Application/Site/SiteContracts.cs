@@ -97,7 +97,9 @@ public sealed record SiteHomeDto(IReadOnlyList<SiteBlockDto> Blocks);
 public sealed record SiteChromeDto(
     AnnouncementBar Announcement, IReadOnlyList<MenuItem> HeaderMenu, FooterContent Footer, IReadOnlyDictionary<string, string> Social);
 
-public sealed record SiteSeoDto(string SiteName, string TitleTemplate, string HomeTitle, string DefaultDescription, SiteImageRefDto? DefaultOgImage);
+public sealed record SiteSeoDto(
+    string SiteName, string TitleTemplate, string HomeTitle, string DefaultDescription, SiteImageRefDto? DefaultOgImage,
+    string SearchConsoleToken = "", string Ga4Id = "");
 
 public sealed record SiteConfigDto(string Version, SiteThemeDto Theme, SiteHomeDto Home, SiteChromeDto Chrome, SiteSeoDto Seo, BadgesPayload Badges);
 

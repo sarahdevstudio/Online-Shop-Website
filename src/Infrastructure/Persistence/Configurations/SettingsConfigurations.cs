@@ -72,3 +72,32 @@ internal sealed class CatalogTransferLogConfiguration : IEntityTypeConfiguration
         builder.HasIndex(x => x.AtUtc).HasDatabaseName("IX_CatalogTransferLogs_AtUtc");
     }
 }
+
+internal sealed class SeoMetaConfiguration : IEntityTypeConfiguration<Shop.Domain.Seo.SeoMeta>
+{
+    public void Configure(EntityTypeBuilder<Shop.Domain.Seo.SeoMeta> builder)
+    {
+        builder.ToTable("SeoMetas");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.TargetType).IsRequired().HasMaxLength(20).IsUnicode(false);
+        builder.Property(x => x.MetaTitle).HasMaxLength(Shop.Domain.Seo.SeoMeta.TitleMaxLength);
+        builder.Property(x => x.MetaDescription).HasMaxLength(Shop.Domain.Seo.SeoMeta.DescriptionMaxLength);
+        builder.Property(x => x.UpdatedAtUtc).HasColumnType("datetime2");
+        builder.Property(x => x.RowVersion).IsRowVersion();
+        builder.HasIndex(x => new { x.TargetType, x.TargetId }).IsUnique().HasDatabaseName("UX_SeoMetas_Target");
+        builder.HasIndex(x => x.NoIndex).HasFilter("[NoIndex] = 1").HasDatabaseName("IX_SeoMetas_NoIndex");
+    }
+}
+
+internal sealed class FaqItemConfiguration : IEntityTypeConfiguration<Shop.Domain.Seo.FaqItem>
+{
+    public void Configure(EntityTypeBuilder<Shop.Domain.Seo.FaqItem> builder)
+    {
+        builder.ToTable("FaqItems");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.TargetType).IsRequired().HasMaxLength(20).IsUnicode(false);
+        builder.Property(x => x.Question).IsRequired().HasMaxLength(Shop.Domain.Seo.FaqItem.QuestionMaxLength);
+        builder.Property(x => x.Answer).IsRequired().HasMaxLength(Shop.Domain.Seo.FaqItem.AnswerMaxLength);
+        builder.HasIndex(x => new { x.TargetType, x.TargetId, x.SortOrder }).HasDatabaseName("IX_FaqItems_Target");
+    }
+}

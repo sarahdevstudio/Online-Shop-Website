@@ -11,6 +11,7 @@ using Shop.Domain.Settings;
 using Shop.Domain.Site;
 using Shop.Domain.Routing;
 using Shop.Domain.Security;
+using Shop.Domain.Seo;
 using Shop.Domain.Translations;
 using Shop.Infrastructure.Identity;
 
@@ -49,6 +50,8 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     public DbSet<RouteAuditLog> RouteAuditLogs => Set<RouteAuditLog>();
     public DbSet<StaffAuditLog> StaffAuditLogs => Set<StaffAuditLog>();
     public DbSet<CatalogTransferLog> CatalogTransferLogs => Set<CatalogTransferLog>();
+    public DbSet<SeoMeta> SeoMetas => Set<SeoMeta>();
+    public DbSet<FaqItem> FaqItems => Set<FaqItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

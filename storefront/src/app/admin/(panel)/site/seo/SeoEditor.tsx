@@ -58,6 +58,12 @@ function SeoFields({ doc }: { doc: AdminSiteDocument<SeoPayload> }) {
           removable
         />
       </FormSection>
+      <FormSection card title={t.analyticsTitle}>
+        <FormGrid>
+          <TextField name="searchConsoleToken" label={t.searchConsole} hint={t.searchConsoleHint} ltr autoComplete="off" maxLength={100} defaultValue={payload.searchConsoleToken ?? ''} />
+          <TextField name="ga4Id" label={t.ga4} hint={t.ga4Hint} ltr autoComplete="off" maxLength={14} defaultValue={payload.ga4Id ?? ''} />
+        </FormGrid>
+      </FormSection>
     </>
   );
 }

@@ -309,6 +309,21 @@
         ],
         "type": "object"
       },
+      "FaqItemDto": {
+        "properties": {
+          "answer": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "answer"
+        ],
+        "type": "object"
+      },
       "IFormFile": {
         "format": "binary",
         "type": "string"
@@ -744,6 +759,66 @@
           "permissions",
           "stamp",
           "currentPassword"
+        ],
+        "type": "object"
+      },
+      "SaveSeoRequest": {
+        "properties": {
+          "faq": {
+            "items": {
+              "$ref": "#/components/schemas/FaqItemDto"
+            },
+            "type": [
+              "null",
+              "array"
+            ]
+          },
+          "intro": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "metaDescription": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "metaTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "noIndex": {
+            "type": "boolean"
+          },
+          "ogMediaId": {
+            "format": "int32",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "rowVersion": {
+            "format": "byte",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "metaTitle",
+          "metaDescription",
+          "ogMediaId",
+          "noIndex",
+          "faq",
+          "intro",
+          "rowVersion"
         ],
         "type": "object"
       },
@@ -2658,6 +2733,92 @@
         ]
       }
     },
+    "/api/v1/admin/seo/{type}/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin SEO"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveSeoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin SEO"
+        ]
+      }
+    },
     "/api/v1/admin/settings": {
       "get": {
         "responses": {
@@ -4272,6 +4433,62 @@
         ]
       }
     },
+    "/api/v1/catalog/seo/noindex": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
+    "/api/v1/catalog/seo/{type}/{slug}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
     "/api/v1/catalog/site": {
       "get": {
         "responses": {
@@ -4642,6 +4859,9 @@
   "tags": [
     {
       "name": "Admin"
+    },
+    {
+      "name": "Admin SEO"
     },
     {
       "name": "Admin account"

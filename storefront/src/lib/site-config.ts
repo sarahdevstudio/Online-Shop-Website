@@ -86,6 +86,10 @@ export interface SiteSeo {
   homeTitle: string;
   defaultDescription: string;
   defaultOgImage: SiteImage | null;
+  /** The content of the Google Search Console verification meta tag; '' = no tag. */
+  searchConsoleToken: string;
+  /** A GA4 measurement id (G-XXXXXXXX); '' = no analytics is loaded at all. */
+  ga4Id: string;
 }
 
 export interface Badges {
@@ -124,6 +128,8 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     homeTitle: `${site.name} | ${site.description}`,
     defaultDescription: site.description,
     defaultOgImage: null,
+    searchConsoleToken: '',
+    ga4Id: '',
   },
   badges: { enamad: null, samandehi: null },
 };
@@ -317,8 +323,14 @@ function parseSeo(raw: unknown): SiteSeo {
     homeTitle: text(source.homeTitle, 70, { min: 1 }) ?? defaults.homeTitle,
     defaultDescription: text(source.defaultDescription, 160, { min: 1 }) ?? defaults.defaultDescription,
     defaultOgImage: image(source.defaultOgImage),
+    // Same shapes the API enforces; anything else is dropped, so a bad value can never reach the page markup.
+    searchConsoleToken: typeof source.searchConsoleToken === 'string' && SEARCH_CONSOLE_TOKEN.test(source.searchConsoleToken) ? source.searchConsoleToken : '',
+    ga4Id: typeof source.ga4Id === 'string' && GA4_ID.test(source.ga4Id) ? source.ga4Id : '',
   };
 }
+
+export const SEARCH_CONSOLE_TOKEN = /^[A-Za-z0-9_-]{20,100}$/;
+export const GA4_ID = /^G-[A-Z0-9]{6,12}$/;
 
 const ID = /^[0-9]{1,10}$/;
 const CODE = /^[A-Za-z0-9]{10,64}$/;

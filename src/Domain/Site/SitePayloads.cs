@@ -217,6 +217,12 @@ public sealed record SeoPayload
     public string HomeTitle { get; init; } = string.Empty;
     public string DefaultDescription { get; init; } = string.Empty;
     public int? DefaultOgMediaId { get; init; }
+
+    /// <summary>The Google Search Console verification token (the content of the meta tag); empty = no tag.</summary>
+    public string SearchConsoleToken { get; init; } = string.Empty;
+
+    /// <summary>A GA4 measurement id (G-XXXXXXXX); empty = no analytics, nothing loaded.</summary>
+    public string Ga4Id { get; init; } = string.Empty;
 }
 
 // ---- trust badges (identifiers only) ----

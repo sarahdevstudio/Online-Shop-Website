@@ -34,6 +34,8 @@ export function parseSeoForm(formData: FormData): SeoPayload {
     homeTitle: text(formData, 'homeTitle'),
     defaultDescription: text(formData, 'defaultDescription'),
     defaultOgMediaId: whole(formData, 'defaultOgMediaId'),
+    searchConsoleToken: text(formData, 'searchConsoleToken'),
+    ga4Id: text(formData, 'ga4Id'),
   };
 }
 

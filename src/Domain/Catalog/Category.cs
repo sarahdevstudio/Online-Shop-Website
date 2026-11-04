@@ -10,6 +10,7 @@ public sealed class Category
 {
     public const int NameMaxLength = 100;
     public const int DescriptionMaxLength = 2000;
+    public const int IntroMaxLength = 20_000;
 
     private Category()
     {
@@ -23,6 +24,11 @@ public sealed class Category
     public string? Description { get; private set; }
     public int SortOrder { get; private set; }
     public bool IsActive { get; private set; }
+
+    /// <summary>A buying guide in Markdown, shown below the product grid of the category's clean URL (rendered safely by the storefront).</summary>
+    public string? IntroMarkdown { get; private set; }
+
+    public void SetIntro(string? markdown) => IntroMarkdown = string.IsNullOrWhiteSpace(markdown) ? null : markdown.Trim();
 
     public static Category Create(string name, string slug, int? parentId, string? description, int sortOrder, bool isActive)
     {

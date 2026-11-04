@@ -31,6 +31,12 @@ public sealed record SiteValidationResult(object Payload, IReadOnlyDictionary<st
 /// </summary>
 public static partial class SitePayloadValidator
 {
+    [GeneratedRegex(@"^[A-Za-z0-9_-]{20,100}$")]
+    private static partial Regex ConsoleToken();
+
+    [GeneratedRegex(@"^G-[A-Z0-9]{6,12}$")]
+    private static partial Regex Ga4Id();
+
     [GeneratedRegex(@"^#[0-9a-fA-F]{6}$")]
     private static partial Regex HexColor();
 
@@ -685,7 +691,24 @@ public static partial class SitePayloadValidator
             CheckMedia(og, "defaultOgMediaId", refs, errors);
         }
 
-        return new SeoPayload { SiteName = siteName, TitleTemplate = template, HomeTitle = homeTitle, DefaultDescription = description, DefaultOgMediaId = og };
+        // The two tags are only ever rendered when they match these shapes (a stray character cannot break out of the markup).
+        var token = (seo.SearchConsoleToken ?? string.Empty).Trim();
+        if (token.Length > 0 && !ConsoleToken().IsMatch(token))
+        {
+            errors.Add("searchConsoleToken", "api.validation.search-console-token");
+        }
+
+        var ga4 = (seo.Ga4Id ?? string.Empty).Trim().ToUpperInvariant();
+        if (ga4.Length > 0 && !Ga4Id().IsMatch(ga4))
+        {
+            errors.Add("ga4Id", "api.validation.ga4-id");
+        }
+
+        return new SeoPayload
+        {
+            SiteName = siteName, TitleTemplate = template, HomeTitle = homeTitle, DefaultDescription = description, DefaultOgMediaId = og,
+            SearchConsoleToken = token, Ga4Id = ga4,
+        };
     }
 
     // ---------------------------------------------------------------- badges

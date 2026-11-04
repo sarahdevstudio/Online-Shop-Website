@@ -399,6 +399,10 @@ namespace Shop.Infrastructure.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
+                    b.Property<string>("IntroMarkdown")
+                        .HasMaxLength(20000)
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -1236,6 +1240,100 @@ namespace Shop.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("IX_StaffAuditLogs_AtUtc");
 
                     b.ToTable("StaffAuditLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Shop.Domain.Seo.FaqItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TargetType", "TargetId", "SortOrder")
+                        .HasDatabaseName("IX_FaqItems_Target");
+
+                    b.ToTable("FaqItems", (string)null);
+                });
+
+            modelBuilder.Entity("Shop.Domain.Seo.SeoMeta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("MetaDescription")
+                        .HasMaxLength(320)
+                        .HasColumnType("nvarchar(320)");
+
+                    b.Property<string>("MetaTitle")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<bool>("NoIndex")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("OgMediaId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("TargetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NoIndex")
+                        .HasDatabaseName("IX_SeoMetas_NoIndex")
+                        .HasFilter("[NoIndex] = 1");
+
+                    b.HasIndex("TargetType", "TargetId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_SeoMetas_Target");
+
+                    b.ToTable("SeoMetas", (string)null);
                 });
 
             modelBuilder.Entity("Shop.Domain.Settings.SettingsAuditLog", b =>

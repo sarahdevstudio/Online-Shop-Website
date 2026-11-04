@@ -14,6 +14,7 @@ internal sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(x => x.Name).IsRequired().HasMaxLength(Category.NameMaxLength);
         builder.Property(x => x.Slug).IsRequired().HasMaxLength(Slug.MaxLength).IsUnicode(false);
         builder.Property(x => x.Description).HasMaxLength(Category.DescriptionMaxLength);
+        builder.Property(x => x.IntroMarkdown).HasMaxLength(Category.IntroMaxLength);
 
         builder.HasOne<Category>().WithMany().HasForeignKey(x => x.ParentId).OnDelete(DeleteBehavior.Restrict);
 

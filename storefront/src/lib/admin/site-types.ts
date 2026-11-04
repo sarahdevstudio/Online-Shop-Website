@@ -40,6 +40,8 @@ export interface SeoPayload {
   homeTitle: string;
   defaultDescription: string;
   defaultOgMediaId: number | null;
+  searchConsoleToken: string;
+  ga4Id: string;
 }
 
 export interface BadgesPayload {
