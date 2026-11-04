@@ -151,6 +151,22 @@ export async function adminFetch<T>(method: string, path: string, request: Admin
   return { ok: false, status: response.status, problem: toProblem(response.status, json) };
 }
 
+/** A file download from the API (the catalog export): the raw bytes and the headers the browser needs. 401 sends the admin to the login page. */
+export async function adminDownload(path: string): Promise<{ ok: true; body: ArrayBuffer; contentType: string; disposition: string | null } | { ok: false; status: number }> {
+  const session = await requireAdmin();
+  const headers = await baseHeaders();
+  headers.cookie = `shop_auth=${session.auth}`;
+  let response: Response;
+  try {
+    response = await fetch(`${apiBaseUrl()}/api/v1${path}`, { method: 'GET', headers, cache: 'no-store', signal: AbortSignal.timeout(60_000) });
+  } catch (error) {
+    throw new ApiUnavailableError(`GET ${path} failed`, { cause: error });
+  }
+  if (response.status === 401) redirect('/admin/login?ended=1');
+  if (!response.ok) return { ok: false, status: response.status };
+  return { ok: true, body: await response.arrayBuffer(), contentType: response.headers.get('content-type') ?? 'application/octet-stream', disposition: response.headers.get('content-disposition') };
+}
+
 function safeJson(text: string): unknown {
   try {
     return JSON.parse(text);

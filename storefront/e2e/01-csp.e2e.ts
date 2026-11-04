@@ -36,7 +36,7 @@ test('a blog post (seeded by scripts/perf/seed.mjs) and an info page', async ({ 
 
 test('the admin panel pages', async ({ page }) => {
   await login(page);
-  const urls = ['/admin', '/admin/account', '/admin/products', '/admin/categories', '/admin/brands', '/admin/orders', '/admin/blog', '/admin/content', '/admin/redirects', '/admin/settings', '/admin/translations', '/admin/site', '/admin/site/home', '/admin/site/header-footer', '/admin/site/theme', '/admin/site/seo', '/admin/site/badges', '/admin/site/audit', '/admin/staff', '/admin/staff/new', '/admin/staff/roles', '/admin/staff/roles/new'];
+  const urls = ['/admin', '/admin/account', '/admin/products', '/admin/categories', '/admin/brands', '/admin/orders', '/admin/blog', '/admin/content', '/admin/redirects', '/admin/settings', '/admin/translations', '/admin/site', '/admin/site/home', '/admin/site/header-footer', '/admin/site/theme', '/admin/site/seo', '/admin/site/badges', '/admin/site/audit', '/admin/staff', '/admin/staff/new', '/admin/staff/roles', '/admin/staff/roles/new', '/admin/products/transfer'];
   for (const url of urls) await openChecked(page, url);
 });
 

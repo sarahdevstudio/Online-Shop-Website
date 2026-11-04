@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Form, SelectField, SubmitButton, TextField } from '@/components/form';
 import { adminGet } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
+import { transferMessages } from '@/lib/admin/transfer-messages';
 import { apiProductStatus, parseProductStatus, PRODUCT_STATUSES } from '@/lib/admin/product-status';
 import type { AdminProductListItem, PagedList } from '@/lib/admin/types';
 import { formatJalaliDate, formatNumber } from '@/lib/format';
@@ -38,6 +39,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           {adminMessages.products.new}
         </Link>
       </div>
+      <p>
+        <Link href="/admin/products/transfer">{transferMessages.link}</Link>
+      </p>
 
       <Form method="get" inline>
         <TextField name="q" label={adminMessages.products.search} type="search" defaultValue={q} autoComplete="off" />
