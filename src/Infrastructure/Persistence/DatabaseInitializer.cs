@@ -48,6 +48,7 @@ public sealed class DatabaseInitializer(
     IOptions<StoreDefaultsOptions> storeDefaults,
     CatalogSeeder catalogSeeder,
     SiteSeeder siteSeeder,
+    Shop.Infrastructure.Routing.RouteSeeder routeSeeder,
     Shop.Infrastructure.Translations.TranslationSeeder translationSeeder,
     Shop.Infrastructure.Translations.TranslationCache translationCache,
     IHostEnvironment environment,
@@ -74,6 +75,9 @@ public sealed class DatabaseInitializer(
         {
             await catalogSeeder.SeedDevelopmentDataAsync(ct);
         }
+
+        // After the sample catalog and the info pages: every existing entity keeps its current URL as its first route.
+        await routeSeeder.EnsureAsync(ct);
 
         // After the sample catalog, so the home page's category tiles can use the categories that exist.
         await siteSeeder.EnsureAsync(ct);

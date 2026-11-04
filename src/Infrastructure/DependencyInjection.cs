@@ -93,6 +93,11 @@ public static class DependencyInjection
         services.AddSingleton<Shop.Infrastructure.Translations.TranslationCache>();
         services.AddScoped<Shop.Application.Translations.IAdminTranslationService, Shop.Infrastructure.Translations.AdminTranslationService>();
         services.AddHostedService<Shop.Infrastructure.Translations.TranslationRefreshService>();
+        services.AddSingleton<Shop.Infrastructure.Routing.RouteTable>();
+        services.AddSingleton<Shop.Application.Routing.IRouteTable>(sp => sp.GetRequiredService<Shop.Infrastructure.Routing.RouteTable>());
+        services.AddScoped<Shop.Application.Routing.IRouteService, Shop.Infrastructure.Routing.RouteService>();
+        services.AddScoped<Shop.Infrastructure.Routing.RouteSeeder>();
+        services.AddHostedService<Shop.Infrastructure.Routing.RouteRefreshService>();
         services.AddScoped<DatabaseInitializer>();
 
         if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
