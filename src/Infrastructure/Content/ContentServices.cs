@@ -115,12 +115,12 @@ internal sealed class AdminContentService(ShopDbContext db, ICurrentUser current
                 where p.Slug == slug
                 join u in db.Users.AsNoTracking() on p.UpdatedByUserId equals u.Id into users
                 from u in users.DefaultIfEmpty()
-                select new { p.Slug, p.Title, p.Body, p.UpdatedAtUtc, p.RowVersion, Username = u.UserName })
+                select new { p.Id, p.Slug, p.Title, p.Body, p.UpdatedAtUtc, p.RowVersion, Username = u.UserName })
             .SingleOrDefaultAsync(ct);
         return row is null
             ? null
             : new AdminContentPageDto(
-                row.Slug, row.Title, row.Body, row.Body.Contains(ContentPage.DraftMarker, StringComparison.Ordinal),
+                row.Id, row.Slug, row.Title, row.Body, row.Body.Contains(ContentPage.DraftMarker, StringComparison.Ordinal),
                 row.UpdatedAtUtc, row.Username, row.RowVersion);
     }
 

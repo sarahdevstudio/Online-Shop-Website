@@ -138,6 +138,12 @@
               "string"
             ]
           },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "slug": {
             "type": [
               "null",
@@ -178,6 +184,25 @@
         ],
         "type": "object"
       },
+      "ChangeRoutePathRequest": {
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "rowVersion": {
+            "format": "byte",
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "required": [
+          "path",
+          "rowVersion"
+        ],
+        "type": "object"
+      },
       "CreateBlogPostRequest": {
         "properties": {
           "body": {
@@ -185,6 +210,12 @@
           },
           "excerpt": {
             "type": "string"
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "publish": {
             "type": "boolean"
@@ -364,6 +395,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "slug": {
             "type": [
@@ -2121,6 +2158,198 @@
         ]
       }
     },
+    "/api/v1/admin/routes/audit": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin routes"
+        ]
+      }
+    },
+    "/api/v1/admin/routes/redirects": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin routes"
+        ]
+      }
+    },
+    "/api/v1/admin/routes/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin routes"
+        ]
+      }
+    },
+    "/api/v1/admin/routes/{type}/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin routes"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRoutePathRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin routes"
+        ]
+      }
+    },
     "/api/v1/admin/settings": {
       "get": {
         "responses": {
@@ -3324,6 +3553,34 @@
         ]
       }
     },
+    "/api/v1/catalog/resolve": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Catalog"
+        ]
+      }
+    },
     "/api/v1/catalog/site": {
       "get": {
         "responses": {
@@ -3706,6 +3963,9 @@
     },
     {
       "name": "Admin orders"
+    },
+    {
+      "name": "Admin routes"
     },
     {
       "name": "Admin settings"

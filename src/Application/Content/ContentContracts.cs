@@ -11,7 +11,7 @@ public sealed record ContentPageSummaryDto(string Slug, string Title, DateTime U
 public sealed record AdminContentPageListItemDto(string Slug, string Title, bool IsDraft, DateTime UpdatedAtUtc, string? UpdatedByUsername);
 
 public sealed record AdminContentPageDto(
-    string Slug, string Title, string Body, bool IsDraft, DateTime UpdatedAtUtc, string? UpdatedByUsername, byte[] RowVersion);
+    int Id, string Slug, string Title, string Body, bool IsDraft, DateTime UpdatedAtUtc, string? UpdatedByUsername, byte[] RowVersion);
 
 /// <summary><see cref="RowVersion"/> is the version the editor loaded: a stale save is a 409.</summary>
 public sealed record UpdateContentPageRequest(string Title, string Body, byte[] RowVersion);
