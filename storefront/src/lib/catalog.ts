@@ -10,12 +10,14 @@ import { OPTION_KEYS, type ListingState } from './listing';
 
 // ---- API DTOs ----
 
-interface CategoryLinkDto {
+/** Every DTO carries `path`, the entity's CURRENT public URL path: links are never built from slugs. */
+export interface CategoryLinkDto {
   slug: string;
   name: string;
+  path: string;
 }
 
-interface CategoryTreeDto extends CategoryLinkDto {
+export interface CategoryTreeDto extends CategoryLinkDto {
   children: CategoryLinkDto[];
 }
 
@@ -33,6 +35,7 @@ interface ImageDto {
 export interface ProductCardDto {
   slug: string;
   name: string;
+  path: string;
   brand: string | null;
   price: number;
   compareAtPrice: number | null;
@@ -80,6 +83,7 @@ export interface VariantAxisDto {
 export interface ProductDetailDto {
   slug: string;
   name: string;
+  path: string;
   description: string | null;
   status: 'published' | 'archived';
   brand: { slug: string; name: string } | null;
@@ -92,8 +96,8 @@ export interface ProductDetailDto {
 }
 
 interface SitemapDto {
-  categories: { slug: string; updatedAtUtc: string | null }[];
-  products: { slug: string; updatedAtUtc: string | null }[];
+  categories: { slug: string; path: string; updatedAtUtc: string | null }[];
+  products: { slug: string; path: string; updatedAtUtc: string | null }[];
 }
 
 // ---- page models ----
@@ -101,6 +105,7 @@ interface SitemapDto {
 export interface Category {
   slug: string;
   name: string;
+  path: string;
   description: string;
   parent: CategoryLinkDto | null;
   children: CategoryLinkDto[];
@@ -121,6 +126,7 @@ export function toProductCard(dto: ProductCardDto): ProductCardModel {
   return {
     slug: dto.slug,
     name: dto.name,
+    path: dto.path,
     brand: dto.brand,
     price: dto.price,
     compareAtPrice: dto.compareAtPrice,
@@ -142,12 +148,22 @@ export function toProductPage(dto: ProductListDto): ProductPage {
 
 // ---- reads (React cache() dedupes repeated calls within one render, e.g. layout + page) ----
 
+/** slug → current path for every category in the tree (roots and children); links from a stored slug use this. */
+export function categoryPaths(tree: readonly CategoryTreeDto[]): Map<string, string> {
+  const paths = new Map<string, string>();
+  for (const root of tree) {
+    paths.set(root.slug, root.path);
+    for (const child of root.children) paths.set(child.slug, child.path);
+  }
+  return paths;
+}
+
 export const getCategoryTree = cache(async (): Promise<CategoryTreeDto[]> =>
   (await apiGet<CategoryTreeDto[]>('/catalog/categories', revalidate.categories)) ?? []);
 
 export const getCategory = cache(async (slug: string): Promise<Category | null> => {
   const dto = await apiGet<CategoryDetailDto>(`/catalog/categories/${encodeURIComponent(slug)}`, revalidate.categories);
-  return dto && { slug: dto.slug, name: dto.name, description: dto.description ?? '', parent: dto.parent, children: dto.children };
+  return dto && { slug: dto.slug, name: dto.name, path: dto.path, description: dto.description ?? '', parent: dto.parent, children: dto.children };
 });
 
 export interface ProductQuery {

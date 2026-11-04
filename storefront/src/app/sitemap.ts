@@ -13,10 +13,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   };
   return [
     { url: absoluteUrl('/') },
-    ...categories.map((c) => entry(`/category/${c.slug}`, c.updatedAtUtc)),
-    ...products.map((p) => entry(`/product/${p.slug}`, p.updatedAtUtc)),
-    ...pages.filter((p) => isInfoSlug(p.slug)).map((p) => entry(`/${p.slug}`, p.updatedAtUtc)),
+    ...categories.map((c) => entry(c.path, c.updatedAtUtc)),
+    ...products.map((p) => entry(p.path, p.updatedAtUtc)),
+    ...pages.filter((p) => isInfoSlug(p.slug)).map((p) => entry(p.path, p.updatedAtUtc)),
     { url: absoluteUrl('/blog') },
-    ...posts.map((p) => entry(`/blog/${p.slug}`, p.updatedAtUtc)),
+    ...posts.map((p) => entry(p.path, p.updatedAtUtc)),
   ];
 }

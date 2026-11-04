@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { buildMenu } from '../src/lib/site-menu';
 
 const categories = [
-  { slug: 'lamps', name: 'لامپ', children: [{ slug: 'led', name: 'ال‌ای‌دی' }] },
-  { slug: 'chandeliers', name: 'لوستر', children: [] },
+  { slug: 'lamps', name: 'لامپ', path: '/category/lamps', children: [{ slug: 'led', name: 'ال‌ای‌دی', path: '/category/led' }] },
+  { slug: 'chandeliers', name: 'لوستر', path: '/shop/chandeliers', children: [] },
 ];
 
 describe('buildMenu', () => {
   it('is today\'s menu (categories + blog) when nothing is configured', () => {
     expect(buildMenu([], categories)).toEqual([
       { label: 'لامپ', href: '/category/lamps' },
-      { label: 'لوستر', href: '/category/chandeliers' },
+      { label: 'لوستر', href: '/shop/chandeliers' },
       { label: 'وبلاگ', href: '/blog' },
     ]);
   });
@@ -18,7 +18,7 @@ describe('buildMenu', () => {
   it('expands an "all categories" entry into the category tree and ignores its own children', () => {
     const menu = buildMenu([{ label: 'فروشگاه', link: '/', allCategories: true, children: [{ label: 'x', link: '/x' }] }], categories);
     expect(menu).toHaveLength(1);
-    expect(menu[0].children?.map((c) => c.href)).toEqual(['/category/lamps', '/category/chandeliers']);
+    expect(menu[0].children?.map((c) => c.href)).toEqual(['/category/lamps', '/shop/chandeliers']);
     expect(menu[0].children?.[0].children).toEqual([{ label: 'ال‌ای‌دی', href: '/category/led' }]);
   });
 

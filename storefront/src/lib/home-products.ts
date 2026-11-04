@@ -44,6 +44,7 @@ export function cardFromDetail(product: ProductDetailDto): ProductCardModel | nu
   return {
     slug: product.slug,
     name: product.name,
+    path: product.path,
     brand: product.brand?.name ?? null,
     price: best.price,
     compareAtPrice: best.compareAtPrice,

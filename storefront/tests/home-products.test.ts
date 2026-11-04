@@ -27,7 +27,7 @@ describe('rowQuery', () => {
 });
 
 const detail = (over: Partial<ProductDetailDto> = {}): ProductDetailDto => ({
-  slug: 'p', name: 'محصول', description: null, status: 'published', brand: { slug: 'b', name: 'برند' }, breadcrumb: [], images: [{ url: '/media/x.jpg', alt: 'x' }],
+  slug: 'p', name: 'محصول', path: '/product/p', description: null, status: 'published', brand: { slug: 'b', name: 'برند' }, breadcrumb: [], images: [{ url: '/media/x.jpg', alt: 'x' }],
   axes: [], variants: [
     { id: 1, sku: 'a', price: 200, compareAtPrice: 250, inStock: true, attributes: {} },
     { id: 2, sku: 'b', price: 100, compareAtPrice: null, inStock: false, attributes: {} },

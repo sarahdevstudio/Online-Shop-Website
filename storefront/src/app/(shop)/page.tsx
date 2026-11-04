@@ -40,7 +40,7 @@ export default async function HomePage() {
         <ul className="ui-cluster">
           {categories.map((c) => (
             <li key={c.slug}>
-              <Link href={`/category/${c.slug}`}>{c.name}</Link>
+              <Link href={c.path}>{c.name}</Link>
             </li>
           ))}
         </ul>

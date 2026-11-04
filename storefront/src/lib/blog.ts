@@ -10,6 +10,7 @@ export function isBlogSlug(value: string): boolean {
 
 export interface BlogPostSummary {
   slug: string;
+  path: string;
   title: string;
   excerpt: string;
   publishedAtUtc: string;
@@ -25,6 +26,7 @@ export interface BlogList {
 
 export interface BlogPost {
   slug: string;
+  path: string;
   title: string;
   excerpt: string;
   body: string;
@@ -34,6 +36,7 @@ export interface BlogPost {
 
 export interface BlogSitemapEntry {
   slug: string;
+  path: string;
   updatedAtUtc: string;
 }
 

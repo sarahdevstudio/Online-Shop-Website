@@ -1,13 +1,16 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Icon } from '@/components/Icon';
+import { categoryPaths, getCategoryTree } from '@/lib/catalog';
 import { messages } from '@/lib/messages';
 import type { HomeBlock } from '@/lib/site-config';
 import styles from './CategoryTilesBlock.module.css';
 
 type Data = Extract<HomeBlock, { type: 'categoryTiles' }>['data'];
 
-export function CategoryTilesBlock({ data, headingId }: { data: Data; headingId: string }) {
+/** Tiles store a category slug; the link is that category's CURRENT path, so a renamed path never breaks the home page. */
+export async function CategoryTilesBlock({ data, headingId }: { data: Data; headingId: string }) {
+  const paths = categoryPaths(await getCategoryTree().catch(() => []));
   return (
     <section className="ui-container ui-section" aria-labelledby={headingId}>
       <h2 id={headingId} className="ui-heading-3">
@@ -16,7 +19,7 @@ export function CategoryTilesBlock({ data, headingId }: { data: Data; headingId:
       <ul className={styles.tiles}>
         {data.items.map((item) => (
           <li key={item.slug}>
-            <Link className={styles.tile} href={`/category/${item.slug}`}>
+            <Link className={styles.tile} href={paths.get(item.slug) ?? `/category/${item.slug}`}>
               <span className={styles.media}>
                 {item.imageUrl ? <Image src={item.imageUrl} alt="" fill sizes="(min-width: 1024px) 16rem, 50vw" /> : <Icon name="image" />}
               </span>

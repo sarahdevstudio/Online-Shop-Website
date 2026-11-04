@@ -4,6 +4,8 @@ export interface CartLineDto {
   variantId: number;
   productName: string;
   productSlug: string;
+  /** The product's current public path. */
+  productPath: string;
   variantLabel: string | null;
   sku: string;
   imageUrl: string | null;

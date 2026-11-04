@@ -72,7 +72,7 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
                   <div className={styles.noThumb} aria-hidden="true" />
                 )}
                 <div className={styles.info}>
-                  <Link className={styles.name} href={`/product/${line.productSlug}`}>
+                  <Link className={styles.name} href={line.productPath}>
                     {line.productName}
                   </Link>
                   {line.variantLabel && <span className={styles.meta}>{line.variantLabel}</span>}

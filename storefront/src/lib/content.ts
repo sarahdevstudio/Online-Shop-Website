@@ -15,6 +15,7 @@ export const DEFAULT_TITLES = messages.infoTitles as Record<InfoSlug, string>;
 
 export interface ContentPageDto {
   slug: string;
+  path: string;
   title: string;
   body: string;
   updatedAtUtc: string;
@@ -22,6 +23,7 @@ export interface ContentPageDto {
 
 export interface ContentPageSummary {
   slug: string;
+  path: string;
   title: string;
   updatedAtUtc: string;
 }
@@ -41,11 +43,11 @@ export async function getContentPages(): Promise<ContentPageSummary[]> {
 
 /** Footer links: titles from the API, or the default titles when it is unavailable. */
 export async function getInfoLinks(): Promise<{ label: string; href: string }[]> {
-  let titles: Record<string, string> = {};
+  let pages: Record<string, ContentPageSummary> = {};
   try {
-    titles = Object.fromEntries((await getContentPages()).map((p) => [p.slug, p.title]));
+    pages = Object.fromEntries((await getContentPages()).map((p) => [p.slug, p]));
   } catch {
     // keep the defaults
   }
-  return INFO_SLUGS.map((slug) => ({ label: titles[slug] ?? DEFAULT_TITLES[slug], href: `/${slug}` }));
+  return INFO_SLUGS.map((slug) => ({ label: pages[slug]?.title ?? DEFAULT_TITLES[slug], href: pages[slug]?.path ?? `/${slug}` }));
 }

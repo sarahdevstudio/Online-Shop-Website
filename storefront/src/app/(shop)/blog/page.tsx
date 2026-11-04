@@ -46,13 +46,13 @@ export default async function BlogListPage({ searchParams }: Props) {
           {list.items.map((post) => (
             <li key={post.slug} className={styles.card}>
               <h2 className="ui-heading-4">
-                <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+                <Link href={post.path}>{post.title}</Link>
               </h2>
               <time className={styles.date} dateTime={post.publishedAtUtc}>
                 {messages.publishedOn(formatJalaliDate(post.publishedAtUtc))}
               </time>
               <p className={styles.excerpt}>{post.excerpt}</p>
-              <Link href={`/blog/${post.slug}`} className={styles.more}>
+              <Link href={post.path} className={styles.more}>
                 {messages.readMore}
               </Link>
             </li>

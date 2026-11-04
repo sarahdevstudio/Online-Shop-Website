@@ -13,6 +13,9 @@ export class ApiUnavailableError extends Error {
   }
 }
 
+/** Tag of every catalog/blog/page read; invalidated when a public path changes (the DTOs carry paths). */
+export const CATALOG_TAG = 'catalog';
+
 /** Seconds a successful response stays in Next's data cache. Only 200 responses are ever stored. */
 export const revalidate = {
   products: 60,
@@ -45,8 +48,9 @@ export interface ApiEnvelope<T> {
 /**
  * GET `/api/v1{path}`. Returns null only for a real API 404; network errors, timeouts and 5xx throw
  * ApiUnavailableError; any other status is a bug in this client and throws a plain Error.
+ * Every read is tagged `catalog` (plus `tags`), so one `updateTag('catalog')` drops everything that may show a path.
  */
-export async function apiGet<T>(path: string, seconds: number): Promise<T | null> {
+export async function apiGet<T>(path: string, seconds: number, tags: readonly string[] = []): Promise<T | null> {
   // Request-time only: `next build` must never need the API, so nothing that reads it is prerendered.
   await connection();
 
@@ -54,7 +58,7 @@ export async function apiGet<T>(path: string, seconds: number): Promise<T | null
   try {
     response = await fetch(`${apiBaseUrl()}/api/v1${path}`, {
       headers: { accept: 'application/json' },
-      next: { revalidate: seconds },
+      next: { revalidate: seconds, tags: [CATALOG_TAG, ...tags] },
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (error) {

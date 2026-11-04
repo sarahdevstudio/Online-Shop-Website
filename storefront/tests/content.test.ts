@@ -52,8 +52,8 @@ describe('sitemap', () => {
 
   it('lists the info pages with their last modification', async () => {
     apiGet.mockImplementation(async (path: string) => {
-      if (path === '/catalog/sitemap') return { categories: [{ slug: 'lamps', updatedAtUtc: '2026-10-20T08:00:00' }], products: [] };
-      if (path === '/catalog/pages') return INFO_SLUGS.map((slug) => ({ slug, title: slug, updatedAtUtc: '2026-10-26T10:30:00' }));
+      if (path === '/catalog/sitemap') return { categories: [{ slug: 'lamps', path: '/category/lamps', updatedAtUtc: '2026-10-20T08:00:00' }], products: [] };
+      if (path === '/catalog/pages') return INFO_SLUGS.map((slug) => ({ slug, path: `/${slug}`, title: slug, updatedAtUtc: '2026-10-26T10:30:00' }));
       if (path === '/catalog/blog/sitemap') return [];
       return null;
     });
@@ -71,7 +71,7 @@ describe('sitemap', () => {
 
   it('ignores a page slug the storefront has no route for', async () => {
     apiGet.mockImplementation(async (path: string) => {
-      if (path === '/catalog/pages') return [{ slug: 'evil', title: 'x', updatedAtUtc: '2026-10-26T10:30:00' }];
+      if (path === '/catalog/pages') return [{ slug: 'evil', path: '/evil', title: 'x', updatedAtUtc: '2026-10-26T10:30:00' }];
       if (path === '/catalog/blog/sitemap') return [];
       return { categories: [], products: [] };
     });
@@ -81,7 +81,7 @@ describe('sitemap', () => {
 
   it('lists the blog index and every published post with its last change', async () => {
     apiGet.mockImplementation(async (path: string) => {
-      if (path === '/catalog/blog/sitemap') return [{ slug: 'led-guide', updatedAtUtc: '2026-10-26T11:00:00' }];
+      if (path === '/catalog/blog/sitemap') return [{ slug: 'led-guide', path: '/blog/led-guide', updatedAtUtc: '2026-10-26T11:00:00' }];
       if (path === '/catalog/pages') return [];
       return { categories: [], products: [] };
     });
@@ -126,5 +126,28 @@ describe('contact structured data', () => {
   it('leaves out everything that is empty instead of inventing it', () => {
     const data = contactJsonLd({ phone: '', address: '', hours: '', instagram: '' });
     expect(Object.keys(data).sort()).toEqual(['@context', '@type', 'name', 'url']);
+  });
+
+  it('always lists the CURRENT path of every entity, never one built from a slug, and no redirect', async () => {
+    apiGet.mockImplementation(async (path: string) => {
+      if (path === '/catalog/sitemap') {
+        return {
+          categories: [{ slug: 'lamps', path: '/shop/lamps', updatedAtUtc: null }],
+          products: [{ slug: 'crystal-9', path: '/lustre/crystal-9', updatedAtUtc: '2026-10-20T08:00:00' }],
+        };
+      }
+      if (path === '/catalog/pages') return INFO_SLUGS.map((slug) => ({ slug, path: slug === 'about' ? '/about-us' : `/${slug}`, title: slug, updatedAtUtc: '2026-10-26T10:30:00' }));
+      if (path === '/catalog/blog/sitemap') return [{ slug: 'led-guide', path: '/guides/led-guide', updatedAtUtc: '2026-10-26T11:00:00' }];
+      return null;
+    });
+
+    const urls = (await sitemap()).map((e) => new URL(e.url).pathname);
+
+    expect(urls).toContain('/shop/lamps');
+    expect(urls).toContain('/lustre/crystal-9');
+    expect(urls).toContain('/about-us');
+    expect(urls).toContain('/guides/led-guide');
+    for (const stale of ['/category/lamps', '/product/crystal-9', '/about', '/blog/led-guide']) expect(urls).not.toContain(stale);
+    expect(new Set(urls).size).toBe(urls.length);
   });
 });

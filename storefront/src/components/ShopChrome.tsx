@@ -20,7 +20,7 @@ export async function ShopChrome({ children }: { children: ReactNode }) {
   const [cartCount, info, infoLinks] = await Promise.all([getCartCount(), getStoreInfo(), getInfoLinks()]);
   const { seo, chrome, theme } = config;
 
-  const categoryLinks = categories.map((c) => ({ label: c.name, href: `/category/${c.slug}` }));
+  const categoryLinks = categories.map((c) => ({ label: c.name, href: c.path }));
   const groups: FooterGroup[] = [
     { title: messages.categories, links: categoryLinks },
     ...chrome.footer.columns.map((column) => ({ title: column.title, links: column.links.map((l) => ({ label: l.label, href: l.link })) })),

@@ -11,6 +11,7 @@ describe('toProductCard', () => {
       toProductCard({
         slug: 'zar-led-bulb-12w-e27',
         name: 'لامپ LED حبابی ۱۲ وات زر',
+        path: '/shop/zar-12w',
         brand: 'زر',
         price: 115_000,
         compareAtPrice: 135_000,
@@ -20,6 +21,7 @@ describe('toProductCard', () => {
     ).toEqual({
       slug: 'zar-led-bulb-12w-e27',
       name: 'لامپ LED حبابی ۱۲ وات زر',
+      path: '/shop/zar-12w', // the card links to the API's current path, not to /product/<slug>
       brand: 'زر',
       price: 115_000,
       compareAtPrice: 135_000,
@@ -30,7 +32,7 @@ describe('toProductCard', () => {
   });
 
   it('uses no image and the name as alt when the product has no image', () => {
-    const card = toProductCard({ slug: 's', name: 'نام', brand: null, price: 1, compareAtPrice: null, inStock: false, image: null });
+    const card = toProductCard({ slug: 's', name: 'نام', path: '/product/s', brand: null, price: 1, compareAtPrice: null, inStock: false, image: null });
     expect(card.imageUrl).toBeNull();
     expect(card.imageAlt).toBe('نام');
     expect(card.brand).toBeNull();
@@ -83,7 +85,7 @@ describe('apiGet', () => {
     await expect(apiGet('/catalog/categories', 300)).resolves.toEqual([{ slug: 'lamps' }]);
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('http://api.internal:8080/api/v1/catalog/categories');
-    expect(init.next).toEqual({ revalidate: 300 });
+    expect(init.next).toEqual({ revalidate: 300, tags: ['catalog'] });
   });
 
   it('returns null only for a real 404', async () => {
@@ -118,5 +120,17 @@ describe('apiGet', () => {
 
     await expect(apiGet('/catalog/categories', 300)).rejects.toBeInstanceOf(ApiUnavailableError);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('categoryPaths', () => {
+  it('maps every category slug (roots and children) to its current path', async () => {
+    const { categoryPaths } = await import('../src/lib/catalog');
+    const paths = categoryPaths([
+      { slug: 'lamps', name: 'لامپ', path: '/shop/lamps', children: [{ slug: 'led', name: 'ال‌ای‌دی', path: '/shop/lamps/led' }] },
+    ]);
+    expect(paths.get('lamps')).toBe('/shop/lamps');
+    expect(paths.get('led')).toBe('/shop/lamps/led');
+    expect(paths.get('missing')).toBeUndefined();
   });
 });
