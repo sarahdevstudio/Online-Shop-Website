@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { requestNonce } from '@/lib/nonce';
 import { ThemeHead } from '@/components/ThemeHead';
 import { TextsProvider } from '@/lib/i18n/TextsProvider';
 import { clientTexts, ensureTexts } from '@/lib/i18n/texts-server';
@@ -47,7 +48,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="fa" dir="rtl">
       <head>
-        <ThemeHead theme={theme} />
+        <ThemeHead theme={theme} nonce={await requestNonce()} />
       </head>
       <body>
         <TextsProvider texts={clientTexts(['common.', 'shop.', 'seo.'])}>{children}</TextsProvider>

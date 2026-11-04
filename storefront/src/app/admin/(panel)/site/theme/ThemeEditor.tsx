@@ -26,7 +26,7 @@ function hasFailures(items: readonly ContrastItem[]) {
   return items.some((item) => !item.ok);
 }
 
-function ThemeFields({ doc }: { doc: AdminSiteDocument<ThemePayload> }) {
+function ThemeFields({ doc, nonce }: { doc: AdminSiteDocument<ThemePayload>; nonce?: string }) {
   const payload = (doc.draft?.payload ?? doc.published?.payload) as ThemePayload;
   const [colors, setColors] = useState<Record<ColorName, string>>(() => Object.fromEntries(COLORS.map((name) => [name, payload[name]])) as Record<ColorName, string>);
   const valid = COLORS.every((name) => isHexColor(colors[name]));
@@ -90,7 +90,7 @@ function ThemeFields({ doc }: { doc: AdminSiteDocument<ThemePayload> }) {
       </FormSection>
 
       <FormSection card title={t.typography}>
-        <style dangerouslySetInnerHTML={{ __html: FONT_IDS.map(fontFaceCss).join('') }} />
+        <style nonce={nonce} dangerouslySetInnerHTML={{ __html: FONT_IDS.map(fontFaceCss).join('') }} />
         <FormGrid>
           <SelectField name="font" label={t.font} hint={t.fontHint} defaultValue={payload.font} required>
             {FONT_IDS.map((id) => (
@@ -127,10 +127,10 @@ function ThemeFields({ doc }: { doc: AdminSiteDocument<ThemePayload> }) {
   );
 }
 
-export function ThemeEditor({ doc }: { doc: AdminSiteDocument<ThemePayload> }) {
+export function ThemeEditor({ doc, nonce }: { doc: AdminSiteDocument<ThemePayload>; nonce?: string }) {
   return (
     <SiteEditor kind="theme" action={themeAction} published={doc.published} draft={doc.draft}>
-      <ThemeFields doc={doc} />
+      <ThemeFields doc={doc} nonce={nonce} />
     </SiteEditor>
   );
 }

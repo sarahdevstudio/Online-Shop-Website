@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { ADMIN_COOKIE, readSessionConfig, sealSession, sessionCookieOptions, sessionState, touchSession, unsealSession } from './lib/admin/session';
 import { isReservedPath } from './lib/reserved-paths';
 import { isResolvablePath } from './lib/route-paths';
+import { contentSecurityPolicy, newNonce } from './lib/csp';
 import { securityHeaders } from './lib/security-headers';
 import { PREVIEW_COOKIE } from './lib/site-preview';
 
@@ -12,9 +13,9 @@ import { PREVIEW_COOKIE } from './lib/site-preview';
  *    calls `requireAdmin()` itself.
  * 2. Headers on EVERY response: security headers, and noindex/nofollow unless SITE_ENV=production (see lib/security-headers).
  */
-function adminGate(request: NextRequest): NextResponse {
+function adminGate(request: NextRequest, forward: Headers): NextResponse {
   const config = readSessionConfig();
-  if (request.nextUrl.pathname === '/admin/login') return NextResponse.next();
+  if (request.nextUrl.pathname === '/admin/login') return NextResponse.next({ request: { headers: forward } });
 
   const session = unsealSession(request.cookies.get(ADMIN_COOKIE)?.value, config.secret);
   if (!session || sessionState(session, Date.now(), config.limits) !== 'ok') {
@@ -23,7 +24,7 @@ function adminGate(request: NextRequest): NextResponse {
     return redirect;
   }
 
-  const next = NextResponse.next();
+  const next = NextResponse.next({ request: { headers: forward } });
   next.cookies.set(ADMIN_COOKIE, sealSession(touchSession(session, Date.now()), config.secret), sessionCookieOptions(config));
   return next;
 }
@@ -74,11 +75,18 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdmin = pathname === '/admin' || pathname.startsWith('/admin/');
   const readOnly = request.method === 'GET' || request.method === 'HEAD';
+  // The nonce goes to Next on the REQUEST (Next tags its own scripts with it) and the policy on the response.
+  const nonce = newNonce();
+  const csp = contentSecurityPolicy({ nonce, development: process.env.NODE_ENV === 'development' });
+  const forward = new Headers(request.headers);
+  forward.set('x-nonce', nonce);
+  forward.set('content-security-policy', csp);
   const response = isAdmin
-    ? adminGate(request)
+    ? adminGate(request, forward)
     : readOnly && (await isGone(pathname))
-      ? NextResponse.rewrite(new URL('/gone', request.url), { status: 410 })
-      : NextResponse.next();
+      ? NextResponse.rewrite(new URL('/gone', request.url), { status: 410, request: { headers: forward } })
+      : NextResponse.next({ request: { headers: forward } });
+  response.headers.set('Content-Security-Policy', csp);
 
   for (const [name, value] of Object.entries(securityHeaders(pathname))) response.headers.set(name, value);
   // A draft preview is for one admin only: never cached, never indexed.

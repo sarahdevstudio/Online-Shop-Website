@@ -66,12 +66,13 @@ describe('production environment requirements', () => {
 });
 
 describe('security headers', () => {
-  it('every response gets nosniff, a referrer policy, no framing and a frame-ancestors CSP', () => {
+  it('every response gets nosniff, a referrer policy, no framing and a Permissions-Policy', () => {
     const h = securityHeaders('/product/led-bulb', GOOD);
     expect(h['X-Content-Type-Options']).toBe('nosniff');
     expect(h['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
     expect(h['X-Frame-Options']).toBe('DENY');
-    expect(h['Content-Security-Policy']).toBe("frame-ancestors 'none'");
+    expect(h['Permissions-Policy']).toContain('camera=()');
+    expect(h['Content-Security-Policy']).toBeUndefined(); // per request: the proxy adds it with a nonce (tests/csp.test.ts)
   });
 
   it('the order page and the admin send no referrer at all', () => {

@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getSiteAudit, getSiteDocument } from '@/lib/admin/site-api';
+import { requestNonce } from '@/lib/nonce';
 import { EditorPage } from '../_components/EditorPage';
 import { ThemeEditor } from './ThemeEditor';
 
@@ -9,7 +10,7 @@ export default async function ThemePage() {
 
   return (
     <EditorPage kind="theme" doc={doc} audit={audit?.items ?? []}>
-      <ThemeEditor doc={doc} />
+      <ThemeEditor doc={doc} nonce={await requestNonce()} />
     </EditorPage>
   );
 }
