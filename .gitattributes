@@ -1,0 +1,2 @@
+translations/*.json text eol=lf
+storefront/src/lib/i18n/*.json text eol=lf
