@@ -1,18 +1,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { INITIAL_REVIEW_STATE, type ReviewFormState } from '@/lib/review-form';
 import { reviewMessages as t } from '@/lib/review-messages';
 import { storeFetch } from '@/lib/store-api';
-
-export interface ReviewFormState {
-  ok: boolean;
-  message: string | null;
-  errors: Record<string, string>;
-  /** What was typed, so a refused submit can show it again (never the honeypot). */
-  values: { name: string; mobile: string; rating: string; text: string };
-}
-
-export const INITIAL_REVIEW_STATE: ReviewFormState = { ok: false, message: null, errors: {}, values: { name: '', mobile: '', rating: '', text: '' } };
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 

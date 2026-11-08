@@ -5,7 +5,8 @@ import { Alert } from '@/components/Alert';
 import { ChoiceGroup, Form, FormActions, FormGrid, RequiredNote, SubmitButton, TextAreaField, TextField } from '@/components/form';
 import { formatNumber } from '@/lib/format';
 import { reviewMessages as t } from '@/lib/review-messages';
-import { INITIAL_REVIEW_STATE, submitReviewAction } from './actions';
+import { INITIAL_REVIEW_STATE } from '@/lib/review-form';
+import { submitReviewAction } from './actions';
 
 /**
  * The guest review form: a normal `<form>` posting to a Server Action (works without JavaScript). Name, mobile number, 1–5 stars and

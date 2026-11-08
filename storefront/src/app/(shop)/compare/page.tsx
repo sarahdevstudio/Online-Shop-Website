@@ -46,7 +46,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
     <div className="ui-container ui-section ui-stack">
       <h1 className="ui-heading-2">{t.title}</h1>
       <div className={styles.tools}>
-        <Link href={onlyDifferences ? '/compare' : '/compare?diff=1'} aria-pressed={onlyDifferences}>
+        <Link href={onlyDifferences ? '/compare' : '/compare?diff=1'}>
           {onlyDifferences ? t.allRows : t.onlyDifferences}
         </Link>
         <Form action={clearCompareAction} inline>
