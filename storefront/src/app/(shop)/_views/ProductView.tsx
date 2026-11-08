@@ -17,6 +17,8 @@ import type { SearchParams } from '@/lib/paging';
 import { absoluteUrl, pageMetadata, productJsonLd, withSeoOverrides, type Availability } from '@/lib/seo';
 import { getEntitySeo } from '@/lib/entity-seo';
 import { CompareButton } from '@/components/CompareButton';
+import { ReviewsSection } from '@/components/ReviewsSection';
+import { getProductReviews } from '@/lib/reviews';
 import { FaqSection } from '@/components/FaqSection';
 import { seoDefaults } from '@/lib/site-config';
 import { pickVariant, selectionFromParams, variantQuery } from '@/lib/variants';
@@ -58,7 +60,7 @@ function specRows(product: ProductDetailDto, variant: VariantDto | null): SpecRo
 }
 
 export async function ProductView({ slug, searchParams }: Props) {
-  const [product, seo] = await Promise.all([getProduct(slug), getEntitySeo('product', slug)]);
+  const [product, seo, reviews] = await Promise.all([getProduct(slug), getEntitySeo('product', slug), getProductReviews(slug)]);
   if (!product) notFound();
 
   const basePath = product.path;
@@ -76,6 +78,7 @@ export async function ProductView({ slug, searchParams }: Props) {
           path: basePath,
           images: product.images.map((image) => absoluteUrl(image.url)),
           brand: product.brand?.name,
+          reviews,
           offers: product.variants.map((v) => ({
             sku: v.sku,
             priceToman: v.price,
@@ -146,6 +149,7 @@ export async function ProductView({ slug, searchParams }: Props) {
         </section>
       )}
       <FaqSection items={seo.faq} />
+      {product.status === 'published' && <ReviewsSection productSlug={product.slug} reviews={reviews} />}
     </div>
   );
 }

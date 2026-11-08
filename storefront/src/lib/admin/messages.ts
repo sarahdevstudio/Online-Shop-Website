@@ -107,6 +107,7 @@ export const adminMessages = {
     get routes() { return t('admin.nav.routes'); },
     get settings() { return t('admin.nav.settings'); },
     get staff() { return t('admin.nav.staff'); },
+    get reviews() { return t('admin.nav.reviews'); },
     get account() { return t('admin.nav.account'); },
   },
   get save() { return t('admin.save'); },

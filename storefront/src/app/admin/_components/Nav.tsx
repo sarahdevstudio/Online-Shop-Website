@@ -18,6 +18,7 @@ const items = (): { href: string; label: string; exact?: boolean; permission?: s
   { href: '/admin/redirects', permission: 'Routes.Manage', label: adminMessages.nav.routes },
   { href: '/admin/translations', permission: 'Translations.Manage', label: adminMessages.nav.translations },
   { href: '/admin/settings', permission: 'Settings.Manage', label: adminMessages.nav.settings },
+  { href: '/admin/reviews', permission: 'Reviews.Manage', label: adminMessages.nav.reviews },
   { href: '/admin/staff', permission: 'User.Manage', label: adminMessages.nav.staff },
   { href: '/admin/account', label: adminMessages.nav.account },
 ];

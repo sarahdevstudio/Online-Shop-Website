@@ -108,6 +108,12 @@ export interface OfferInput {
   path: string;
 }
 
+export interface ReviewsInput {
+  count: number;
+  average: number;
+  items: readonly { name: string; rating: number; text: string; createdAtUtc: string }[];
+}
+
 interface ProductJsonLdInput {
   name: string;
   description: string;
@@ -115,11 +121,17 @@ interface ProductJsonLdInput {
   images: readonly string[];
   brand?: string | null;
   offers: readonly OfferInput[];
+  /** Approved reviews only. Rating and Review are emitted only when there is at least one: never invented, never seeded. */
+  reviews?: ReviewsInput;
 }
 
+/** The date part of a UTC timestamp from the API (it has no zone suffix). */
+const isoDate = (utc: string) => utc.slice(0, 10);
+
 /**
- * Product with one Offer per variant. No aggregateRating/review: there are no reviews yet, and invented ratings in
- * structured data violate Google's guidelines.
+ * Product with one Offer per variant. `aggregateRating` and `review` appear only when the product has at least one APPROVED
+ * review (the caller passes only those): invented ratings in structured data violate Google's guidelines, so with none there is
+ * no rating at all.
  */
 export function productJsonLd(p: ProductJsonLdInput) {
   return {
@@ -131,6 +143,18 @@ export function productJsonLd(p: ProductJsonLdInput) {
     ...(p.images.length > 0 ? { image: p.images } : {}),
     ...(p.offers.length === 1 ? { sku: p.offers[0].sku } : {}),
     ...(p.brand ? { brand: { '@type': 'Brand', name: p.brand } } : {}),
+    ...(p.reviews && p.reviews.count > 0
+      ? {
+          aggregateRating: { '@type': 'AggregateRating', ratingValue: p.reviews.average, reviewCount: p.reviews.count, bestRating: 5, worstRating: 1 },
+          review: p.reviews.items.slice(0, 10).map((r) => ({
+            '@type': 'Review',
+            author: { '@type': 'Person', name: r.name },
+            datePublished: isoDate(r.createdAtUtc),
+            reviewBody: r.text,
+            reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+          })),
+        }
+      : {}),
     ...(p.offers.length > 0
       ? {
           offers: p.offers.map((offer) => ({

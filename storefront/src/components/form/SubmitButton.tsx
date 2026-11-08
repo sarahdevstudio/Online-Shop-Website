@@ -13,6 +13,8 @@ export function SubmitButton({
   block,
   disabled,
   'aria-label': ariaLabel,
+  name,
+  value,
 }: {
   children: ReactNode;
   pendingLabel?: ReactNode;
@@ -21,10 +23,13 @@ export function SubmitButton({
   block?: boolean;
   disabled?: boolean;
   'aria-label'?: string;
+  /** Sent with the form when this button submits it (several decisions on one form). */
+  name?: string;
+  value?: string;
 }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant={variant} size={size} block={block} loading={pending} disabled={disabled} aria-label={ariaLabel}>
+    <Button type="submit" variant={variant} size={size} block={block} loading={pending} disabled={disabled} aria-label={ariaLabel} name={name} value={value}>
       {pending && pendingLabel ? pendingLabel : children}
     </Button>
   );
