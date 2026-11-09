@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Shop.Application.Catalog;
 using Shop.Domain.Catalog;
@@ -13,7 +14,7 @@ namespace Shop.Api.Commands;
 /// <c>dotnet Shop.Api.dll import-initial-catalog [--dry-run]</c>: reads the manifest and images that
 /// <c>tools/catalog-scrape</c> produced (never the network) and creates the categories and products that don't
 /// already exist, matching by slug. Existing ones are never touched (admin edits win). One transaction: any error
-/// means nothing is written.
+/// means nothing is written (including the image files already saved during this run).
 /// </summary>
 public static class ImportInitialCatalogCommand
 {
@@ -22,13 +23,49 @@ public static class ImportInitialCatalogCommand
     private sealed record ManifestCategory(string Slug, string Name, string? ParentSlug);
     private sealed record ManifestImage(string File, string Alt);
     private sealed record ManifestProduct(
-        string SourceUrl, string Slug, string Name, string CategorySlug, long? PriceToman,
+        string SourceUrl, string Slug, string Sku, string Name, string CategorySlug, long? PriceToman,
         Dictionary<string, string> Specs, string Description, List<ManifestImage> Images);
     private sealed record Manifest(List<ManifestCategory> Categories, List<ManifestProduct> Products);
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
+    /// <summary>
+    /// A scraped spec maps to an existing or new attribute, as a plain spec of the whole product (never a variant
+    /// axis: the source has no variants). <see cref="Reader.Invoke"/> turns the raw spec text into either a Text
+    /// value, or an (option value, option slug) pair for an Option attribute; returning null skips that product's
+    /// value for that key, rather than writing one the attribute model can't represent cleanly.
+    /// </summary>
+    private sealed record SpecAttribute(string Code, string? Name, AttributeType Type, Func<string, (string? Text, (string Value, string Slug)? Option)> Reader);
+
+    private static (string Value, string Slug)? ExtractBase(string raw)
+    {
+        var match = Regex.Match(raw, "E14|E27|GU10", RegexOptions.IgnoreCase);
+        return match.Success ? (match.Value.ToUpperInvariant(), match.Value.ToLowerInvariant()) : null;
+    }
+
+    private static (string Value, string Slug)? ExtractWattage(string raw)
+    {
+        var match = Regex.Match(raw, @"\d+");
+        return match.Success ? ($"{match.Value} وات", $"{match.Value}w") : null;
+    }
+
+    // Reused attributes (arms, finish, lumen, base, wattage) already exist: EnsureAttributesAsync seeds them in
+    // every environment. New ones (dimensions, weight, style, warranty) have no match in the lighting-attribute
+    // reference data and are created the first time this import needs them.
+    private static readonly Dictionary<string, SpecAttribute> SpecMap = new()
+    {
+        ["تعداد شاخه"] = new("arms", null, AttributeType.Text, raw => (raw, null)),
+        ["رنگ"] = new("finish", null, AttributeType.Text, raw => (raw, null)),
+        ["رنگ نور"] = new("lumen", null, AttributeType.Text, raw => (Regex.Match(raw, @"\d+") is { Success: true } m ? m.Value : raw, null)),
+        ["نوع لامپ"] = new("base", null, AttributeType.Option, raw => (null, ExtractBase(raw))),
+        ["میزان-مصرف"] = new("wattage", null, AttributeType.Option, raw => (null, ExtractWattage(raw))),
+        ["ابعاد"] = new("dimensions", "ابعاد", AttributeType.Text, raw => (raw, null)),
+        ["وزن"] = new("weight", "وزن", AttributeType.Text, raw => (raw, null)),
+        ["سبک"] = new("style", "سبک", AttributeType.Text, raw => (raw, null)),
+        ["گارانتی"] = new("warranty", "گارانتی", AttributeType.Text, raw => (raw, null)),
     };
 
     public static async Task<int> RunAsync(string[] args)
@@ -58,6 +95,14 @@ public static class ImportInitialCatalogCommand
 
         var manifest = JsonSerializer.Deserialize<Manifest>(await File.ReadAllTextAsync(manifestPath), JsonOptions)
             ?? throw new InvalidOperationException("Empty manifest.");
+
+        var skus = manifest.Products.Select(p => SanitizeSku(p.Sku)).ToList();
+        var duplicateSku = skus.GroupBy(s => s, StringComparer.OrdinalIgnoreCase).FirstOrDefault(g => g.Count() > 1);
+        if (duplicateSku is not null)
+        {
+            Console.Error.WriteLine($"Two products share the SKU '{duplicateSku.Key}'. Fix the manifest and re-run.");
+            return 1;
+        }
 
         var builder = WebApplication.CreateBuilder([]);
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
@@ -95,6 +140,7 @@ public static class ImportInitialCatalogCommand
             return 0;
         }
 
+        var savedMediaPaths = new List<string>();
         await using var tx = await db.Database.BeginTransactionAsync();
         try
         {
@@ -108,17 +154,56 @@ public static class ImportInitialCatalogCommand
                 categoriesBySlug[manifestCategory.Slug] = category;
             }
 
+            var attributesByCode = await db.Attributes.Include(a => a.Options).ToDictionaryAsync(a => a.Code);
+            var nextAttributeSort = attributesByCode.Count == 0 ? 10 : attributesByCode.Values.Max(a => a.SortOrder) + 10;
+
             var now = clock.GetUtcNow().UtcDateTime;
             foreach (var manifestProduct in productsToCreate)
             {
                 var category = categoriesBySlug[manifestProduct.CategorySlug];
-                var description = Describe(manifestProduct);
                 var product = Product.Create(
-                    category.Id, brandId: null, brandName: null, manifestProduct.Name, manifestProduct.Slug, description, ProductStatus.Draft, now);
+                    category.Id, brandId: null, brandName: null, manifestProduct.Name, manifestProduct.Slug,
+                    manifestProduct.Description, ProductStatus.Draft, now);
                 product.Variants.Add(ProductVariant.Create(
-                    manifestProduct.Slug, manifestProduct.PriceToman ?? 0, compareAtPrice: null, stock: 0, isActive: true, sortOrder: 0));
+                    SanitizeSku(manifestProduct.Sku), manifestProduct.PriceToman ?? 0, compareAtPrice: null, stock: 0, isActive: true, sortOrder: 0));
                 db.Products.Add(product);
                 await db.SaveChangesAsync();
+
+                foreach (var (key, raw) in manifestProduct.Specs)
+                {
+                    if (!SpecMap.TryGetValue(key, out var spec))
+                    {
+                        continue;
+                    }
+
+                    if (!attributesByCode.TryGetValue(spec.Code, out var attribute))
+                    {
+                        attribute = AttributeDefinition.Create(spec.Code, spec.Name!, unit: null, spec.Type, isFilterable: false, nextAttributeSort);
+                        nextAttributeSort += 10;
+                        db.Attributes.Add(attribute);
+                        await db.SaveChangesAsync();
+                        attributesByCode[spec.Code] = attribute;
+                    }
+
+                    var (text, option) = spec.Reader(raw);
+                    if (attribute.Type == AttributeType.Text && text is { Length: > 0 })
+                    {
+                        product.AttributeValues.Add(ProductAttributeValue.ForText(attribute.Id, text, variantId: null));
+                    }
+                    else if (attribute.Type == AttributeType.Option && option is { } chosen)
+                    {
+                        var attrOption = attribute.Options.FirstOrDefault(o => o.Slug == chosen.Slug);
+                        if (attrOption is null)
+                        {
+                            attrOption = AttributeOption.Create(chosen.Value, chosen.Slug, attribute.Options.Count * 10 + 10);
+                            attribute.Options.Add(attrOption);
+                            await db.SaveChangesAsync();
+                        }
+
+                        product.AttributeValues.Add(ProductAttributeValue.ForOption(attribute.Id, attrOption.Id, variantId: null));
+                    }
+                    // Else: the raw value didn't fit the attribute (e.g. no recognizable socket code) — skipped.
+                }
 
                 for (var i = 0; i < manifestProduct.Images.Count; i++)
                 {
@@ -126,6 +211,7 @@ public static class ImportInitialCatalogCommand
                     var sourcePath = Path.Combine(catalogDir, "images", manifestImage.File);
                     await using var fileStream = File.OpenRead(sourcePath);
                     var storedPath = await media.SaveAsync(fileStream, $"products/{product.Id}", ".webp", CancellationToken.None);
+                    savedMediaPaths.Add(storedPath);
                     product.Images.Add(ProductImage.Create(storedPath, manifestImage.Alt, i));
                 }
 
@@ -141,6 +227,11 @@ public static class ImportInitialCatalogCommand
         catch
         {
             await tx.RollbackAsync();
+            foreach (var path in savedMediaPaths)
+            {
+                await media.DeleteAsync(path, CancellationToken.None);
+            }
+
             throw;
         }
 
@@ -153,9 +244,6 @@ public static class ImportInitialCatalogCommand
         return 0;
     }
 
-    private static string Describe(ManifestProduct product)
-    {
-        var specLines = product.Specs.Select(s => $"{s.Key}: {s.Value}");
-        return string.Join('\n', new[] { product.Description }.Concat(specLines).Where(line => line.Length > 0));
-    }
+    /// <summary>The site's product code may contain '/' (e.g. "H18/12"), which <see cref="ProductVariant.IsValidSku"/> refuses.</summary>
+    private static string SanitizeSku(string sku) => sku.Replace('/', '-');
 }
