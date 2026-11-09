@@ -10,6 +10,12 @@ if (args.Length > 0 && args[0] == "create-admin")
     return await Shop.Api.Commands.CreateAdminCommand.RunAsync(args[1..]);
 }
 
+// `dotnet Shop.Api.dll import-initial-catalog [--dry-run]`: create-only import of the catalog tools/catalog-scrape produced.
+if (args.Length > 0 && args[0] == "import-initial-catalog")
+{
+    return await Shop.Api.Commands.ImportInitialCatalogCommand.RunAsync(args[1..]);
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, services, logger) => logger

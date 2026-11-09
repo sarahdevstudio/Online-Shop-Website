@@ -10,6 +10,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- import-initial-catalog (ImportInitialCatalogCommand) reads these next to the built dll. The manifest is a
+         default Content item, the images are default None items; both need CopyToOutputDirectory. -->
+    <Content Update="SeedData\initial-catalog\**" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="SeedData\initial-catalog\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.12" />
