@@ -85,9 +85,29 @@ by the app or CI, and the app reads only local files, never the network):
 2. `dotnet Shop.Api.dll import-initial-catalog [--dry-run]` reads the manifest and images (never the
    network) and creates what doesn't already exist, matching by slug: existing products and categories are
    never touched (admin edits win). New products are created Draft with a single Stock-0 variant (the source
-   has no product variations) and the scraped price converted from Rial to integer Toman; a new category is
-   created inactive until an admin publishes it. Runs in one transaction — any problem fails the whole run —
-   and writes a `CatalogTransferLogs` row (kind `import`) per real run. The source's spec table (weight,
-   dimensions, arm count, lamp type) has no matching attribute codes (those are lighting attributes for
-   bulbs, not chandeliers), so it is appended as text to the product description rather than mapped into the
-   structured attribute system.
+   has no product variations), the real site SKU (sanitized only for `/`, which `ProductVariant.Sku` forbids),
+   and the scraped price converted from Rial to integer Toman; a new category is created inactive until an
+   admin publishes it. Runs in one transaction — any problem fails the whole run, including the image files
+   already saved to the media store during that run — and writes a `CatalogTransferLogs` row (kind `import`)
+   per real run.
+
+   The 9 scraped spec keys map onto attributes, never the description:
+
+   | Persian key | Attribute | Type | Filterable |
+   |---|---|---|---|
+   | تعداد شاخه (arm count) | `arms` (reused) | Text | no |
+   | رنگ (colour) | `finish` (reused) | Text | no |
+   | رنگ نور (despite the name, a lumen figure) | `lumen` (reused) | Text | no |
+   | نوع لامپ (socket) | `base` (reused) | Option | **yes** |
+   | میزان-مصرف (wattage) | `wattage` (reused) | Option | **yes** |
+   | ابعاد (dimensions) | `dimensions` (new) | Text | no |
+   | وزن (weight) | `weight` (new) | Text | no |
+   | سبک (style) | `style` (new) | Text | no |
+   | گارانتی (warranty) | `warranty` (new) | Text | no |
+
+   `arms`/`finish`/`lumen`/`base`/`wattage` already exist (seeded in every environment); the command creates
+   the other 4 the first time it needs them. `base`/`wattage` extract a socket code or a number from the raw
+   text and add a new option when needed (e.g. `72w`); a value that doesn't fit (no recognizable socket, no
+   number) is skipped for that product rather than guessed at. `dimensions`/`weight` are free-form with a
+   unit (not a clean filter); `style` is sometimes comma-multi-valued, which the one-row-per-attribute model
+   can't hold as an Option; `warranty` has one occurrence in the source. None of the 4 new ones is filterable.
