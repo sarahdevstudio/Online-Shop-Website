@@ -72,3 +72,22 @@ Cart/order/admin-order endpoints are designed with M-7.
 1. Guest checkout is allowed: phone + address, no account.
 2. Shipping: one flat fee from configuration plus an optional free-shipping threshold on the subtotal.
 3. One category per product.
+
+## 8. Initial catalog import (Series 4)
+
+The real catalog (from the previous site, ghr-co.com) is imported once in two steps, both dev-only (never run
+by the app or CI, and the app reads only local files, never the network):
+
+1. `tools/catalog-scrape/scrape.mjs` crawls the source politely (1 request/second) and writes
+   `src/Api/SeedData/initial-catalog/manifest.json` plus WebP images (max 1600px, quality ~80, metadata
+   stripped). Re-running it against the same source produces the same manifest (sorted keys, products sorted
+   by slug), so a re-scrape diffs cleanly.
+2. `dotnet Shop.Api.dll import-initial-catalog [--dry-run]` reads the manifest and images (never the
+   network) and creates what doesn't already exist, matching by slug: existing products and categories are
+   never touched (admin edits win). New products are created Draft with a single Stock-0 variant (the source
+   has no product variations) and the scraped price converted from Rial to integer Toman; a new category is
+   created inactive until an admin publishes it. Runs in one transaction — any problem fails the whole run —
+   and writes a `CatalogTransferLogs` row (kind `import`) per real run. The source's spec table (weight,
+   dimensions, arm count, lamp type) has no matching attribute codes (those are lighting attributes for
+   bulbs, not chandeliers), so it is appended as text to the product description rather than mapped into the
+   structured attribute system.
