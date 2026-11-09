@@ -9,7 +9,7 @@
 import sharp from '../../storefront/node_modules/sharp/dist/index.cjs';
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT_DIR = join(ROOT, 'src', 'Api', 'SeedData', 'initial-catalog');
@@ -50,6 +50,12 @@ function stripTags(html) {
     .join('\n');
 }
 
+// Exported for scrape.test.mjs. The source shows Rial; the shop stores whole Toman (Rial / 10).
+export function rialToToman(priceRial, context) {
+  if (priceRial % 10 !== 0) throw new Error(`price ${priceRial} Rial in ${context} is not a whole Toman amount`);
+  return priceRial / 10;
+}
+
 function slugify(sku) {
   return sku
     .toLowerCase()
@@ -76,8 +82,7 @@ function parseProduct(html, sourceUrl) {
 
   const priceMatch = /<span class="woocommerce-Price-amount amount">([\d,]+)/.exec(html);
   const priceRial = priceMatch ? Number(priceMatch[1].replace(/,/g, '')) : null;
-  if (priceRial !== null && priceRial % 10 !== 0) throw new Error(`price ${priceRial} Rial in ${sourceUrl} is not a whole Toman amount`);
-  const priceToman = priceRial === null ? null : priceRial / 10;
+  const priceToman = priceRial === null ? null : rialToToman(priceRial, sourceUrl);
 
   const specs = {};
   const specRegex = /<tr class="woocommerce-product-attributes-item[^"]*">\s*<th class="woocommerce-product-attributes-item__label">([^<]+)<\/th>\s*<td class="woocommerce-product-attributes-item__value">([\s\S]*?)<\/td>\s*<\/tr>/g;
@@ -169,7 +174,10 @@ async function main() {
   console.log(`wrote ${manifestPath} (${products.length} products)`);
 }
 
-main().catch((err) => {
-  console.error(err.message);
-  process.exit(1);
-});
+// Only run the scrape when this file is executed directly, not when scrape.test.mjs imports rialToToman.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
+}

@@ -21,3 +21,9 @@ sorted by slug), so a re-scrape diffs cleanly against the committed one.
 
 Reuses the storefront's own `sharp` dependency directly from `storefront/node_modules` — this script adds
 no dependency of its own.
+
+## Test
+
+```
+node --test tools/catalog-scrape/scrape.test.mjs
+```

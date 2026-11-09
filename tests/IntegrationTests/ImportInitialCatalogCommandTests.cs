@@ -61,10 +61,11 @@ public sealed class ImportInitialCatalogCommandTests(ApiFixture fixture) : ApiTe
     {
       "categories": [ { "slug": "test-import-cat", "name": "دسته آزمایشی", "parentSlug": null } ],
       "products": [
-        { "sourceUrl": "https://example.test/a", "slug": "test-import-a", "name": "محصول آزمایشی A",
-          "categorySlug": "test-import-cat", "priceToman": 2800000, "specs": { "وزن": "4 kg" },
+        { "sourceUrl": "https://example.test/a", "slug": "test-import-a", "sku": "H5/8", "name": "محصول آزمایشی A",
+          "categorySlug": "test-import-cat", "priceToman": 2800000,
+          "specs": { "وزن": "4 kg", "نوع لامپ": "نوع E14 ( سرپیچ شمعی)", "یک کلید ناشناس": "نادیده گرفته می‌شود" },
           "description": "توضیح A", "images": [ { "file": "fixture-1.webp", "alt": "محصول آزمایشی A" } ] },
-        { "sourceUrl": "https://example.test/b", "slug": "test-import-b", "name": "محصول آزمایشی B",
+        { "sourceUrl": "https://example.test/b", "slug": "test-import-b", "sku": "B-2", "name": "محصول آزمایشی B",
           "categorySlug": "test-import-cat", "priceToman": 1500000, "specs": {}, "description": "توضیح B",
           "images": [ { "file": "fixture-1.webp", "alt": "محصول آزمایشی B" } ] }
       ]
@@ -75,12 +76,26 @@ public sealed class ImportInitialCatalogCommandTests(ApiFixture fixture) : ApiTe
     {
       "categories": [ { "slug": "test-import-cat", "name": "دسته آزمایشی", "parentSlug": null } ],
       "products": [
-        { "sourceUrl": "https://example.test/a", "slug": "test-import-a", "name": "محصول آزمایشی A",
+        { "sourceUrl": "https://example.test/a", "slug": "test-import-a", "sku": "A-1", "name": "محصول آزمایشی A",
           "categorySlug": "test-import-cat", "priceToman": 2800000, "specs": {},
           "description": "توضیح A", "images": [ { "file": "fixture-1.webp", "alt": "A" } ] },
-        { "sourceUrl": "https://example.test/bad", "slug": "not a valid slug", "name": "محصول خراب",
+        { "sourceUrl": "https://example.test/bad", "slug": "zzz invalid slug", "sku": "BAD-1", "name": "محصول خراب",
           "categorySlug": "test-import-cat", "priceToman": 1000000, "specs": {}, "description": "",
           "images": [ { "file": "fixture-1.webp", "alt": "bad" } ] }
+      ]
+    }
+    """;
+
+    private const string DuplicateSkuManifest = """
+    {
+      "categories": [ { "slug": "test-import-cat", "name": "دسته آزمایشی", "parentSlug": null } ],
+      "products": [
+        { "sourceUrl": "https://example.test/a", "slug": "test-import-a", "sku": "DUP-1", "name": "A",
+          "categorySlug": "test-import-cat", "priceToman": 100000, "specs": {}, "description": "",
+          "images": [ { "file": "fixture-1.webp", "alt": "A" } ] },
+        { "sourceUrl": "https://example.test/b", "slug": "test-import-b", "sku": "dup-1", "name": "B",
+          "categorySlug": "test-import-cat", "priceToman": 200000, "specs": {}, "description": "",
+          "images": [ { "file": "fixture-1.webp", "alt": "B" } ] }
       ]
     }
     """;
@@ -115,15 +130,30 @@ public sealed class ImportInitialCatalogCommandTests(ApiFixture fixture) : ApiTe
 
                 await using (var db = new ShopDbContext(options))
                 {
-                    var products = await db.Products.Include(p => p.Variants).Include(p => p.Images).OrderBy(p => p.Slug).ToListAsync();
+                    var products = await db.Products.Include(p => p.Variants).Include(p => p.Images)
+                        .Include(p => p.AttributeValues).OrderBy(p => p.Slug).ToListAsync();
                     Assert.Equal(2, products.Count);
                     Assert.All(products, p => Assert.Equal(ProductStatus.Draft, p.Status));
                     Assert.All(products, p => Assert.Single(p.Images));
                     Assert.All(products, p => Assert.Equal(0, p.Variants.Single().Stock));
 
                     // The manifest's priceToman (already the source Rial price / 10) lands unchanged on the variant.
-                    Assert.Equal(2_800_000, products.Single(p => p.Slug == "test-import-a").Variants.Single().Price);
+                    var a = products.Single(p => p.Slug == "test-import-a");
+                    Assert.Equal(2_800_000, a.Variants.Single().Price);
                     Assert.Equal(1_500_000, products.Single(p => p.Slug == "test-import-b").Variants.Single().Price);
+
+                    // The real SKU (sanitized only for the '/' ProductVariant.Sku forbids), not the slug.
+                    Assert.Equal("H5-8", a.Variants.Single().Sku);
+                    // Specs no longer flattened into the description.
+                    Assert.Equal("توضیح A", a.Description);
+
+                    var attributes = await db.Attributes.Include(x => x.Options).ToDictionaryAsync(x => x.Code);
+                    var weight = a.AttributeValues.Single(v => v.AttributeId == attributes["weight"].Id);
+                    Assert.Equal("4 kg", weight.Text);
+                    var baseValue = a.AttributeValues.Single(v => v.AttributeId == attributes["base"].Id);
+                    Assert.Equal("e14", attributes["base"].Options.Single(o => o.Id == baseValue.OptionId).Slug);
+                    // The unknown spec key ("یک کلید ناشناس") was silently ignored, not a third attribute value.
+                    Assert.Equal(2, a.AttributeValues.Count);
 
                     var category = await db.Categories.SingleAsync();
                     Assert.False(category.IsActive); // new categories are hidden until an admin publishes them
@@ -172,12 +202,51 @@ public sealed class ImportInitialCatalogCommandTests(ApiFixture fixture) : ApiTe
                 ("Seed__AdminEmail", null),
                 ("Seed__AdminPassword", null)))
             {
-                // The second product's slug ("not a valid slug") is invalid: the whole run fails, including the
-                // first (valid) product, because it all runs in one transaction.
+                // "test-import-a" sorts before the invalid "zzz invalid slug", so its image is already saved to
+                // disk when the second product's bad slug fails the whole run.
                 await Assert.ThrowsAnyAsync<Exception>(() => ImportInitialCatalogCommand.RunAsync([]));
 
                 await using var db = new ShopDbContext(options);
                 Assert.Equal(0, await db.Products.CountAsync());
+                // Only the "products/" subfolder is this import's own files; "site/" etc. come from unrelated startup seeding.
+                var productsMedia = Path.Combine(media, "products");
+                Assert.Empty(Directory.Exists(productsMedia) ? Directory.GetFiles(productsMedia, "*", SearchOption.AllDirectories) : []);
+            }
+        }
+        finally
+        {
+            Microsoft.Data.SqlClient.SqlConnection.ClearAllPools();
+            await using var cleanup = new ShopDbContext(options);
+            await cleanup.Database.EnsureDeletedAsync();
+            Directory.Delete(catalogDir, recursive: true);
+            if (Directory.Exists(media))
+            {
+                Directory.Delete(media, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task DuplicateSkuAcrossProducts_FailsBeforeAnythingIsWritten()
+    {
+        var connection = ApiFixture.NewDatabaseConnectionString();
+        var media = Path.Combine(Path.GetTempPath(), $"shop-catalog-import-media-{Guid.NewGuid():N}");
+        var catalogDir = WriteFixtureCatalog(DuplicateSkuManifest);
+        var options = new DbContextOptionsBuilder<ShopDbContext>().UseSqlServer(connection).Options;
+        try
+        {
+            using (new EnvScope(
+                ("ASPNETCORE_ENVIRONMENT", "Testing"),
+                ("ConnectionStrings__Default", connection),
+                ("Database__MigrateOnStartup", "true"),
+                ("Media__RootPath", media),
+                ("CATALOG_IMPORT_DIR", catalogDir),
+                ("Seed__AdminEmail", null),
+                ("Seed__AdminPassword", null)))
+            {
+                // "DUP-1" and "dup-1" are the same SKU: caught before the database is even touched.
+                Assert.Equal(1, await ImportInitialCatalogCommand.RunAsync([]));
+                Assert.False(Directory.Exists(media));
             }
         }
         finally
