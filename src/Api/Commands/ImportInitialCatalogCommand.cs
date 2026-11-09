@@ -144,6 +144,11 @@ public static class ImportInitialCatalogCommand
             throw;
         }
 
+        // The route table is seeded once at API startup; entities created afterwards (here) need the same
+        // backfill RouteSeeder already does for exactly this case ("heals an entity created by a path that
+        // skipped the route service"), or their storefront page 404s despite existing.
+        await scope.ServiceProvider.GetRequiredService<Shop.Infrastructure.Routing.RouteSeeder>().EnsureAsync(CancellationToken.None);
+
         Console.WriteLine($"Created {categoriesToCreate.Count} categories and {productsToCreate.Count} products.");
         return 0;
     }
