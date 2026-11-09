@@ -43,6 +43,7 @@ function stripTags(html) {
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
+    .replace(/&times;/g, '×')
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
@@ -81,7 +82,11 @@ function parseProduct(html, sourceUrl) {
   const specs = {};
   const specRegex = /<tr class="woocommerce-product-attributes-item[^"]*">\s*<th class="woocommerce-product-attributes-item__label">([^<]+)<\/th>\s*<td class="woocommerce-product-attributes-item__value">([\s\S]*?)<\/td>\s*<\/tr>/g;
   for (const [, label, valueHtml] of html.matchAll(specRegex)) {
-    specs[label.trim()] = stripTags(valueHtml);
+    const key = label.trim();
+    let value = stripTags(valueHtml);
+    // "نوع لامپ" (lamp socket) appears both as "E14 (...)" and "نوع E14 (...)" for the same meaning.
+    if (key === 'نوع لامپ') value = value.replace(/^نوع\s+/, '');
+    specs[key] = value;
   }
 
   // The gallery sits between its own marker and the "related products" section further down the page;
@@ -96,7 +101,7 @@ function parseProduct(html, sourceUrl) {
   const uniqueImages = [...new Set(images)];
   if (uniqueImages.length === 0) throw new Error(`no images found in ${sourceUrl}`);
 
-  return { sourceUrl, slug, name, categorySlug: CATEGORY_SLUG, priceToman, specs, description, imageUrls: uniqueImages };
+  return { sourceUrl, slug, sku, name, categorySlug: CATEGORY_SLUG, priceToman, specs, description, imageUrls: uniqueImages };
 }
 
 function sortKeysDeep(value) {

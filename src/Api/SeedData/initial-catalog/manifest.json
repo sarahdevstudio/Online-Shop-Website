@@ -50,6 +50,7 @@
       ],
       "name": "لوستر ۲FLW-B",
       "priceToman": 3490000,
+      "sku": "2FLW-B",
       "slug": "2flw-b",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-2flw-b/",
       "specs": {}
@@ -97,6 +98,7 @@
       ],
       "name": "لوستر ARMS",
       "priceToman": 3690000,
+      "sku": "ARMS",
       "slug": "arms",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-arms/",
       "specs": {}
@@ -144,6 +146,7 @@
       ],
       "name": "لوستر BASTI",
       "priceToman": 4990000,
+      "sku": "BASTI",
       "slug": "basti",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-basti/",
       "specs": {}
@@ -187,6 +190,7 @@
       ],
       "name": "لوستر BUT4",
       "priceToman": 2690000,
+      "sku": "BUT4",
       "slug": "but4",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-but4/",
       "specs": {}
@@ -218,6 +222,7 @@
       ],
       "name": "لوستر CIR7",
       "priceToman": 2990000,
+      "sku": "CIR7",
       "slug": "cir7",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-cir7/",
       "specs": {}
@@ -245,6 +250,7 @@
       ],
       "name": "لوستر ELVA-8",
       "priceToman": 3690000,
+      "sku": "ELVA-8",
       "slug": "elva-8",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-elva-8/",
       "specs": {}
@@ -292,6 +298,7 @@
       ],
       "name": "لوستر FLNZ",
       "priceToman": 3390000,
+      "sku": "FLNZ",
       "slug": "flnz",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-flnz/",
       "specs": {}
@@ -323,6 +330,7 @@
       ],
       "name": "لوستر H1-5",
       "priceToman": 4360000,
+      "sku": "H1-5",
       "slug": "h1-5",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-h1-5/",
       "specs": {}
@@ -362,6 +370,7 @@
       ],
       "name": "لوستر H12",
       "priceToman": 2300000,
+      "sku": "H12",
       "slug": "h12",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-h12/",
       "specs": {}
@@ -401,6 +410,7 @@
       ],
       "name": "لوستر H1410",
       "priceToman": 4180000,
+      "sku": "H1410",
       "slug": "h1410",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-h1410/",
       "specs": {}
@@ -436,6 +446,7 @@
       ],
       "name": "لوستر H18/12",
       "priceToman": 4360000,
+      "sku": "H18/12",
       "slug": "h18-12",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-h18-12/",
       "specs": {}
@@ -479,6 +490,7 @@
       ],
       "name": "لوستر H40",
       "priceToman": 3380000,
+      "sku": "H40",
       "slug": "h40",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-h40/",
       "specs": {}
@@ -506,6 +518,7 @@
       ],
       "name": "لوستر H5-4",
       "priceToman": 4290000,
+      "sku": "H5-4",
       "slug": "h5-4",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-h5-4/",
       "specs": {}
@@ -529,6 +542,7 @@
       ],
       "name": "لوستر H6-4",
       "priceToman": 1380000,
+      "sku": "H6-4",
       "slug": "h6-4",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-h6-4/",
       "specs": {}
@@ -560,6 +574,7 @@
       ],
       "name": "لوستر H7-4",
       "priceToman": 1380000,
+      "sku": "H7-4",
       "slug": "h7-4",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-h7-4/",
       "specs": {}
@@ -611,6 +626,7 @@
       ],
       "name": "لوستر JL3CH",
       "priceToman": 1590000,
+      "sku": "JL3CH",
       "slug": "jl3ch",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-jl3ch/",
       "specs": {}
@@ -654,6 +670,7 @@
       ],
       "name": "لوستر JL4CH",
       "priceToman": 2690000,
+      "sku": "JL4CH",
       "slug": "jl4ch",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-jl4ch/",
       "specs": {}
@@ -693,6 +710,7 @@
       ],
       "name": "لوستر JLT",
       "priceToman": 3990000,
+      "sku": "JLT",
       "slug": "jlt",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-jlt/",
       "specs": {}
@@ -736,6 +754,7 @@
       ],
       "name": "لوستر K2/8",
       "priceToman": 1380000,
+      "sku": "K2/8",
       "slug": "k2-8",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-k2-8/",
       "specs": {}
@@ -763,6 +782,7 @@
       ],
       "name": "لوستر KIT-3",
       "priceToman": 1380000,
+      "sku": "KIT-3",
       "slug": "kit-3",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-kit-3/",
       "specs": {}
@@ -790,10 +810,11 @@
       ],
       "name": "لوستر K1/12",
       "priceToman": 3450000,
+      "sku": "kr-1801",
       "slug": "kr-1801",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1k1-12/",
       "specs": {
-        "ابعاد": "60 &times; 40 &times; 15 cm",
+        "ابعاد": "60 × 40 × 15 cm",
         "تعداد شاخه": "12",
         "میزان-مصرف": "72 وات",
         "نوع لامپ": "E14 ( سرپیچ شمعی)",
@@ -827,12 +848,13 @@
       ],
       "name": "لوستر H5/8",
       "priceToman": 2800000,
+      "sku": "ls-1566",
       "slug": "ls-1566",
       "sourceUrl": "https://ghr-co.com/product/h5-8%d9%84%d9%88%d8%b3%d8%aa%d8%b1/",
       "specs": {
-        "ابعاد": "50 &times; 50 &times; 100 cm",
+        "ابعاد": "50 × 50 × 100 cm",
         "تعداد شاخه": "8",
-        "نوع لامپ": "نوع E14 ( سرپیچ شمعی)",
+        "نوع لامپ": "E14 ( سرپیچ شمعی)",
         "وزن": "4 kg"
       }
     },
@@ -879,10 +901,11 @@
       ],
       "name": "لوستر H20/12",
       "priceToman": 4180000,
+      "sku": "ls-1567",
       "slug": "ls-1567",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1h20-12/",
       "specs": {
-        "ابعاد": "45 &times; 45 &times; 90 cm",
+        "ابعاد": "45 × 45 × 90 cm",
         "تعداد شاخه": "12",
         "میزان-مصرف": "72 وات",
         "نوع لامپ": "E14 ( سرپیچ شمعی)",
@@ -916,10 +939,11 @@
       ],
       "name": "لوستر H35/10",
       "priceToman": 3380000,
+      "sku": "ls-1568",
       "slug": "ls-1568",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1h35-10/",
       "specs": {
-        "ابعاد": "60 &times; 60 &times; 90 cm",
+        "ابعاد": "60 × 60 × 90 cm",
         "تعداد شاخه": "5",
         "رنگ": "نقره ای",
         "رنگ نور": "2800 لومن",
@@ -965,10 +989,11 @@
       ],
       "name": "لوستر H10/10",
       "priceToman": 3880000,
+      "sku": "ls-1569",
       "slug": "ls-1569",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1h10-10/",
       "specs": {
-        "ابعاد": "110 &times; 110 &times; 50 cm",
+        "ابعاد": "110 × 110 × 50 cm",
         "تعداد شاخه": "10",
         "میزان-مصرف": "72 وات",
         "نوع لامپ": "E14 ( سرپیچ شمعی)",
@@ -1006,6 +1031,7 @@
       ],
       "name": "لوستر MLK-5-15",
       "priceToman": 1590000,
+      "sku": "MLK-5-15",
       "slug": "mlk-5-15",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-mlk-5-15/",
       "specs": {}
@@ -1037,6 +1063,7 @@
       ],
       "name": "لوستر SEN/6",
       "priceToman": 3450000,
+      "sku": "SEN/6",
       "slug": "sen-6",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-sen-6/",
       "specs": {}
@@ -1076,6 +1103,7 @@
       ],
       "name": "لوستر SHRN-8",
       "priceToman": 4290000,
+      "sku": "SHRN-8",
       "slug": "shrn-8",
       "sourceUrl": "https://ghr-co.com/product/%d9%84%d9%88%d8%b3%d8%aa%d8%b1-shrn-8/",
       "specs": {}
