@@ -35,15 +35,24 @@ async function fetchText(url) {
   return (await politeFetch(url)).text();
 }
 
-function stripTags(html) {
-  return html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
+// Exported for scrape.test.mjs and the manifest.json entity fix-up script.
+export function decodeEntities(text) {
+  return text
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
     .replace(/&times;/g, '×')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+}
+
+function stripTags(html) {
+  return decodeEntities(
+    html
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+  )
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
@@ -109,7 +118,8 @@ function parseProduct(html, sourceUrl) {
   return { sourceUrl, slug, sku, name, categorySlug: CATEGORY_SLUG, priceToman, specs, description, imageUrls: uniqueImages };
 }
 
-function sortKeysDeep(value) {
+// Exported for the manifest.json entity fix-up script.
+export function sortKeysDeep(value) {
   if (Array.isArray(value)) return value.map(sortKeysDeep);
   if (value && typeof value === 'object') {
     return Object.fromEntries(Object.keys(value).sort().map((key) => [key, sortKeysDeep(value[key])]));
