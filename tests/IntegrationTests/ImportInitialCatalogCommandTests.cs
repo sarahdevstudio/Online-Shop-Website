@@ -63,7 +63,7 @@ public sealed class ImportInitialCatalogCommandTests(ApiFixture fixture) : ApiTe
       "products": [
         { "sourceUrl": "https://example.test/a", "slug": "test-import-a", "sku": "H5/8", "name": "محصول آزمایشی A",
           "categorySlug": "test-import-cat", "priceToman": 2800000,
-          "specs": { "وزن": "4 kg", "نوع لامپ": "نوع E14 ( سرپیچ شمعی)", "یک کلید ناشناس": "نادیده گرفته می‌شود" },
+          "specs": { "وزن": "4 kg", "نوع لامپ": "E14 ( سرپیچ شمعی)", "میزان-مصرف": "پنج در 60 وات", "یک کلید ناشناس": "نادیده گرفته می‌شود" },
           "description": "توضیح A", "images": [ { "file": "fixture-1.webp", "alt": "محصول آزمایشی A" } ] },
         { "sourceUrl": "https://example.test/b", "slug": "test-import-b", "sku": "B-2", "name": "محصول آزمایشی B",
           "categorySlug": "test-import-cat", "priceToman": 1500000, "specs": {}, "description": "توضیح B",
@@ -152,8 +152,12 @@ public sealed class ImportInitialCatalogCommandTests(ApiFixture fixture) : ApiTe
                     Assert.Equal("4 kg", weight.Text);
                     var baseValue = a.AttributeValues.Single(v => v.AttributeId == attributes["base"].Id);
                     Assert.Equal("e14", attributes["base"].Options.Single(o => o.Id == baseValue.OptionId).Slug);
-                    // The unknown spec key ("یک کلید ناشناس") was silently ignored, not a third attribute value.
-                    Assert.Equal(2, a.AttributeValues.Count);
+                    // A wattage value that isn't a single "<n> وات" figure falls back to a plain spec, not the option.
+                    var wattageNote = a.AttributeValues.Single(v => v.AttributeId == attributes["wattage-note"].Id);
+                    Assert.Equal("پنج در 60 وات", wattageNote.Text);
+                    Assert.DoesNotContain(a.AttributeValues, v => v.AttributeId == attributes["wattage"].Id);
+                    // The unknown spec key ("یک کلید ناشناس") was silently ignored, not a fourth attribute value.
+                    Assert.Equal(3, a.AttributeValues.Count);
 
                     var category = await db.Categories.SingleAsync();
                     Assert.False(category.IsActive); // new categories are hidden until an admin publishes them
@@ -215,6 +219,54 @@ public sealed class ImportInitialCatalogCommandTests(ApiFixture fixture) : ApiTe
         }
         finally
         {
+            Microsoft.Data.SqlClient.SqlConnection.ClearAllPools();
+            await using var cleanup = new ShopDbContext(options);
+            await cleanup.Database.EnsureDeletedAsync();
+            Directory.Delete(catalogDir, recursive: true);
+            if (Directory.Exists(media))
+            {
+                Directory.Delete(media, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task UnknownSpecKey_WarnsWithSlugAndKey_InDryRunAndRealRun()
+    {
+        var connection = ApiFixture.NewDatabaseConnectionString();
+        var media = Path.Combine(Path.GetTempPath(), $"shop-catalog-import-media-{Guid.NewGuid():N}");
+        var catalogDir = WriteFixtureCatalog(ManifestTemplate);
+        var options = new DbContextOptionsBuilder<ShopDbContext>().UseSqlServer(connection).Options;
+        var originalOut = Console.Out;
+        try
+        {
+            using (new EnvScope(
+                ("ASPNETCORE_ENVIRONMENT", "Testing"),
+                ("ConnectionStrings__Default", connection),
+                ("Database__MigrateOnStartup", "true"),
+                ("Media__RootPath", media),
+                ("CATALOG_IMPORT_DIR", catalogDir),
+                ("Seed__AdminEmail", null),
+                ("Seed__AdminPassword", null)))
+            {
+                var dryRunOutput = new StringWriter();
+                Console.SetOut(dryRunOutput);
+                Assert.Equal(0, await ImportInitialCatalogCommand.RunAsync(["--dry-run"]));
+                Console.SetOut(originalOut);
+                Assert.Contains("warning: unknown spec key 'یک کلید ناشناس' on test-import-a — ignored.", dryRunOutput.ToString());
+                Assert.Contains("1 unknown spec key(s) ignored.", dryRunOutput.ToString());
+
+                var runOutput = new StringWriter();
+                Console.SetOut(runOutput);
+                Assert.Equal(0, await ImportInitialCatalogCommand.RunAsync([]));
+                Console.SetOut(originalOut);
+                Assert.Contains("warning: unknown spec key 'یک کلید ناشناس' on test-import-a — ignored.", runOutput.ToString());
+                Assert.Contains("1 unknown spec key(s) ignored.", runOutput.ToString());
+            }
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
             Microsoft.Data.SqlClient.SqlConnection.ClearAllPools();
             await using var cleanup = new ShopDbContext(options);
             await cleanup.Database.EnsureDeletedAsync();

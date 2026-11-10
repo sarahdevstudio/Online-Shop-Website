@@ -38,30 +38,36 @@ public static class ImportInitialCatalogCommand
     /// value, or an (option value, option slug) pair for an Option attribute; returning null skips that product's
     /// value for that key, rather than writing one the attribute model can't represent cleanly.
     /// </summary>
-    private sealed record SpecAttribute(string Code, string? Name, AttributeType Type, Func<string, (string? Text, (string Value, string Slug)? Option)> Reader);
+    private sealed record SpecAttribute(
+        string Code, string? Name, AttributeType Type, Func<string, (string? Text, (string Value, string Slug)? Option)> Reader,
+        string? FallbackCode = null, string? FallbackName = null);
 
+    // Only a value that IS a socket code (ignoring a trailing parenthetical note) is clean enough to filter on;
+    // anything else (e.g. "ال ای دی, کم مصرف") is not a base value and falls back to a plain spec.
     private static (string Value, string Slug)? ExtractBase(string raw)
     {
-        var match = Regex.Match(raw, "E14|E27|GU10", RegexOptions.IgnoreCase);
-        return match.Success ? (match.Value.ToUpperInvariant(), match.Value.ToLowerInvariant()) : null;
+        var match = Regex.Match(raw.Trim(), @"^(E14|E27|GU10)\s*(\(.*\))?$", RegexOptions.IgnoreCase);
+        return match.Success ? (match.Groups[1].Value.ToUpperInvariant(), match.Groups[1].Value.ToLowerInvariant()) : null;
     }
 
+    // Only a single "<n> وات" value is clean enough to filter on; anything else (e.g. "پنج در 60 وات") falls back
+    // to a plain spec instead of guessing which number is the wattage.
     private static (string Value, string Slug)? ExtractWattage(string raw)
     {
-        var match = Regex.Match(raw, @"\d+");
-        return match.Success ? ($"{match.Value} وات", $"{match.Value}w") : null;
+        var match = Regex.Match(raw.Trim(), @"^(\d+)\s*وات$");
+        return match.Success ? ($"{match.Groups[1].Value} وات", $"{match.Groups[1].Value}w") : null;
     }
 
     // Reused attributes (arms, finish, lumen, base, wattage) already exist: EnsureAttributesAsync seeds them in
-    // every environment. New ones (dimensions, weight, style, warranty) have no match in the lighting-attribute
-    // reference data and are created the first time this import needs them.
+    // every environment. New ones (dimensions, weight, style, warranty, lamp-type, wattage-note) have no match in
+    // the lighting-attribute reference data and are created the first time this import needs them.
     private static readonly Dictionary<string, SpecAttribute> SpecMap = new()
     {
         ["تعداد شاخه"] = new("arms", null, AttributeType.Text, raw => (raw, null)),
         ["رنگ"] = new("finish", null, AttributeType.Text, raw => (raw, null)),
         ["رنگ نور"] = new("lumen", null, AttributeType.Text, raw => (Regex.Match(raw, @"\d+") is { Success: true } m ? m.Value : raw, null)),
-        ["نوع لامپ"] = new("base", null, AttributeType.Option, raw => (null, ExtractBase(raw))),
-        ["میزان-مصرف"] = new("wattage", null, AttributeType.Option, raw => (null, ExtractWattage(raw))),
+        ["نوع لامپ"] = new("base", null, AttributeType.Option, raw => (null, ExtractBase(raw)), "lamp-type", "نوع لامپ"),
+        ["میزان-مصرف"] = new("wattage", null, AttributeType.Option, raw => (null, ExtractWattage(raw)), "wattage-note", "میزان-مصرف"),
         ["ابعاد"] = new("dimensions", "ابعاد", AttributeType.Text, raw => (raw, null)),
         ["وزن"] = new("weight", "وزن", AttributeType.Text, raw => (raw, null)),
         ["سبک"] = new("style", "سبک", AttributeType.Text, raw => (raw, null)),
@@ -134,6 +140,19 @@ public static class ImportInitialCatalogCommand
             Console.WriteLine($"  create {product.Slug} ({product.Images.Count} images, {product.PriceToman?.ToString() ?? "no price"} Toman)");
         }
 
+        var unknownSpecKeys = productsToCreate
+            .SelectMany(p => p.Specs.Keys.Where(key => !SpecMap.ContainsKey(key)).Select(key => (p.Slug, key)))
+            .ToList();
+        foreach (var (slug, key) in unknownSpecKeys)
+        {
+            Console.WriteLine($"  warning: unknown spec key '{key}' on {slug} — ignored.");
+        }
+
+        if (unknownSpecKeys.Count > 0)
+        {
+            Console.WriteLine($"{unknownSpecKeys.Count} unknown spec key(s) ignored.");
+        }
+
         if (dryRun)
         {
             Console.WriteLine("Dry run: nothing written.");
@@ -155,7 +174,6 @@ public static class ImportInitialCatalogCommand
             }
 
             var attributesByCode = await db.Attributes.Include(a => a.Options).ToDictionaryAsync(a => a.Code);
-            var nextAttributeSort = attributesByCode.Count == 0 ? 10 : attributesByCode.Values.Max(a => a.SortOrder) + 10;
 
             var now = clock.GetUtcNow().UtcDateTime;
             foreach (var manifestProduct in productsToCreate)
@@ -176,14 +194,7 @@ public static class ImportInitialCatalogCommand
                         continue;
                     }
 
-                    if (!attributesByCode.TryGetValue(spec.Code, out var attribute))
-                    {
-                        attribute = AttributeDefinition.Create(spec.Code, spec.Name!, unit: null, spec.Type, isFilterable: false, nextAttributeSort);
-                        nextAttributeSort += 10;
-                        db.Attributes.Add(attribute);
-                        await db.SaveChangesAsync();
-                        attributesByCode[spec.Code] = attribute;
-                    }
+                    var attribute = await GetOrCreateAttributeAsync(db, attributesByCode, spec.Code, spec.Name!, spec.Type);
 
                     var (text, option) = spec.Reader(raw);
                     if (attribute.Type == AttributeType.Text && text is { Length: > 0 })
@@ -202,7 +213,13 @@ public static class ImportInitialCatalogCommand
 
                         product.AttributeValues.Add(ProductAttributeValue.ForOption(attribute.Id, attrOption.Id, variantId: null));
                     }
-                    // Else: the raw value didn't fit the attribute (e.g. no recognizable socket code) — skipped.
+                    else if (attribute.Type == AttributeType.Option && spec.FallbackCode is { } fallbackCode)
+                    {
+                        // The raw value didn't fit the option (e.g. no recognizable socket code, or more than one
+                        // wattage figure): keep it as a plain spec instead of dropping it.
+                        var fallback = await GetOrCreateAttributeAsync(db, attributesByCode, fallbackCode, spec.FallbackName!, AttributeType.Text);
+                        product.AttributeValues.Add(ProductAttributeValue.ForText(fallback.Id, raw, variantId: null));
+                    }
                 }
 
                 for (var i = 0; i < manifestProduct.Images.Count; i++)
@@ -246,4 +263,20 @@ public static class ImportInitialCatalogCommand
 
     /// <summary>The site's product code may contain '/' (e.g. "H18/12"), which <see cref="ProductVariant.IsValidSku"/> refuses.</summary>
     private static string SanitizeSku(string sku) => sku.Replace('/', '-');
+
+    private static async Task<AttributeDefinition> GetOrCreateAttributeAsync(
+        ShopDbContext db, Dictionary<string, AttributeDefinition> attributesByCode, string code, string name, AttributeType type)
+    {
+        if (attributesByCode.TryGetValue(code, out var attribute))
+        {
+            return attribute;
+        }
+
+        var sortOrder = attributesByCode.Count == 0 ? 10 : attributesByCode.Values.Max(a => a.SortOrder) + 10;
+        attribute = AttributeDefinition.Create(code, name, unit: null, type, isFilterable: false, sortOrder);
+        db.Attributes.Add(attribute);
+        await db.SaveChangesAsync();
+        attributesByCode[code] = attribute;
+        return attribute;
+    }
 }
