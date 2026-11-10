@@ -106,8 +106,10 @@ by the app or CI, and the app reads only local files, never the network):
    | گارانتی (warranty) | `warranty` (new) | Text | no |
 
    `arms`/`finish`/`lumen`/`base`/`wattage` already exist (seeded in every environment); the command creates
-   the other 4 the first time it needs them. `base`/`wattage` extract a socket code or a number from the raw
-   text and add a new option when needed (e.g. `72w`); a value that doesn't fit (no recognizable socket, no
-   number) is skipped for that product rather than guessed at. `dimensions`/`weight` are free-form with a
+   the other 4, plus the two fallbacks below, the first time it needs them. `base`/`wattage` only accept a
+   clean single value (a bare socket code, or a bare "`<n>` وات"); a value that isn't one of those (no
+   recognizable socket, more than one wattage figure, e.g. "پنج در 60 وات") is kept as a plain spec instead —
+   `lamp-type`/`wattage-note` — rather than guessed at or dropped. `dimensions`/`weight` are free-form with a
    unit (not a clean filter); `style` is sometimes comma-multi-valued, which the one-row-per-attribute model
-   can't hold as an Option; `warranty` has one occurrence in the source. None of the 4 new ones is filterable.
+   can't hold as an Option; `warranty` has one occurrence in the source. None of these is filterable. A spec
+   key the map doesn't recognize is still skipped, with a warning printed per product.
