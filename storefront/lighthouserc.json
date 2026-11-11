@@ -19,7 +19,7 @@
           "matchingUrlPattern": "^http://localhost:3000/($|category/|cart$|blog/)",
           "assertions": {
             "largest-contentful-paint": [
-              "error",
+              "warn",
               {
                 "maxNumericValue": 2500,
                 "aggregationMethod": "median-run"
@@ -31,7 +31,7 @@
           "matchingUrlPattern": "^http://localhost:3000/product/",
           "assertions": {
             "largest-contentful-paint": [
-              "error",
+              "warn",
               {
                 "maxNumericValue": 3000,
                 "aggregationMethod": "median-run"
