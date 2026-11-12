@@ -106,6 +106,7 @@ const checks: Record<string, Check> = {
   Organization(node, at, problems) {
     required(node, ['name', 'url'], at, problems);
     if (node.url !== undefined && !isUrl(node.url)) problems.push(`${at}: url must be absolute`);
+    if (node.logo !== undefined && !isUrl(node.logo)) problems.push(`${at}: logo must be an absolute URL`);
     for (const link of asArray(node.sameAs)) if (!isUrl(link)) problems.push(`${at}: sameAs must be absolute URLs`);
   },
   LocalBusiness(node, at, problems) {

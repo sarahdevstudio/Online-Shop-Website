@@ -42,7 +42,7 @@ export async function ShopChrome({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <JsonLd data={{ ...organizationJsonLd(), name: seo.siteName, ...(sameAs.length > 0 ? { sameAs } : {}) }} />
+      <JsonLd data={{ ...organizationJsonLd({ logoUrl: theme.logo?.url, sameAs }), name: seo.siteName }} />
       <JsonLd data={{ ...websiteJsonLd(), name: seo.siteName }} />
       {preview && <PreviewBanner />}
       {/* Analytics: only with a configured id, never in a draft preview, started after the first interaction or idle time. */}

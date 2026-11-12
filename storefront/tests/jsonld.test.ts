@@ -33,7 +33,11 @@ describe('JSON-LD of each page type matches the schema.org shapes', () => {
 
   it('Organization, WebSite and the contact page', () => {
     valid(organizationJsonLd());
-    valid({ ...organizationJsonLd(), sameAs: ['https://www.instagram.com/shop/'] });
+    expect(organizationJsonLd().logo).toMatch(/^https?:\/\/.+\/brand\/logo\.png$/); // the fallback logo, absolute
+    valid(organizationJsonLd({ sameAs: ['https://www.instagram.com/shop/'] }));
+    valid(organizationJsonLd({ logoUrl: '/media/site/logo.webp', sameAs: ['https://www.instagram.com/shop/'] }));
+    expect(organizationJsonLd({ logoUrl: '/media/site/logo.webp' }).logo).toMatch(/^https?:\/\/.+\/media\/site\/logo\.webp$/);
+    expect(organizationJsonLd({ sameAs: [] })).not.toHaveProperty('sameAs'); // no social links set: left out, not an empty array
     valid(websiteJsonLd());
     valid(contactJsonLd({ phone: '021-123', address: 'تهران', hours: '', instagram: 'shop' }));
     valid(contactJsonLd({ phone: '021-123', address: '', hours: '', instagram: '' }));

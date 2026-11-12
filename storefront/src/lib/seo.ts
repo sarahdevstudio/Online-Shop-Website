@@ -57,12 +57,18 @@ export function pageMetadata({ title, description, path, image, type = 'website'
   };
 }
 
-export function organizationJsonLd() {
+/** The built-in logo, served from the storefront's own public assets, used until a site logo is uploaded. */
+const FALLBACK_LOGO_PATH = '/brand/logo.png';
+
+export function organizationJsonLd(options?: { logoUrl?: string | null; sameAs?: readonly string[] }) {
+  const sameAs = (options?.sameAs ?? []).filter(Boolean);
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: site.name,
     url: site.url,
+    logo: absoluteUrl(options?.logoUrl ?? FALLBACK_LOGO_PATH),
+    ...(sameAs.length > 0 ? { sameAs } : {}),
   };
 }
 
