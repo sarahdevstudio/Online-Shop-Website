@@ -103,8 +103,12 @@ public static class ImportInitialContentCommand
         var aboutSeed = ContentSeeds.All.First(s => s.Slug == ContentSlugs.About);
         var contactSeed = ContentSeeds.All.First(s => s.Slug == ContentSlugs.Contact);
 
-        var willUpdateAbout = about is not null && about.Title == PreviousDefaults.AboutTitle && about.Body == PreviousDefaults.AboutBody;
-        var willUpdateContact = contact is not null && contact.Title == PreviousDefaults.ContactTitle && contact.Body == PreviousDefaults.ContactBody;
+        // The checked-out line endings (LF vs CRLF) of ContentSeeds.cs's raw string literals are not meaningful
+        // here — only the text — so both sides are compared with line endings normalized to LF.
+        static string Lf(string value) => value.Replace("\r\n", "\n");
+
+        var willUpdateAbout = about is not null && about.Title == PreviousDefaults.AboutTitle && Lf(about.Body) == Lf(PreviousDefaults.AboutBody);
+        var willUpdateContact = contact is not null && contact.Title == PreviousDefaults.ContactTitle && Lf(contact.Body) == Lf(PreviousDefaults.ContactBody);
 
         Console.WriteLine(about is null
             ? "about: no content page row yet (run the app once to seed it first) — skipped"
