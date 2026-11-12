@@ -8,6 +8,7 @@ export const RESERVED_SEGMENTS = [
   'account',
   'admin',
   'api',
+  'brand',
   'cart',
   'checkout',
   'compare',
