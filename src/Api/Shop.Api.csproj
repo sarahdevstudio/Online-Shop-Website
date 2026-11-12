@@ -14,6 +14,9 @@
          default Content item, the images are default None items; both need CopyToOutputDirectory. -->
     <Content Update="SeedData\initial-catalog\**" CopyToOutputDirectory="PreserveNewest" />
     <None Update="SeedData\initial-catalog\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- import-initial-content (ImportInitialContentCommand) reads these next to the built dll. -->
+    <Content Update="SeedData\initial-content\**" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="SeedData\initial-content\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
