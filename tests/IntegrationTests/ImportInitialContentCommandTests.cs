@@ -74,11 +74,14 @@ public sealed class ImportInitialContentCommandTests(ApiFixture fixture) : ApiTe
                 ("Seed__AdminPassword", null)))
             {
                 // Seed once (About still the previous draft, Contact edited by the owner before this import runs).
+                // About is seeded with CRLF line endings (as it could be, depending on how the seeding code was
+                // checked out when it first ran) to prove the comparison isn't tripped up by that.
+                var aboutBodyCrlf = ContentSeeds.PreviousAboutBody.Replace("\r\n", "\n").Replace("\n", "\r\n");
                 await using (var seedDb = new ShopDbContext(options))
                 {
                     await seedDb.Database.MigrateAsync();
                     var now = DateTime.UtcNow;
-                    seedDb.ContentPages.Add(ContentPage.Create(ContentSlugs.About, "دربارهٔ ما", ContentSeeds.PreviousAboutBody, now));
+                    seedDb.ContentPages.Add(ContentPage.Create(ContentSlugs.About, "دربارهٔ ما", aboutBodyCrlf, now));
                     seedDb.ContentPages.Add(ContentPage.Create(ContentSlugs.Contact, "درباره شد توسط مالک", "متنی که مالک فروشگاه خودش نوشته است.", now));
                     await seedDb.SaveChangesAsync();
                 }
@@ -88,7 +91,7 @@ public sealed class ImportInitialContentCommandTests(ApiFixture fixture) : ApiTe
                 await using (var db = new ShopDbContext(options))
                 {
                     var about = await db.ContentPages.SingleAsync(p => p.Slug == ContentSlugs.About);
-                    Assert.Equal(ContentSeeds.PreviousAboutBody, about.Body); // untouched by the dry run
+                    Assert.Equal(aboutBodyCrlf, about.Body); // untouched by the dry run
                     Assert.Equal(0, await db.BlogPosts.CountAsync());
                 }
 
