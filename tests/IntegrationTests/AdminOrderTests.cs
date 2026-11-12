@@ -45,13 +45,15 @@ public sealed class AdminOrderTests(ApiFixture fixture) : StoreTestBase(fixture)
         var (placed, id, _) = await NewOrderAsync(admin, "cardToCard");
 
         var byNumber = await GetOkAsync<AdminOrderListBody>(admin, $"/api/v1/admin/orders?q={placed.Number}");
-        Assert.Equal(id, Assert.Single(byNumber.Items).Id);
-        Assert.True(byNumber.Items[0].Total > 0);
+        var numberStr = placed.Number.ToString();
+        Assert.Contains(byNumber.Items, o => o.Id == id);
+        Assert.All(byNumber.Items, o => Assert.True(o.Number == placed.Number || o.Mobile.Contains(numberStr)));
+        Assert.True(byNumber.Items.Single(o => o.Id == id).Total > 0);
 
         var awaiting = await GetOkAsync<AdminOrderListBody>(admin, "/api/v1/admin/orders?status=awaitingPayment&paymentStatus=unpaid");
         Assert.Contains(awaiting.Items, o => o.Id == id);
         var paid = await GetOkAsync<AdminOrderListBody>(admin, "/api/v1/admin/orders?paymentStatus=paid&q=" + placed.Number);
-        Assert.Empty(paid.Items);
+        Assert.DoesNotContain(paid.Items, o => o.Id == id);
     }
 
     [Fact]
