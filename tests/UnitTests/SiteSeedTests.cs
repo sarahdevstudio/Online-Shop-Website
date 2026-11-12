@@ -60,6 +60,19 @@ public class SiteSeedTests
         Assert.Null(chrome.Social.Telegram);
     }
 
+    [Fact]
+    public void Chrome_WithContentPageIds_LinksAboutAndContactAsEntities()
+    {
+        var chrome = SiteDefaults.Chrome(aboutContentPageId: 1, contactContentPageId: 2);
+
+        var about = chrome.HeaderMenu.Single(m => m.Label == "درباره ما");
+        var contact = chrome.HeaderMenu.Single(m => m.Label == "تماس");
+        Assert.Null(about.Link);
+        Assert.Equal(("contentPage", 1), (about.Entity!.Type, about.Entity!.Id));
+        Assert.Null(contact.Link);
+        Assert.Equal(("contentPage", 2), (contact.Entity!.Type, contact.Entity!.Id));
+    }
+
     [Theory]
     [InlineData("logo.png", 300, 70)]
     [InlineData("favicon-512.png", 512, 512)]

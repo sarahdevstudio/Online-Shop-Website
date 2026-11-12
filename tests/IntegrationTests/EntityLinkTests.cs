@@ -316,6 +316,48 @@ public sealed class EntityLinkTests(ApiFixture fixture) : StoreTestBase(fixture)
     }
 
     [Fact]
+    public async Task TheSeededHeaderMenu_HidesAboutAndContact_WhileTheyAreStillDraft_AndShowsThemOnceReviewed()
+    {
+        var admin = await LoginAdminAsync();
+        var anon = NewClient();
+
+        async Task<AdminPageBody> GetPage(string slug) => await GetOkAsync<AdminPageBody>(admin, $"/api/v1/admin/content-pages/{slug}");
+        async Task SavePage(string slug, string body)
+        {
+            var current = await GetPage(slug);
+            await SendOkAsync<AdminPageBody>(admin, HttpMethod.Put, $"/api/v1/admin/content-pages/{slug}", new { title = current.Title, body, rowVersion = current.RowVersion });
+        }
+
+        var aboutOriginal = await GetPage(ContentSlugs.About);
+        var contactOriginal = await GetPage(ContentSlugs.Contact);
+        try
+        {
+            // The seeded pages are still drafts: the header has no About/Contact entry, and the editor names why.
+            var labelsBefore = (await PublicChromeAsync(anon)).GetProperty("headerMenu").EnumerateArray().Select(m => m.GetProperty("label").GetString()).ToArray();
+            Assert.DoesNotContain("درباره ما", labelsBefore);
+            Assert.DoesNotContain("تماس", labelsBefore);
+
+            var editorBefore = await GetOkAsync<SiteKindLinksBody>(admin, $"{Site}/chrome");
+            var contentLinksBefore = editorBefore.Links.Values.Where(l => l.Type == "contentPage").ToList();
+            Assert.Equal(2, contentLinksBefore.Count);
+            Assert.All(contentLinksBefore, l => Assert.Equal("draft", l.State));
+
+            // Reviewed (the marker removed): the links appear with no republish needed.
+            await SavePage(ContentSlugs.About, aboutOriginal.Body.Replace(ContentPage.DraftMarker, "نسخهٔ نهایی", StringComparison.Ordinal));
+            await SavePage(ContentSlugs.Contact, contactOriginal.Body.Replace(ContentPage.DraftMarker, "نسخهٔ نهایی", StringComparison.Ordinal));
+
+            var labelsAfter = (await PublicChromeAsync(anon)).GetProperty("headerMenu").EnumerateArray().Select(m => m.GetProperty("label").GetString()).ToArray();
+            Assert.Contains("درباره ما", labelsAfter);
+            Assert.Contains("تماس", labelsAfter);
+        }
+        finally
+        {
+            await SavePage(ContentSlugs.About, aboutOriginal.Body);
+            await SavePage(ContentSlugs.Contact, contactOriginal.Body);
+        }
+    }
+
+    [Fact]
     public async Task TheLabelStoredWithAReference_SurvivesTheTargetsDeletion_AndIsTrimmed()
     {
         var admin = await LoginAdminAsync();
