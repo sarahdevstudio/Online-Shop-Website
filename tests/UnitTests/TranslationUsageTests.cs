@@ -47,7 +47,7 @@ public class TranslationUsageTests
     /// <summary>Documented exceptions: seed/sample data (not translations, docs/11 B.7), the generic last-resort text and fixed markers.</summary>
     private static readonly string[] AllowedFiles =
     [
-        "CatalogSeeder.cs", "ContentSeeds.cs", "SiteDefaults.cs", "ImportInitialCatalogCommand.cs", // data seeds
+        "CatalogSeeder.cs", "ContentSeeds.cs", "SiteDefaults.cs", "ImportInitialCatalogCommand.cs", "ImportInitialContentCommand.cs", // data seeds
         "Translate.cs",   // the generic text when even the manifest is unreachable
         "ContentPage.cs", // DraftMarker: a marker stored inside seeded page bodies
         "CardNumbers.cs", // PlaceholderHolder: the sample card holder that is refused as real data

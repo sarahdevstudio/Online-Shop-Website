@@ -16,6 +16,12 @@ if (args.Length > 0 && args[0] == "import-initial-catalog")
     return await Shop.Api.Commands.ImportInitialCatalogCommand.RunAsync(args[1..]);
 }
 
+// `dotnet Shop.Api.dll import-initial-content [--dry-run]`: import of the info/blog content tools/content-scrape produced.
+if (args.Length > 0 && args[0] == "import-initial-content")
+{
+    return await Shop.Api.Commands.ImportInitialContentCommand.RunAsync(args[1..]);
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, services, logger) => logger
