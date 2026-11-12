@@ -16,6 +16,7 @@ public static class ReservedPaths
         "account",        // customer area (static page)
         "admin",          // admin panel
         "api",            // storefront route handlers
+        "brand",          // storefront/public/brand (fallback Organization JSON-LD logo)
         "cart",
         "checkout",
         "compare",        // product comparison (a cookie-backed personal list)
