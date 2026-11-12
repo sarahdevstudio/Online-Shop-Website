@@ -66,6 +66,14 @@ public sealed class SiteSeeder(ShopDbContext db, IMediaStorage media, TimeProvid
                     .Select(c => c.Id)
                     .ToListAsync(ct);
                 return SiteDefaults.Home(top);
+            case SiteKind.Chrome:
+                var ids = await db.ContentPages.AsNoTracking()
+                    .Where(p => p.Slug == Shop.Domain.Content.ContentSlugs.About || p.Slug == Shop.Domain.Content.ContentSlugs.Contact)
+                    .Select(p => new { p.Slug, p.Id })
+                    .ToDictionaryAsync(p => p.Slug, p => (int?)p.Id, ct);
+                return SiteDefaults.Chrome(
+                    ids.TryGetValue(Shop.Domain.Content.ContentSlugs.About, out var aboutId) ? aboutId : null,
+                    ids.TryGetValue(Shop.Domain.Content.ContentSlugs.Contact, out var contactId) ? contactId : null);
             default:
                 return SiteDefaults.ForKind(kind);
         }

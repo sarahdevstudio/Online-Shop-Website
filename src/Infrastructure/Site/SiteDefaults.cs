@@ -1,3 +1,4 @@
+using Shop.Domain.Routing;
 using Shop.Domain.Site;
 
 namespace Shop.Infrastructure.Site;
@@ -42,15 +43,24 @@ public static class SiteDefaults
         DefaultOgMediaId = null,
     };
 
-    public static ChromePayload Chrome() => new()
+    /// <summary>
+    /// <paramref name="aboutContentPageId"/>/<paramref name="contactContentPageId"/>: the seeded about/contact content pages'
+    /// ids, so the menu links to them as entity references (hidden while they are still draft) instead of a typed "/about"
+    /// URL. Left out (the ids are not known yet, e.g. the <see cref="ForKind"/> fallback), the item falls back to the typed URL.
+    /// </summary>
+    public static ChromePayload Chrome(int? aboutContentPageId = null, int? contactContentPageId = null) => new()
     {
         Announcement = new AnnouncementBar { Enabled = false, Text = string.Empty, Link = null, Style = "primary", Dismissible = true },
         HeaderMenu =
         [
             new MenuItem { Label = "خانه", Link = "/" },
             new MenuItem { Label = "فروشگاه", Link = "/", AllCategories = true },
-            new MenuItem { Label = "درباره ما", Link = "/about" },
-            new MenuItem { Label = "تماس", Link = "/contact" },
+            aboutContentPageId is { } aboutId
+                ? new MenuItem { Label = "درباره ما", Entity = new LinkEntity { Type = RouteTargetTypes.ContentPage, Id = aboutId } }
+                : new MenuItem { Label = "درباره ما", Link = "/about" },
+            contactContentPageId is { } contactId
+                ? new MenuItem { Label = "تماس", Entity = new LinkEntity { Type = RouteTargetTypes.ContentPage, Id = contactId } }
+                : new MenuItem { Label = "تماس", Link = "/contact" },
         ],
         Footer = new FooterContent { About = "گالری قصر روشنایی؛ از سال ۱۳۸۵ پیشرو در واردات لوسترهای مدرن و کلاسیک.", Columns = [] },
         Social = new SocialLinks
