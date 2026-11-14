@@ -11,8 +11,25 @@ dev-only tools, local files only at runtime, nothing published automatically.
   still hidden from the header menu until an admin reviews and publishes them (docs/11, entity-link draft
   hiding).
 - **Terms, returns, privacy**: the previous site has no usable equivalent (terms/returns don't exist at all;
-  `privacy-policy/` exists as a URL but its body is an empty shell with no real content). These three pages
-  keep their original seeded draft text, unchanged.
+  `privacy-policy/` exists as a URL but its body is an empty shell with no real content). F0 (below) later
+  replaced these three with store-specific drafted text instead of the previous site's text, since there was
+  none to pull in.
+
+## F0: store-specific terms/returns/privacy drafts
+
+With no previous-site text to import for these three pages, `ContentSeeds.cs` was given real,
+store-specific drafted text instead (not placeholder "[نام فروشگاه]" text): built from facts already known
+(address, phones, the warranty/installation/shipping promises from the about page, the card-to-card payment
+flow) plus Iran's e-commerce/consumer-protection law basics for a lighting retailer. The draft marker stays on
+all three; genuinely unknown facts (legal name, national ID, exact payment/refund deadlines, the carrier for
+other cities, data retention period) stay as `[...]` placeholders for the owner to fill in. The previous
+(original placeholder) text is kept as `ContentSeeds.PreviousTermsBody` / `PreviousReturnsBody` /
+`PreviousPrivacyBody`, the same way `PreviousAboutBody` / `PreviousContactBody` were kept.
+
+`ImportInitialContentCommand`'s overwrite rule was generalized from the two pages (about/contact) to all five:
+a `PreviousPageDefaults` dictionary (slug → previous title/body) drives one loop instead of two near-duplicate
+blocks, so terms/returns/privacy are now also updated when a page is still on its previous seed, and left alone
+(and reported as "kept (edited by owner)") otherwise — same rule, same idempotency.
 - **Blog**: the previous site's 4 posts (2019) were scraped and are seeded as Draft `BlogPost` rows (never
   published by this import). `BlogPost` has no cover-image field in the current domain model, so each post's
   feature image is kept only as a local WebP file under `src/Api/SeedData/initial-content/images/`
