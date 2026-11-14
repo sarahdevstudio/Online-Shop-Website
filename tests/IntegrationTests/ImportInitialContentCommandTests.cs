@@ -141,6 +141,61 @@ public sealed class ImportInitialContentCommandTests(ApiFixture fixture) : ApiTe
     }
 
     [Fact]
+    public async Task TermsPage_StillOnThePreviousSeed_IsUpdated_AndKeepsTheDraftMarker()
+    {
+        var connection = ApiFixture.NewDatabaseConnectionString();
+        var media = Path.Combine(Path.GetTempPath(), $"shop-content-import-media-{Guid.NewGuid():N}");
+        var contentDir = WriteFixtureContent(ManifestTemplate);
+        var options = new DbContextOptionsBuilder<ShopDbContext>().UseSqlServer(connection).Options;
+        try
+        {
+            using (new EnvScope(
+                ("ASPNETCORE_ENVIRONMENT", "Testing"),
+                ("ConnectionStrings__Default", connection),
+                ("Database__MigrateOnStartup", "true"),
+                ("Media__RootPath", media),
+                ("CONTENT_IMPORT_DIR", contentDir),
+                ("Seed__AdminEmail", null),
+                ("Seed__AdminPassword", null)))
+            {
+                await using (var seedDb = new ShopDbContext(options))
+                {
+                    await seedDb.Database.MigrateAsync();
+                    seedDb.ContentPages.Add(ContentPage.Create(ContentSlugs.Terms, "شرایط و قوانین", ContentSeeds.PreviousTermsBody, DateTime.UtcNow));
+                    await seedDb.SaveChangesAsync();
+                }
+
+                Assert.Equal(0, await ImportInitialContentCommand.RunAsync([]));
+
+                await using (var db = new ShopDbContext(options))
+                {
+                    var terms = await db.ContentPages.SingleAsync(p => p.Slug == ContentSlugs.Terms);
+                    Assert.NotEqual(ContentSeeds.PreviousTermsBody, terms.Body);
+                    Assert.Contains(ContentPage.DraftMarker, terms.Body, StringComparison.Ordinal);
+                }
+
+                // Re-run: idempotent (the page was already updated once).
+                Assert.Equal(0, await ImportInitialContentCommand.RunAsync([]));
+                await using (var db = new ShopDbContext(options))
+                {
+                    Assert.Equal(1, await db.ContentAuditLogs.CountAsync(l => l.Slug == ContentSlugs.Terms));
+                }
+            }
+        }
+        finally
+        {
+            Microsoft.Data.SqlClient.SqlConnection.ClearAllPools();
+            await using var cleanup = new ShopDbContext(options);
+            await cleanup.Database.EnsureDeletedAsync();
+            Directory.Delete(contentDir, recursive: true);
+            if (Directory.Exists(media))
+            {
+                Directory.Delete(media, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task NeverTouchesPaymentFields()
     {
         var connection = ApiFixture.NewDatabaseConnectionString();

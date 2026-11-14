@@ -13,14 +13,15 @@ namespace Shop.Api.Commands;
 
 /// <summary>
 /// <c>dotnet Shop.Api.dll import-initial-content [--dry-run]</c>: reads the manifest <c>tools/content-scrape</c>
-/// produced (never the network) and the about/contact text baked into <see cref="ContentSeeds"/>, and applies them
+/// produced (never the network) and the content-page text baked into <see cref="ContentSeeds"/>, and applies them
 /// to the database. One transaction: any error means nothing is written. Idempotent (a second run changes nothing).
 ///
 /// Overwrite rule, owner edits always win: an existing content page or store setting field is overwritten ONLY when
 /// its current value is still exactly the value <see cref="ContentSeeds"/>/<c>StoreDefaultsOptions</c> seeded
-/// before this import existed (<see cref="PreviousDefaults"/>); any other current value is left alone and printed
-/// as "kept (edited by owner)". Blog posts are create-only by slug: this command never updates or removes one.
-/// Never touches payment fields (CardNumber, CardHolderName, BankName, CardToCardEnabled).
+/// before this import existed (<see cref="PreviousPageDefaults"/> / <see cref="PreviousStoreDefaults"/>); any other
+/// current value is left alone and printed as "kept (edited by owner)". Blog posts are create-only by slug: this
+/// command never updates or removes one. Never touches payment fields (CardNumber, CardHolderName, BankName,
+/// CardToCardEnabled).
 /// </summary>
 public static class ImportInitialContentCommand
 {
@@ -36,21 +37,30 @@ public static class ImportInitialContentCommand
     };
 
     /// <summary>
-    /// The exact title/body (for the two content pages this import touches) and the exact empty-string store-setting
-    /// fields that were seeded before this import existed. A page or field still equal to these values has never been
-    /// opened in the admin and is safe to overwrite; anything else is an owner edit and is left alone.
+    /// The exact title/body every content page was seeded with before this import existed. A page still exactly
+    /// equal to its entry here (title and, line-ending-normalized, body) has never been opened in the admin and is
+    /// safe to overwrite; anything else is an owner edit and is left alone.
     /// </summary>
-    private static class PreviousDefaults
+    private static readonly Dictionary<string, (string Title, string Body)> PreviousPageDefaults = new()
     {
-        public const string AboutTitle = "دربارهٔ ما";
-        public const string AboutBody = ContentSeeds.PreviousAboutBody;
-        public const string ContactTitle = "تماس با ما";
-        public const string ContactBody = ContentSeeds.PreviousContactBody;
+        [ContentSlugs.About] = ("دربارهٔ ما", ContentSeeds.PreviousAboutBody),
+        [ContentSlugs.Contact] = ("تماس با ما", ContentSeeds.PreviousContactBody),
+        [ContentSlugs.Terms] = ("شرایط و قوانین", ContentSeeds.PreviousTermsBody),
+        [ContentSlugs.Returns] = ("مرجوعی و بازگشت کالا", ContentSeeds.PreviousReturnsBody),
+        [ContentSlugs.Privacy] = ("حریم خصوصی", ContentSeeds.PreviousPrivacyBody),
+    };
 
+    /// <summary>The exact empty-string store-setting fields seeded before this import existed.</summary>
+    private static class PreviousStoreDefaults
+    {
         public const string StorePhone = "";
         public const string StoreAddress = "";
         public const string InstagramHandle = "";
     }
+
+    // The checked-out line endings (LF vs CRLF) of ContentSeeds.cs's raw string literals are not meaningful here —
+    // only the text — so both sides are compared with line endings normalized to LF.
+    private static string Lf(string value) => value.Replace("\r\n", "\n");
 
     public static async Task<int> RunAsync(string[] args)
     {
@@ -95,42 +105,43 @@ public static class ImportInitialContentCommand
         var clock = scope.ServiceProvider.GetRequiredService<TimeProvider>();
         var now = clock.GetUtcNow().UtcDateTime;
 
-        var about = await db.ContentPages.FirstOrDefaultAsync(p => p.Slug == ContentSlugs.About);
-        var contact = await db.ContentPages.FirstOrDefaultAsync(p => p.Slug == ContentSlugs.Contact);
+        var pages = await db.ContentPages.Where(p => PreviousPageDefaults.Keys.Contains(p.Slug)).ToDictionaryAsync(p => p.Slug);
         var storeSetting = await db.StoreSettings.FirstOrDefaultAsync();
         var existingPostSlugs = await db.BlogPosts.Select(p => p.Slug).ToHashSetAsync();
 
-        var aboutSeed = ContentSeeds.All.First(s => s.Slug == ContentSlugs.About);
-        var contactSeed = ContentSeeds.All.First(s => s.Slug == ContentSlugs.Contact);
+        var seedsBySlug = ContentSeeds.All.ToDictionary(s => s.Slug);
+        var pagesToUpdate = new List<string>();
+        foreach (var slug in ContentSlugs.All)
+        {
+            if (!pages.TryGetValue(slug, out var page))
+            {
+                Console.WriteLine($"{slug}: no content page row yet (run the app once to seed it first) — skipped");
+                continue;
+            }
 
-        // The checked-out line endings (LF vs CRLF) of ContentSeeds.cs's raw string literals are not meaningful
-        // here — only the text — so both sides are compared with line endings normalized to LF.
-        static string Lf(string value) => value.Replace("\r\n", "\n");
-
-        var willUpdateAbout = about is not null && about.Title == PreviousDefaults.AboutTitle && Lf(about.Body) == Lf(PreviousDefaults.AboutBody);
-        var willUpdateContact = contact is not null && contact.Title == PreviousDefaults.ContactTitle && Lf(contact.Body) == Lf(PreviousDefaults.ContactBody);
-
-        Console.WriteLine(about is null
-            ? "about: no content page row yet (run the app once to seed it first) — skipped"
-            : willUpdateAbout ? "about: update (still the previous seeded draft)" : "about: kept (edited by owner)");
-        Console.WriteLine(contact is null
-            ? "contact: no content page row yet (run the app once to seed it first) — skipped"
-            : willUpdateContact ? "contact: update (still the previous seeded draft)" : "contact: kept (edited by owner)");
+            var (previousTitle, previousBody) = PreviousPageDefaults[slug];
+            var willUpdate = page.Title == previousTitle && Lf(page.Body) == Lf(previousBody);
+            Console.WriteLine(willUpdate ? $"{slug}: update (still the previous seeded draft)" : $"{slug}: kept (edited by owner)");
+            if (willUpdate)
+            {
+                pagesToUpdate.Add(slug);
+            }
+        }
 
         var storeFieldChanges = new List<(string Field, string Old, string New)>();
         if (storeSetting is not null)
         {
-            if (storeSetting.StorePhone == PreviousDefaults.StorePhone && storeSetting.StorePhone != "۰۲۱۳۳۹۴۵۳۱۹ / ۰۲۱۳۳۹۴۵۵۱۶")
+            if (storeSetting.StorePhone == PreviousStoreDefaults.StorePhone && storeSetting.StorePhone != "۰۲۱۳۳۹۴۵۳۱۹ / ۰۲۱۳۳۹۴۵۵۱۶")
             {
                 storeFieldChanges.Add(("storePhone", storeSetting.StorePhone, "۰۲۱۳۳۹۴۵۳۱۹ / ۰۲۱۳۳۹۴۵۵۱۶"));
             }
 
-            if (storeSetting.StoreAddress == PreviousDefaults.StoreAddress && storeSetting.StoreAddress != "تهران، ابتدای خیابان لاله‌زار نو، پلاک ۴۳۴")
+            if (storeSetting.StoreAddress == PreviousStoreDefaults.StoreAddress && storeSetting.StoreAddress != "تهران، ابتدای خیابان لاله‌زار نو، پلاک ۴۳۴")
             {
                 storeFieldChanges.Add(("storeAddress", storeSetting.StoreAddress, "تهران، ابتدای خیابان لاله‌زار نو، پلاک ۴۳۴"));
             }
 
-            if (storeSetting.InstagramHandle == PreviousDefaults.InstagramHandle && storeSetting.InstagramHandle != "parsagallery2020")
+            if (storeSetting.InstagramHandle == PreviousStoreDefaults.InstagramHandle && storeSetting.InstagramHandle != "parsagallery2020")
             {
                 storeFieldChanges.Add(("instagramHandle", storeSetting.InstagramHandle, "parsagallery2020"));
             }
@@ -168,16 +179,11 @@ public static class ImportInitialContentCommand
         await using var tx = await db.Database.BeginTransactionAsync();
         try
         {
-            if (about is not null && willUpdateAbout)
+            foreach (var slug in pagesToUpdate)
             {
-                about.Apply(aboutSeed.Title, aboutSeed.Body, null, now);
-                db.ContentAuditLogs.Add(ContentAuditLog.Create(ContentSlugs.About, null, titleChanged: true, bodyChanged: true, now));
-            }
-
-            if (contact is not null && willUpdateContact)
-            {
-                contact.Apply(contactSeed.Title, contactSeed.Body, null, now);
-                db.ContentAuditLogs.Add(ContentAuditLog.Create(ContentSlugs.Contact, null, titleChanged: true, bodyChanged: true, now));
+                var seed = seedsBySlug[slug];
+                pages[slug].Apply(seed.Title, seed.Body, null, now);
+                db.ContentAuditLogs.Add(ContentAuditLog.Create(slug, null, titleChanged: true, bodyChanged: true, now));
             }
 
             if (storeSetting is not null && storeFieldChanges.Count > 0)
@@ -221,7 +227,7 @@ public static class ImportInitialContentCommand
         // seeded once at API startup.
         await scope.ServiceProvider.GetRequiredService<RouteSeeder>().EnsureAsync(CancellationToken.None);
 
-        Console.WriteLine($"Updated {(willUpdateAbout ? 1 : 0) + (willUpdateContact ? 1 : 0)} content page(s), " +
+        Console.WriteLine($"Updated {pagesToUpdate.Count} content page(s), " +
             $"{storeFieldChanges.Count} store setting field(s), created {postsToCreate.Count} blog post(s).");
         return 0;
     }
