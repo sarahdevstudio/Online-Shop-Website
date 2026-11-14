@@ -62,7 +62,7 @@ public sealed class ContentTests(ApiFixture fixture) : CatalogTestBase(fixture)
         var page = await GetOkAsync<PageBody>(NewClient(), "/api/v1/catalog/pages/returns");
 
         Assert.Contains("۷ روز", page.Body);
-        Assert.Contains("استفاده‌نشده", page.Body);
+        Assert.Contains("استفاده و نصب نشده", page.Body);
         Assert.Contains("بسته‌بندی اصلی", page.Body);
         Assert.Contains("هزینهٔ ارسال", page.Body);
         Assert.Contains("نحوهٔ درخواست مرجوعی", page.Body);
