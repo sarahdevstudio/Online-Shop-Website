@@ -163,10 +163,10 @@ public sealed class ReviewTests(ApiFixture fixture) : StoreTestBase(fixture)
         await SubmitAsync(Review(slug));
         var review = await FindAsync(admin, slug);
 
-        // anonymous and a role without Reviews.Manage
+        // anonymous and a role without Reviews.View
         Assert.Equal(HttpStatusCode.Unauthorized, (await NewClient().GetAsync("/api/v1/admin/reviews")).StatusCode);
         var role = await SendOkAsync<StaffRoleBody>(admin, HttpMethod.Post, "/api/v1/admin/staff/roles",
-            new { name = "NoRev" + Guid.NewGuid().ToString("N")[..8], title = "بدون نظرات", permissions = new[] { Permissions.OrdersManage }, currentPassword = Fixture.AdminPassword });
+            new { name = "NoRev" + Guid.NewGuid().ToString("N")[..8], title = "بدون نظرات", permissions = new[] { Permissions.OrdersView }, currentPassword = Fixture.AdminPassword });
         var username = "norev-" + Guid.NewGuid().ToString("N")[..8];
         var password = TestData.NewPassword() + "-Zz9";
         await SendOkAsync<StaffUserBody>(admin, HttpMethod.Post, "/api/v1/admin/staff", new { username, displayName = "x", email = (string?)null, password, roles = new[] { role.Name }, currentPassword = Fixture.AdminPassword });

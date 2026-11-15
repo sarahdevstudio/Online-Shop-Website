@@ -66,6 +66,7 @@ public sealed class DatabaseInitializer(
 
         await translationSeeder.EnsureAsync(ct);
         await translationCache.ReloadAsync(ct);
+        await MigrateLegacyManagePermissionsAsync();
         await SyncRolesAndPermissionsAsync();
         await EnsureAdminAsync();
         await EnsureStoreSettingsAsync(ct);
@@ -136,6 +137,30 @@ public sealed class DatabaseInitializer(
             if ((await db.ContentPages.CountAsync(ct)) < ContentSlugs.All.Count)
             {
                 throw;
+            }
+        }
+    }
+
+    /// <summary>
+    /// One-time expansion, for every role (including custom ones <see cref="Roles.All"/> doesn't cover): a claim
+    /// still holding a retired coarse "X.Manage" permission is replaced by everything it now maps to
+    /// (<see cref="Permissions.PermissionsReplacedByManage"/>), so nobody loses access when the permission set
+    /// becomes granular. Naturally idempotent: once no role holds a legacy value, this is just a cheap scan.
+    /// </summary>
+    private async Task MigrateLegacyManagePermissionsAsync()
+    {
+        foreach (var role in await roleManager.Roles.ToListAsync())
+        {
+            var claims = (await roleManager.GetClaimsAsync(role)).Where(c => c.Type == Permissions.ClaimType).ToList();
+            var present = claims.Select(c => c.Value).ToHashSet(StringComparer.Ordinal);
+            foreach (var legacy in claims.Where(c => Permissions.PermissionsReplacedByManage.ContainsKey(c.Value)))
+            {
+                EnsureSucceeded(await roleManager.RemoveClaimAsync(role, legacy), $"remove legacy permission '{legacy.Value}' from role '{role.Name}'");
+                foreach (var replacement in Permissions.PermissionsReplacedByManage[legacy.Value].Where(p => !present.Contains(p)))
+                {
+                    EnsureSucceeded(await roleManager.AddClaimAsync(role, new System.Security.Claims.Claim(Permissions.ClaimType, replacement)), $"add permission '{replacement}' to role '{role.Name}'");
+                    present.Add(replacement);
+                }
             }
         }
     }

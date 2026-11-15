@@ -7,23 +7,25 @@ using Shop.Domain.Security;
 
 namespace Shop.Api.Controllers;
 
-// Site.Manage (its own permission), CSRF like every admin write, 409 on a stale draft version. {kind} is
-// theme | home | chrome | seo | badges.
+// CSRF like every admin write, 409 on a stale draft version. {kind} is theme | home | chrome | seo | badges.
 [Route("api/v1/admin/site")]
 [Tags("Admin site")]
-[Authorize(Policy = Permissions.SiteManage)]
+[Authorize]
 public sealed class AdminSiteController(IAdminSiteService site, ISiteConfigService published, ISiteLinkTargets linkTargets) : ApiControllerBase
 {
     [HttpGet]
+    [Authorize(Policy = Permissions.SiteView)]
     public async Task<IActionResult> Overview(CancellationToken ct) =>
         Http(Results.Ok(await site.OverviewAsync(ct)));
 
     [HttpGet("audit")]
+    [Authorize(Policy = Permissions.SiteView)]
     public async Task<IActionResult> Audit([FromQuery] string? kind, [FromQuery] int? page, CancellationToken ct) =>
         Http(await site.AuditAsync(kind, page ?? 1, ct), Results.Ok);
 
     /// <summary>The searchable list behind the "link to an entity" select: <c>type</c> is category | product | contentPage | blogPost.</summary>
     [HttpGet("link-targets")]
+    [Authorize(Policy = Permissions.SiteView)]
     public async Task<IActionResult> LinkTargets([FromQuery] string? type, [FromQuery] string? q, CancellationToken ct)
     {
         if (!Shop.Domain.Routing.RouteTargetTypes.IsKnown(type))
@@ -38,6 +40,7 @@ public sealed class AdminSiteController(IAdminSiteService site, ISiteConfigServi
 
     /// <summary>The compiled document for the storefront's preview: <c>state=draft</c> (drafts applied) or <c>published</c>.</summary>
     [HttpGet("compiled")]
+    [Authorize(Policy = Permissions.SiteView)]
     public async Task<IActionResult> Compiled([FromQuery] string? state, CancellationToken ct)
     {
         if (state is not ("draft" or "published"))
@@ -53,6 +56,7 @@ public sealed class AdminSiteController(IAdminSiteService site, ISiteConfigServi
     // Multipart upload. No framework antiforgery middleware is registered, so the API-wide X-XSRF-TOKEN filter
     // (CsrfFilter) is the only CSRF check.
     [HttpPost("images")]
+    [Authorize(Policy = Permissions.SiteUpdate)]
     [RequireMultipartForm]
     public async Task<IActionResult> UploadImage([Required] IFormFile file, [FromForm] string? alt, [FromForm] string? purpose, CancellationToken ct)
     {
@@ -67,26 +71,32 @@ public sealed class AdminSiteController(IAdminSiteService site, ISiteConfigServi
     }
 
     [HttpGet("{kind}")]
+    [Authorize(Policy = Permissions.SiteView)]
     public async Task<IActionResult> Get(string kind, CancellationToken ct) =>
         Http(await site.GetAsync(kind, ct), Results.Ok);
 
     [HttpPut("{kind}/draft")]
+    [Authorize(Policy = Permissions.SiteUpdate)]
     public async Task<IActionResult> SaveDraft(string kind, [FromBody] SaveSiteDraftRequest request, CancellationToken ct) =>
         Http(await site.SaveDraftAsync(kind, request, ct), Results.Ok);
 
     [HttpPost("{kind}/publish")]
+    [Authorize(Policy = Permissions.SiteUpdate)]
     public async Task<IActionResult> Publish(string kind, [FromBody] PublishSiteRequest request, CancellationToken ct) =>
         Http(await site.PublishAsync(kind, request, ct), Results.Ok);
 
     [HttpPost("{kind}/discard")]
+    [Authorize(Policy = Permissions.SiteUpdate)]
     public async Task<IActionResult> Discard(string kind, [FromBody] DiscardSiteDraftRequest request, CancellationToken ct) =>
         Http(await site.DiscardAsync(kind, request, ct), Results.Ok);
 
     [HttpPost("{kind}/restore/{version:int}")]
+    [Authorize(Policy = Permissions.SiteUpdate)]
     public async Task<IActionResult> Restore(string kind, int version, [FromBody] RestoreSiteVersionRequest request, CancellationToken ct) =>
         Http(await site.RestoreAsync(kind, version, request, ct), Results.Ok);
 
     [HttpGet("{kind}/versions/{version:int}")]
+    [Authorize(Policy = Permissions.SiteView)]
     public async Task<IActionResult> GetVersion(string kind, int version, CancellationToken ct) =>
         Http(await site.GetVersionAsync(kind, version, ct), Results.Ok);
 }

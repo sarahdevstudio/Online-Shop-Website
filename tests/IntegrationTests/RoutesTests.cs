@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Shop.Domain.Routing;
+using Shop.Domain.Security;
 using Shop.Infrastructure.Identity;
 using Shop.Infrastructure.Routing;
 
@@ -542,7 +543,7 @@ public sealed class RoutesTests(ApiFixture fixture) : StoreTestBase(fixture)
         var post = await SendOkAsync<AdminBlogBody>(admin, HttpMethod.Post, "/api/v1/admin/blog",
             new { slug = postSlug, title = "راهنما", excerpt = "خلاصه", body = "متن", publish = true });
 
-        var catalogOnly = await LoginWithAsync("Catalog.Manage");
+        var catalogOnly = await LoginWithAsync(Permissions.CatalogView, Permissions.CatalogUpdate);
         Assert.Equal($"/product/{slug}", (await TargetAsync(catalogOnly, "product", product.Id)).Path);
         await ChangeOkAsync(catalogOnly, "product", product.Id, $"/lustre/{slug}");
         Assert.Equal(HttpStatusCode.Forbidden, (await catalogOnly.GetAsync($"{Routes}/blogPost/{post.Id}")).StatusCode);
@@ -552,7 +553,7 @@ public sealed class RoutesTests(ApiFixture fixture) : StoreTestBase(fixture)
         var old = (await TargetAsync(admin, "product", product.Id)).OldPaths.Single();
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(catalogOnly, HttpMethod.Delete, $"{Routes}/{old.Id}")).StatusCode);
 
-        var routesOnly = await LoginWithAsync("Routes.Manage");
+        var routesOnly = await LoginWithAsync(Permissions.RoutesView, Permissions.RoutesRelease);
         Assert.Equal(HttpStatusCode.Forbidden, (await ChangeAsync(routesOnly, "product", product.Id, $"/x/{slug}")).StatusCode); // cannot edit entity paths
         Assert.Equal(HttpStatusCode.Forbidden, (await routesOnly.GetAsync($"{Routes}/product/{product.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await routesOnly.GetAsync($"{Routes}/redirects")).StatusCode);

@@ -7,33 +7,42 @@ using Shop.Domain.Security;
 
 namespace Shop.Api.Controllers;
 
-// SEO fields, FAQ and the category guide are edited with the entity they belong to, so the entity's own permission decides:
-// Catalog.Manage (products, categories), Content.Manage (info pages), Blog.Manage (posts). CSRF like every admin write, 409 on a stale version.
+// SEO fields, FAQ and the category guide are edited with the entity they belong to, so the entity's own view/update
+// permission decides: Catalog.* (products, categories), Content.* (info pages), Blog.* (posts). CSRF like every
+// admin write, 409 on a stale version.
 [Route("api/v1/admin/seo/{type}/{id:int}")]
 [Tags("Admin SEO")]
 [Authorize]
 public sealed class AdminSeoController(IAdminSeoService seo, ICurrentUser currentUser) : ApiControllerBase
 {
-    private static string? PermissionFor(string type) => type switch
+    private static string? ViewPermissionFor(string type) => type switch
     {
-        RouteTargetTypes.Product or RouteTargetTypes.Category => Permissions.CatalogManage,
-        RouteTargetTypes.ContentPage => Permissions.ContentManage,
-        RouteTargetTypes.BlogPost => Permissions.BlogManage,
+        RouteTargetTypes.Product or RouteTargetTypes.Category => Permissions.CatalogView,
+        RouteTargetTypes.ContentPage => Permissions.ContentView,
+        RouteTargetTypes.BlogPost => Permissions.BlogView,
         _ => null,
     };
 
-    private IActionResult? Gate(string type) =>
-        PermissionFor(type) is not { } permission ? Http(Error.NotFound("seo_type_unknown", "api.error.requested-item-not-found"))
+    private static string? UpdatePermissionFor(string type) => type switch
+    {
+        RouteTargetTypes.Product or RouteTargetTypes.Category => Permissions.CatalogUpdate,
+        RouteTargetTypes.ContentPage => Permissions.ContentUpdate,
+        RouteTargetTypes.BlogPost => Permissions.BlogUpdate,
+        _ => null,
+    };
+
+    private IActionResult? Gate(string? permission) =>
+        permission is null ? Http(Error.NotFound("seo_type_unknown", "api.error.requested-item-not-found"))
         : currentUser.HasPermission(permission) ? null
         : Http(Error.Forbidden("forbidden", "api.error.forbidden"));
 
     [HttpGet]
     public async Task<IActionResult> Get(string type, int id, CancellationToken ct) =>
-        Gate(type) ?? Http(await seo.GetAsync(type, id, ct), Results.Ok);
+        Gate(ViewPermissionFor(type)) ?? Http(await seo.GetAsync(type, id, ct), Results.Ok);
 
     [HttpPut]
     public async Task<IActionResult> Save(string type, int id, [FromBody] SaveSeoRequest request, CancellationToken ct) =>
-        Gate(type) ?? Http(await seo.SaveAsync(type, id, request, ct), Results.Ok);
+        Gate(UpdatePermissionFor(type)) ?? Http(await seo.SaveAsync(type, id, request, ct), Results.Ok);
 }
 
 [Route("api/v1/catalog/seo")]

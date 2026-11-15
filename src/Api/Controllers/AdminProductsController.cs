@@ -10,12 +10,13 @@ namespace Shop.Api.Controllers;
 
 [Route("api/v1/admin/products")]
 [Tags("Admin catalog")]
-[Authorize(Policy = Permissions.CatalogManage)]
+[Authorize]
 public sealed class AdminProductsController(ICatalogAdminService catalog) : ApiControllerBase
 {
     // Query binding keeps the minimal-API rules: repeated values join with commas, empty is not absent, enum names
     // are case-sensitive, numbers are accepted (see RequestBinding.QueryBinding).
     [HttpGet]
+    [Authorize(Policy = Permissions.CatalogView)]
     public async Task<IActionResult> List(
         [FromQuery] string? q,
         [FromQuery][ModelBinder(typeof(DocumentationOnlyModelBinder))] ProductStatus? status,
@@ -33,25 +34,30 @@ public sealed class AdminProductsController(ICatalogAdminService catalog) : ApiC
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = Permissions.CatalogView)]
     public async Task<IActionResult> Get(int id, CancellationToken ct) =>
         Http(await catalog.GetProductAsync(id, ct), Results.Ok);
 
     [HttpPost]
+    [Authorize(Policy = Permissions.CatalogCreate)]
     [ValidateRequest<ProductRequest>]
     public async Task<IActionResult> Create([FromBody] ProductRequest request, CancellationToken ct) =>
         Http(await catalog.CreateProductAsync(request, ct), p => Results.Created($"/api/v1/admin/products/{p.Id}", p));
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = Permissions.CatalogUpdate)]
     [ValidateRequest<ProductRequest>]
     public async Task<IActionResult> Update(int id, [FromBody] ProductRequest request, CancellationToken ct) =>
         Http(await catalog.UpdateProductAsync(id, request, ct), Results.Ok);
 
     [HttpPost("{id:int}/variants")]
+    [Authorize(Policy = Permissions.CatalogUpdate)]
     [ValidateRequest<VariantRequest>]
     public async Task<IActionResult> AddVariant(int id, [FromBody] VariantRequest request, CancellationToken ct) =>
         Http(await catalog.AddVariantAsync(id, request, ct), v => Results.Created($"/api/v1/admin/products/{id}", v));
 
     [HttpPut("{id:int}/attributes")]
+    [Authorize(Policy = Permissions.CatalogUpdate)]
     [ValidateRequest<ProductAttributesRequest>]
     public async Task<IActionResult> SetAttributes(int id, [FromBody] ProductAttributesRequest request, CancellationToken ct) =>
         Http(await catalog.SetAttributesAsync(id, request, ct), Results.Ok);
@@ -59,6 +65,7 @@ public sealed class AdminProductsController(ICatalogAdminService catalog) : ApiC
     // Multipart upload. No framework antiforgery middleware is registered, so the API-wide X-XSRF-TOKEN filter
     // (CsrfFilter) is the only CSRF check, same as before.
     [HttpPost("{id:int}/images")]
+    [Authorize(Policy = Permissions.CatalogUpdate)]
     [RequireMultipartForm]
     public async Task<IActionResult> AddImage(int id, [Required] IFormFile file, [FromForm] string? alt, CancellationToken ct)
     {
@@ -73,6 +80,7 @@ public sealed class AdminProductsController(ICatalogAdminService catalog) : ApiC
     }
 
     [HttpPut("{id:int}/images/order")]
+    [Authorize(Policy = Permissions.CatalogUpdate)]
     [ValidateRequest<ImageOrderRequest>]
     public async Task<IActionResult> ReorderImages(int id, [FromBody] ImageOrderRequest request, CancellationToken ct) =>
         Http(await catalog.ReorderImagesAsync(id, request, ct), Results.Ok);

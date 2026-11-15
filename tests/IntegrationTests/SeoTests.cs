@@ -139,11 +139,11 @@ public sealed class SeoTests(ApiFixture fixture) : CatalogTestBase(fixture)
         await AssertProblemAsync(await SendAsync(admin, HttpMethod.Put, Url("category", e.CategoryId), Save(title: "x", rowVersion: new byte[8] { 1, 0, 0, 0, 0, 0, 0, 0 })), 409, "concurrent_update");
 
         // A blogger may edit posts' SEO but not a product's, a catalog editor not a post's.
-        var blogger = await SignedInWithAsync(admin, Permissions.BlogManage);
+        var blogger = await SignedInWithAsync(admin, Permissions.BlogView);
         Assert.Equal(HttpStatusCode.OK, (await blogger.GetAsync(Url("blogPost", e.PostId))).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await blogger.GetAsync(Url("product", e.ProductId))).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await SendAsync(blogger, HttpMethod.Put, Url("category", e.CategoryId), Save())).StatusCode);
-        var catalog = await SignedInWithAsync(admin, Permissions.CatalogManage);
+        var catalog = await SignedInWithAsync(admin, Permissions.CatalogView);
         Assert.Equal(HttpStatusCode.OK, (await catalog.GetAsync(Url("category", e.CategoryId))).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await catalog.GetAsync(Url("blogPost", e.PostId))).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await NewClient().GetAsync(Url("product", e.ProductId))).StatusCode);

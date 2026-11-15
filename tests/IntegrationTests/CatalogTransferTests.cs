@@ -98,10 +98,10 @@ public sealed class CatalogTransferTests(ApiFixture fixture) : CatalogTestBase(f
         Assert.Equal(HttpStatusCode.Unauthorized, (await anon.GetAsync($"{Base}/export")).StatusCode);
 
         var admin = await LoginAdminAsync();
-        // A role without Catalog.Manage.
+        // A role without Catalog.Import/Export.
         var stepUp = Fixture.AdminPassword;
         var role = await SendOkAsync<StaffRoleBody>(admin, HttpMethod.Post, "/api/v1/admin/staff/roles",
-            new { name = "NoCatalog" + Guid.NewGuid().ToString("N")[..6], title = "بدون محصول", permissions = new[] { Permissions.OrdersManage }, currentPassword = stepUp });
+            new { name = "NoCatalog" + Guid.NewGuid().ToString("N")[..6], title = "بدون محصول", permissions = new[] { Permissions.OrdersView }, currentPassword = stepUp });
         var username = "nocat-" + Guid.NewGuid().ToString("N")[..8];
         var password = TestData.NewPassword() + "-Zz9";
         await SendOkAsync<StaffUserBody>(admin, HttpMethod.Post, "/api/v1/admin/staff",

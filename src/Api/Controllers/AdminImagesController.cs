@@ -7,7 +7,7 @@ namespace Shop.Api.Controllers;
 
 [Route("api/v1/admin/images")]
 [Tags("Admin catalog")]
-[Authorize(Policy = Permissions.CatalogManage)]
+[Authorize(Policy = Permissions.CatalogUpdate)]
 public sealed class AdminImagesController(ICatalogAdminService catalog) : ApiControllerBase
 {
     [HttpDelete("{id:int}")]

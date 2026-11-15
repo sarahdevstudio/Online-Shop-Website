@@ -32,25 +32,29 @@ public sealed class CatalogReviewsController(IReviewService reviews) : ApiContro
     public async Task<IActionResult> Get(string slug, CancellationToken ct) => Http(await reviews.GetApprovedAsync(slug, ct), Results.Ok);
 }
 
-// Reviews.Manage is its own permission. CSRF like every admin write, 409 on a stale row version, every decision in the moderation log.
+// CSRF like every admin write, 409 on a stale row version, every decision in the moderation log.
 [Route("api/v1/admin/reviews")]
 [Tags("Admin reviews")]
-[Authorize(Policy = Permissions.ReviewsManage)]
+[Authorize]
 public sealed class AdminReviewsController(IAdminReviewService reviews) : ApiControllerBase
 {
     [HttpGet]
+    [Authorize(Policy = Permissions.ReviewsView)]
     public async Task<IActionResult> List([FromQuery] ReviewStatus? status, [FromQuery] int? page, CancellationToken ct) =>
         Http(Results.Ok(await reviews.ListAsync(status, page ?? 1, ct)));
 
     [HttpPost("{id:int}/approve")]
+    [Authorize(Policy = Permissions.ReviewsModerate)]
     public async Task<IActionResult> Approve(int id, [FromBody] ModerateReviewRequest request, CancellationToken ct) =>
         Http(await reviews.ApproveAsync(id, request, ct), Results.Ok);
 
     [HttpPost("{id:int}/reject")]
+    [Authorize(Policy = Permissions.ReviewsModerate)]
     public async Task<IActionResult> Reject(int id, [FromBody] ModerateReviewRequest request, CancellationToken ct) =>
         Http(await reviews.RejectAsync(id, request, ct), Results.Ok);
 
     [HttpGet("audit")]
+    [Authorize(Policy = Permissions.ReviewsView)]
     public async Task<IActionResult> Audit([FromQuery] int? page, CancellationToken ct) =>
         Http(Results.Ok(await reviews.AuditAsync(page ?? 1, ct)));
 }

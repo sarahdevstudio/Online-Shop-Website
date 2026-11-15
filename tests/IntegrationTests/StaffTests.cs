@@ -70,7 +70,7 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
         Assert.Equal(HttpStatusCode.Unauthorized, (await NewClient().GetAsync(Url)).StatusCode);
 
         var admin = await LoginAdminAsync();
-        var role = await NewRoleAsync(admin, Permissions.OrdersManage);
+        var role = await NewRoleAsync(admin, Permissions.OrdersView);
         var (user, password) = await CreateOkAsync(admin, role.Name);
         var limited = await SignInAsync(user.Username, password);
         Assert.Equal(HttpStatusCode.Forbidden, (await limited.GetAsync(Url)).StatusCode);
@@ -88,10 +88,10 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
         var admin = await LoginAdminAsync();
         Assert.Equal(Permissions.All.Order(StringComparer.Ordinal), (await GetOkAsync<AdminMeBody>(admin, "/api/v1/admin/me")).Permissions);
 
-        var role = await NewRoleAsync(admin, Permissions.BlogManage, Permissions.ContentManage);
+        var role = await NewRoleAsync(admin, Permissions.BlogView, Permissions.ContentView);
         var (user, password) = await CreateOkAsync(admin, role.Name);
         var me = await GetOkAsync<AdminMeBody>(await SignInAsync(user.Username, password), "/api/v1/admin/me");
-        Assert.Equal([Permissions.BlogManage, Permissions.ContentManage], me.Permissions);
+        Assert.Equal([Permissions.BlogView, Permissions.ContentView], me.Permissions);
 
         // A shopper has no permission at all: not a staff account.
         var (customer, _, _) = await RegisterCustomerAsync();
@@ -104,7 +104,7 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
     public async Task CreatingAStaffAccount_AppliesTheAdminPasswordRules_AndNeedsTheCallersPassword()
     {
         var admin = await LoginAdminAsync();
-        var role = await NewRoleAsync(admin, Permissions.CatalogManage);
+        var role = await NewRoleAsync(admin, Permissions.CatalogView);
 
         var (user, password) = await CreateOkAsync(admin, role.Name);
         Assert.Equal([role.Name], user.Roles);
@@ -202,9 +202,9 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
     public async Task ARoleDecidesWhatTheUserCanDo_AndEditingItChangesItAtOnce()
     {
         var admin = await LoginAdminAsync();
-        var role = await NewRoleAsync(admin, Permissions.OrdersManage);
+        var role = await NewRoleAsync(admin, Permissions.OrdersView);
         Assert.False(role.IsSystem);
-        Assert.Equal([Permissions.OrdersManage], role.Permissions);
+        Assert.Equal([Permissions.OrdersView], role.Permissions);
 
         var (user, password) = await CreateOkAsync(admin, role.Name);
         var session = await SignInAsync(user.Username, password);
@@ -213,7 +213,7 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
 
         // Adding a permission: the person's session ends (a new sign-in carries the new set).
         var updated = await SendOkAsync<StaffRoleBody>(admin, HttpMethod.Put, $"{Url}/roles/{role.Id}",
-            new { name = role.Name, title = "نقش ویرایش‌شده", permissions = new[] { Permissions.OrdersManage, Permissions.CatalogManage }, stamp = role.Stamp, currentPassword = Fixture.AdminPassword });
+            new { name = role.Name, title = "نقش ویرایش‌شده", permissions = new[] { Permissions.OrdersView, Permissions.CatalogView }, stamp = role.Stamp, currentPassword = Fixture.AdminPassword });
         Assert.Equal("نقش ویرایش‌شده", updated.Title);
         Assert.Equal(1, updated.UserCount);
         Assert.Equal(HttpStatusCode.Unauthorized, (await session.GetAsync("/api/v1/admin/orders")).StatusCode);
@@ -222,9 +222,9 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
 
         // The old stamp is a 409; the wrong password a 403; an unknown permission a 400.
         await AssertProblemAsync(await SendAsync(admin, HttpMethod.Put, $"{Url}/roles/{role.Id}",
-            new { name = role.Name, title = "x", permissions = new[] { Permissions.OrdersManage }, stamp = role.Stamp, currentPassword = Fixture.AdminPassword }), 409, "concurrent_update");
+            new { name = role.Name, title = "x", permissions = new[] { Permissions.OrdersView }, stamp = role.Stamp, currentPassword = Fixture.AdminPassword }), 409, "concurrent_update");
         await AssertProblemAsync(await SendAsync(admin, HttpMethod.Put, $"{Url}/roles/{role.Id}",
-            new { name = role.Name, title = "x", permissions = new[] { Permissions.OrdersManage }, stamp = updated.Stamp, currentPassword = "wrong" }), 403, "step_up_failed");
+            new { name = role.Name, title = "x", permissions = new[] { Permissions.OrdersView }, stamp = updated.Stamp, currentPassword = "wrong" }), 403, "step_up_failed");
         await AssertProblemAsync(await SendAsync(admin, HttpMethod.Put, $"{Url}/roles/{role.Id}",
             new { name = role.Name, title = "x", permissions = new[] { "Nothing.Real" }, stamp = updated.Stamp, currentPassword = Fixture.AdminPassword }), 400);
     }
@@ -234,14 +234,14 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
     {
         var admin = await LoginAdminAsync();
         Task<HttpResponseMessage> Create(string name, string? title = "عنوان") =>
-            SendAsync(admin, HttpMethod.Post, $"{Url}/roles", new { name, title, permissions = new[] { Permissions.BlogManage }, currentPassword = Fixture.AdminPassword });
+            SendAsync(admin, HttpMethod.Post, $"{Url}/roles", new { name, title, permissions = new[] { Permissions.BlogView }, currentPassword = Fixture.AdminPassword });
 
         await AssertProblemAsync(await Create("a"), 400);
         await AssertProblemAsync(await Create("نقش"), 400);
         await AssertProblemAsync(await Create("Valid_Name", null), 400);
         await AssertProblemAsync(await Create("admin"), 409, "role_name_taken"); // the built-in names are taken, whatever the case
 
-        var role = await NewRoleAsync(admin, Permissions.BlogManage);
+        var role = await NewRoleAsync(admin, Permissions.BlogView);
         await AssertProblemAsync(await Create(role.Name), 409, "role_name_taken");
 
         var system = await RoleAsync(admin, Roles.Admin);
@@ -266,7 +266,7 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
     public async Task ChangingRoles_NeedsTheCallersPassword_AndAtLeastOneRole()
     {
         var admin = await LoginAdminAsync();
-        var role = await NewRoleAsync(admin, Permissions.ContentManage);
+        var role = await NewRoleAsync(admin, Permissions.ContentView);
         var (user, password) = await CreateOkAsync(admin, role.Name);
         var session = await SignInAsync(user.Username, password);
 
@@ -308,7 +308,7 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
             // Now the caller is the only one. They cannot deactivate themselves, and cannot give up the Admin role.
             var me = (await OverviewAsync(admin)).Users.Single(u => u.Id == parked.fixtureAdminId);
             await AssertProblemAsync(await ActiveAsync(admin, me, false), 409, "staff_self_deactivate");
-            var limited = await NewRoleAsync(admin, Permissions.OrdersManage);
+            var limited = await NewRoleAsync(admin, Permissions.OrdersView);
             await AssertProblemAsync(await RolesAsync(admin, me, [limited.Name]), 409, "staff_lockout");
             Assert.Contains(Roles.Admin, (await UserAsync(admin, me.Id)).Roles); // rolled back
 
@@ -341,7 +341,7 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
         Assert.Equal(Permissions.All.Count, all.Permissions.Length);
         // Others still hold everything through the Admin role, so trimming it is allowed; the guard only bites when nobody is left.
         var trimmed = await SendAsync(admin, HttpMethod.Put, $"{Url}/roles/{all.Id}",
-            new { name = all.Name, title = "کمتر", permissions = new[] { Permissions.OrdersManage }, stamp = all.Stamp, currentPassword = Fixture.AdminPassword });
+            new { name = all.Name, title = "کمتر", permissions = new[] { Permissions.OrdersView }, stamp = all.Stamp, currentPassword = Fixture.AdminPassword });
         Assert.Equal(HttpStatusCode.OK, trimmed.StatusCode);
     }
 

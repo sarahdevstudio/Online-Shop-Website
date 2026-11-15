@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Shop.Application.Settings;
+using Shop.Domain.Security;
 using Shop.Infrastructure.Identity;
 using Shop.Infrastructure.Persistence;
 
@@ -90,7 +91,7 @@ public sealed class SettingsTests(ApiFixture fixture) : StoreTestBase(fixture)
     [Fact]
     public async Task CatalogManager_WithoutSettingsManage_IsForbidden()
     {
-        // Settings.Manage is separate from Catalog.Manage: a user holding only the catalog permission can't touch settings.
+        // Settings permissions are separate from Catalog permissions: a user holding only the catalog one can't touch settings.
         var email = TestData.NewEmail();
         var password = TestData.NewPassword();
         using (var scope = Fixture.Factory.Services.CreateScope())
@@ -98,7 +99,7 @@ public sealed class SettingsTests(ApiFixture fixture) : StoreTestBase(fixture)
             var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var user = new ApplicationUser { Id = Guid.NewGuid(), UserName = email, Email = email, EmailConfirmed = true, CreatedAtUtc = DateTime.UtcNow };
             Assert.True((await users.CreateAsync(user, password)).Succeeded);
-            Assert.True((await users.AddClaimAsync(user, new Claim("permission", "Catalog.Manage"))).Succeeded);
+            Assert.True((await users.AddClaimAsync(user, new Claim("permission", Permissions.CatalogView))).Succeeded);
         }
 
         var client = NewClient();

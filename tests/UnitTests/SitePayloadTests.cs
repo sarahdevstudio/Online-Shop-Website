@@ -6,10 +6,12 @@ namespace Shop.UnitTests;
 public class SitePayloadTests
 {
     [Fact]
-    public void SiteManage_IsAnAdminPermission()
+    public void SitePermissions_AreAdminPermissions()
     {
-        Assert.Contains(Permissions.SiteManage, Permissions.All);
-        Assert.Contains(Permissions.SiteManage, Roles.PermissionsFor(Roles.Admin));
+        Assert.Contains(Permissions.SiteView, Permissions.All);
+        Assert.Contains(Permissions.SiteUpdate, Permissions.All);
+        Assert.Contains(Permissions.SiteView, Roles.PermissionsFor(Roles.Admin));
+        Assert.Contains(Permissions.SiteUpdate, Roles.PermissionsFor(Roles.Admin));
         Assert.Empty(Roles.PermissionsFor(Roles.Customer));
     }
 

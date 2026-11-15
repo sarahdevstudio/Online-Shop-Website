@@ -7,16 +7,17 @@ using Shop.Domain.Security;
 
 namespace Shop.Api.Controllers;
 
-// Catalog.Manage. Export is a GET (nothing changes except an audit row); the two import calls are multipart POSTs, so the API-wide
+// Export is a GET (nothing changes except an audit row); the two import calls are multipart POSTs, so the API-wide
 // X-XSRF-TOKEN filter is their CSRF check. The file is size-limited here and again while it is read.
 [Route("api/v1/admin/catalog")]
 [Tags("Admin catalog import and export")]
-[Authorize(Policy = Permissions.CatalogManage)]
+[Authorize]
 public sealed class AdminCatalogTransferController(ICatalogTransferService transfer) : ApiControllerBase
 {
     private const long RequestLimit = TableLimits.MaxFileBytes + 64 * 1024;
 
     [HttpGet("export")]
+    [Authorize(Policy = Permissions.CatalogExport)]
     public async Task<IActionResult> Export([FromQuery] string? format, CancellationToken ct)
     {
         var file = await transfer.ExportAsync(format ?? "csv", ct);
@@ -24,6 +25,7 @@ public sealed class AdminCatalogTransferController(ICatalogTransferService trans
     }
 
     [HttpPost("import/preview")]
+    [Authorize(Policy = Permissions.CatalogImport)]
     [RequireMultipartForm]
     [RequestSizeLimit(RequestLimit)]
     public async Task<IActionResult> Preview([Required] IFormFile file, CancellationToken ct)
@@ -38,6 +40,7 @@ public sealed class AdminCatalogTransferController(ICatalogTransferService trans
     }
 
     [HttpPost("import/apply")]
+    [Authorize(Policy = Permissions.CatalogImport)]
     [RequireMultipartForm]
     [RequestSizeLimit(RequestLimit)]
     public async Task<IActionResult> Apply([Required] IFormFile file, CancellationToken ct)
