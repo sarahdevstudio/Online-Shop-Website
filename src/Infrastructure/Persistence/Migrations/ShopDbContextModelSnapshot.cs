@@ -581,6 +581,9 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.Property<long?>("CompareAtPrice")
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("CostPrice")
+                        .HasColumnType("bigint");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -620,6 +623,8 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.ToTable("ProductVariants", null, t =>
                         {
                             t.HasCheckConstraint("CK_ProductVariants_CompareAtPrice", "[CompareAtPrice] IS NULL OR [CompareAtPrice] > [Price]");
+
+                            t.HasCheckConstraint("CK_ProductVariants_CostPrice", "[CostPrice] IS NULL OR [CostPrice] >= 0");
 
                             t.HasCheckConstraint("CK_ProductVariants_Price", "[Price] > 0");
 
@@ -1040,6 +1045,9 @@ namespace Shop.Infrastructure.Persistence.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(64)");
 
+                    b.Property<long?>("UnitCost")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("UnitPrice")
                         .HasColumnType("bigint");
 
@@ -1061,6 +1069,8 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.ToTable("OrderItems", null, t =>
                         {
                             t.HasCheckConstraint("CK_OrderItems_Quantity", "[Quantity] > 0");
+
+                            t.HasCheckConstraint("CK_OrderItems_UnitCost", "[UnitCost] IS NULL OR [UnitCost] >= 0");
 
                             t.HasCheckConstraint("CK_OrderItems_UnitPrice", "[UnitPrice] > 0");
                         });

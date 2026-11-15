@@ -123,12 +123,12 @@ public interface IVariantFields
     int Stock { get; }
 }
 
-public sealed record VariantRequest(string Sku, long Price, long? CompareAtPrice, int Stock, bool IsActive, int SortOrder)
+public sealed record VariantRequest(string Sku, long Price, long? CompareAtPrice, int Stock, bool IsActive, int SortOrder, long? CostPrice = null)
     : IVariantFields;
 
 /// <summary>Update of a variant; <see cref="RowVersion"/> is the value last read, so a concurrent stock change is a 409.</summary>
 public sealed record UpdateVariantRequest(
-    string Sku, long Price, long? CompareAtPrice, int Stock, bool IsActive, int SortOrder, byte[] RowVersion) : IVariantFields;
+    string Sku, long Price, long? CompareAtPrice, int Stock, bool IsActive, int SortOrder, byte[] RowVersion, long? CostPrice = null) : IVariantFields;
 
 /// <summary>Create: slug is set here only. Update: <see cref="Slug"/> and <see cref="Variants"/> are ignored.</summary>
 public sealed record ProductRequest(
@@ -142,7 +142,7 @@ public sealed record ProductAttributesRequest(IReadOnlyList<AttributeValueReques
 public sealed record ImageOrderRequest(IReadOnlyList<int> ImageIds);
 
 public sealed record AdminVariantDto(
-    int Id, string Sku, long Price, long? CompareAtPrice, int Stock, bool IsActive, int SortOrder, byte[] RowVersion);
+    int Id, string Sku, long Price, long? CompareAtPrice, int Stock, bool IsActive, int SortOrder, byte[] RowVersion, long? CostPrice = null);
 
 public sealed record AdminImageDto(int Id, string Url, string Alt, int SortOrder);
 

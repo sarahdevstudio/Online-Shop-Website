@@ -24,7 +24,7 @@ internal static class Tokens
 /// <summary>A variant as the cart and checkout need it: live price and stock, and whether it can be bought at all.</summary>
 internal sealed record VariantInfo(
     int VariantId, int ProductId, string ProductName, string ProductSlug, string Sku, long Price, int Stock, bool Purchasable,
-    string? Label, string? ImagePath)
+    string? Label, string? ImagePath, long? CostPrice)
 {
     /// <summary>The most of this variant a customer may hold: the stock, capped by the per-line maximum from the store settings.</summary>
     public int MaxQuantity(int maxPerLine) => Purchasable ? Math.Min(Stock, maxPerLine) : 0;
@@ -43,7 +43,7 @@ internal static class VariantInfoLoader
                 from v in db.ProductVariants.AsNoTracking()
                 join p in db.Products.AsNoTracking() on v.ProductId equals p.Id
                 where variantIds.Contains(v.Id)
-                select new { v.Id, v.ProductId, p.Name, p.Slug, v.Sku, v.Price, v.Stock, v.IsActive, p.Status })
+                select new { v.Id, v.ProductId, p.Name, p.Slug, v.Sku, v.Price, v.Stock, v.IsActive, p.Status, v.CostPrice })
             .ToListAsync(ct);
 
         // Variant-level option values ("۹ وات", "آفتابی") joined into a short label, in attribute order.
@@ -71,7 +71,8 @@ internal static class VariantInfoLoader
                 r.Id, r.ProductId, r.Name, r.Slug, r.Sku, r.Price, r.Stock,
                 r.IsActive && r.Status == ProductStatus.Published && r.Stock > 0,
                 labels.GetValueOrDefault(r.Id),
-                firstImage.GetValueOrDefault(r.ProductId)));
+                firstImage.GetValueOrDefault(r.ProductId),
+                r.CostPrice));
     }
 }
 

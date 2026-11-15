@@ -25,6 +25,11 @@ public sealed partial class ProductVariant
     public int Stock { get; private set; }
     public bool IsActive { get; private set; }
     public int SortOrder { get; private set; }
+
+    /// <summary>What the item cost the store (whole Toman), for margin reports (docs/19). Admin-only: never sent to the
+    /// storefront, never in a public DTO, JSON-LD or sitemap. Null when the owner hasn't entered it yet.</summary>
+    public long? CostPrice { get; private set; }
+
     public byte[] RowVersion { get; private set; } = [];
 
     public static bool IsValidSku(string? sku) => sku is { Length: > 0 and <= SkuMaxLength } && SkuPattern().IsMatch(sku);
@@ -64,6 +69,16 @@ public sealed partial class ProductVariant
         Stock = stock;
         IsActive = isActive;
         SortOrder = sortOrder;
+    }
+
+    public void SetCostPrice(long? costPrice)
+    {
+        if (costPrice is < 0 or > MaxPrice)
+        {
+            throw new ArgumentOutOfRangeException(nameof(costPrice));
+        }
+
+        CostPrice = costPrice;
     }
 
     [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9._-]*$", RegexOptions.CultureInvariant)]

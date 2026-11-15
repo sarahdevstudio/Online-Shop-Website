@@ -11,7 +11,7 @@ public sealed record AdminOptionBody(int Id, string Value, string Slug);
 
 public sealed record AdminAttributeBody(int Id, string Code, string Type, AdminOptionBody[] Options);
 
-public sealed record AdminVariantBody(int Id, string Sku, long Price, long? CompareAtPrice, int Stock, bool IsActive, int SortOrder, byte[] RowVersion);
+public sealed record AdminVariantBody(int Id, string Sku, long Price, long? CompareAtPrice, int Stock, bool IsActive, int SortOrder, byte[] RowVersion, long? CostPrice = null);
 
 public sealed record AdminImageBody(int Id, string Url, string Alt, int SortOrder);
 

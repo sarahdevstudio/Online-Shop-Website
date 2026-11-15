@@ -315,7 +315,12 @@ internal sealed class CatalogAdminService(
 
         var product = Product.Create(request.CategoryId, request.BrandId, references.BrandName, request.Name, request.Slug,
             request.Description, request.Status, clock.GetUtcNow().UtcDateTime);
-        product.Variants.AddRange(variants.Select(v => ProductVariant.Create(v.Sku, v.Price, v.CompareAtPrice, v.Stock, v.IsActive, v.SortOrder)));
+        product.Variants.AddRange(variants.Select(v =>
+        {
+            var variant = ProductVariant.Create(v.Sku, v.Price, v.CompareAtPrice, v.Stock, v.IsActive, v.SortOrder);
+            variant.SetCostPrice(v.CostPrice);
+            return variant;
+        }));
         db.Products.Add(product);
         return await SaveNewAsync(RouteTargetTypes.Product, () => product.Id, product.Slug, request.Path, () => ToDto(product),
             [("UX_Products_Slug", SlugTaken), ("UX_ProductVariants_Sku", SkuTaken)], ct);
@@ -355,6 +360,7 @@ internal sealed class CatalogAdminService(
         }
 
         var variant = ProductVariant.Create(request.Sku, request.Price, request.CompareAtPrice, request.Stock, request.IsActive, request.SortOrder);
+        variant.SetCostPrice(request.CostPrice);
         product.Variants.Add(variant);
         product.Touch(clock.GetUtcNow().UtcDateTime);
         return await SaveAsync(() => ToDto(variant), ("UX_ProductVariants_Sku", SkuTaken), ct);
@@ -378,6 +384,7 @@ internal sealed class CatalogAdminService(
         db.Entry(variant).Property(v => v.RowVersion).OriginalValue = request.RowVersion;
         var oldStock = variant.Stock;
         variant.Update(request.Sku, request.Price, request.CompareAtPrice, request.Stock, request.IsActive, request.SortOrder);
+        variant.SetCostPrice(request.CostPrice);
         if (request.Stock != oldStock)
         {
             db.StockAdjustments.Add(StockAdjustment.Create(
@@ -616,7 +623,7 @@ internal sealed class CatalogAdminService(
     private static AdminAttributeOptionDto ToDto(AttributeOption o) => new(o.Id, o.Value, o.Slug, o.SortOrder);
 
     private static AdminVariantDto ToDto(ProductVariant v) =>
-        new(v.Id, v.Sku, v.Price, v.CompareAtPrice, v.Stock, v.IsActive, v.SortOrder, v.RowVersion);
+        new(v.Id, v.Sku, v.Price, v.CompareAtPrice, v.Stock, v.IsActive, v.SortOrder, v.RowVersion, v.CostPrice);
 
     private AdminImageDto ToDto(ProductImage i) => new(i.Id, media.GetUrl(i.Path), i.Alt, i.SortOrder);
 

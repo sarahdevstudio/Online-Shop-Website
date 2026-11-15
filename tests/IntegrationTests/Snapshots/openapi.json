@@ -1205,6 +1205,15 @@
               "string"
             ]
           },
+          "costPrice": {
+            "format": "int64",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
           "isActive": {
             "type": "boolean"
           },
@@ -1254,6 +1263,15 @@
       "VariantRequest": {
         "properties": {
           "compareAtPrice": {
+            "format": "int64",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ]
+          },
+          "costPrice": {
             "format": "int64",
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [

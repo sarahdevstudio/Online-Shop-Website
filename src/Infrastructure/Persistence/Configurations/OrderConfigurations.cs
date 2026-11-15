@@ -96,6 +96,7 @@ internal sealed class OrderItemConfiguration : IEntityTypeConfiguration<OrderIte
         {
             t.HasCheckConstraint("CK_OrderItems_Quantity", "[Quantity] > 0");
             t.HasCheckConstraint("CK_OrderItems_UnitPrice", "[UnitPrice] > 0");
+            t.HasCheckConstraint("CK_OrderItems_UnitCost", "[UnitCost] IS NULL OR [UnitCost] >= 0");
         });
         builder.HasKey(x => x.Id);
         builder.Ignore(x => x.LineTotal);

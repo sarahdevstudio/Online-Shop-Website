@@ -126,7 +126,7 @@ internal sealed class OrderService(
         var items = lines.Select(l =>
         {
             var info = infos[l.VariantId];
-            return OrderItem.Create(l.VariantId, info.ProductName, info.Label, info.Sku, info.Price, l.Quantity);
+            return OrderItem.Create(l.VariantId, info.ProductName, info.Label, info.Sku, info.Price, l.Quantity, info.CostPrice);
         });
         var order = Order.Create(
             Tokens.New(), context.IdempotencyKey, request.PaymentMethod,

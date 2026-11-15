@@ -40,6 +40,33 @@ public sealed class StoreOrderTests(ApiFixture fixture) : StoreTestBase(fixture)
     }
 
     [Fact]
+    public async Task PlacingAnOrder_SnapshotsEachLinesUnitCost_NullWhenTheVariantHasNoCostPriceYet()
+    {
+        var admin = await LoginAdminAsync();
+        var withCost = await CreateVariantAsync(admin, 100_000, 5);
+        var withoutCost = await CreateVariantAsync(admin, 80_000, 5);
+        await Fixture.WithDbAsync(async db => await db.ProductVariants.Where(v => v.Id == withCost)
+            .ExecuteUpdateAsync(s => s.SetProperty(v => v.CostPrice, 60_000L)));
+
+        var shopper = NewShopper();
+        await shopper.AddAsync(withCost, 2);
+        await shopper.AddAsync(withoutCost, 1);
+        var placed = await PlaceOkAsync(shopper);
+
+        var items = await Fixture.WithDbAsync(db => db.Orders.Where(o => o.Number == placed.Number)
+            .SelectMany(o => o.Items).Select(i => new { i.VariantId, i.UnitCost, i.Quantity }).ToListAsync());
+        Assert.Equal(60_000L, items.Single(i => i.VariantId == withCost).UnitCost);
+        Assert.Null(items.Single(i => i.VariantId == withoutCost).UnitCost);
+
+        // Changing the cost price later never changes what an already-placed order reports.
+        await Fixture.WithDbAsync(async db => await db.ProductVariants.Where(v => v.Id == withCost)
+            .ExecuteUpdateAsync(s => s.SetProperty(v => v.CostPrice, 90_000L)));
+        var stillOld = await Fixture.WithDbAsync(db => db.Orders.Where(o => o.Number == placed.Number)
+            .SelectMany(o => o.Items).Where(i => i.VariantId == withCost).Select(i => i.UnitCost).SingleAsync());
+        Assert.Equal(60_000L, stillOld);
+    }
+
+    [Fact]
     public async Task CardToCard_ShowsExactAmountAndCard_AcceptsTransferReference_UntilConfirmed()
     {
         var admin = await LoginAdminAsync();

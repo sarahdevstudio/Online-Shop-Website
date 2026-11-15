@@ -75,6 +75,7 @@ internal sealed class ProductVariantConfiguration : IEntityTypeConfiguration<Pro
             t.HasCheckConstraint("CK_ProductVariants_Price", "[Price] > 0");
             t.HasCheckConstraint("CK_ProductVariants_CompareAtPrice", "[CompareAtPrice] IS NULL OR [CompareAtPrice] > [Price]");
             t.HasCheckConstraint("CK_ProductVariants_Stock", "[Stock] >= 0");
+            t.HasCheckConstraint("CK_ProductVariants_CostPrice", "[CostPrice] IS NULL OR [CostPrice] >= 0");
         });
         builder.HasKey(x => x.Id);
         // Lets attribute values reference (ProductId, VariantId), so a value can't point at another product's variant.

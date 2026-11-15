@@ -214,9 +214,13 @@ public sealed class OrderItem
     public long UnitPrice { get; private set; }
     public int Quantity { get; private set; }
 
+    /// <summary>What the item cost the store at the moment of this order (whole Toman); null when the variant had no
+    /// cost price entered yet. Snapshotted so a later cost-price edit never changes a past order's reported margin.</summary>
+    public long? UnitCost { get; private set; }
+
     public long LineTotal => UnitPrice * Quantity;
 
-    public static OrderItem Create(int variantId, string productName, string? variantLabel, string sku, long unitPrice, int quantity) => new()
+    public static OrderItem Create(int variantId, string productName, string? variantLabel, string sku, long unitPrice, int quantity, long? unitCost = null) => new()
     {
         VariantId = variantId,
         ProductName = productName.Length <= ProductNameMaxLength ? productName : productName[..ProductNameMaxLength],
@@ -224,6 +228,7 @@ public sealed class OrderItem
         Sku = sku,
         UnitPrice = unitPrice,
         Quantity = quantity,
+        UnitCost = unitCost,
     };
 }
 
