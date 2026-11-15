@@ -28,10 +28,10 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
     private static readonly string[] Fixed =
     [
         "product_slug", "product_name", "category", "brand", "status", "description", "path",
-        "sku", "price", "compare_at_price", "stock", "variant_active", "sort_order", "image_ids",
+        "sku", "price", "compare_at_price", "cost_price", "stock", "variant_active", "sort_order", "image_ids",
     ];
 
-    private static readonly HashSet<string> NumericColumns = ["price", "compare_at_price", "stock", "sort_order"];
+    private static readonly HashSet<string> NumericColumns = ["price", "compare_at_price", "cost_price", "stock", "sort_order"];
     private const string SpecPrefix = "spec:";
     private const string AxisPrefix = "axis:";
 
@@ -66,6 +66,7 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
                     product.BrandId is { } b ? brands.GetValueOrDefault(b, string.Empty) : string.Empty,
                     product.Status.ToString().ToLowerInvariant(), product.Description ?? string.Empty, productPaths.GetValueOrDefault(product.Id, string.Empty),
                     variant.Sku, variant.Price.ToString(CultureInfo.InvariantCulture), variant.CompareAtPrice?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
+                    variant.CostPrice?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
                     variant.Stock.ToString(CultureInfo.InvariantCulture), variant.IsActive ? "1" : "0", variant.SortOrder.ToString(CultureInfo.InvariantCulture), images,
                 };
                 row.AddRange(attributes.Select(a => product.AttributeValues.FirstOrDefault(v => v.AttributeId == a.Id && v.VariantId is null) is { } spec ? ValueOf(spec) : string.Empty));
@@ -176,6 +177,11 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
         public string Sku { get; } = sku;
         public long Price { get; set; }
         public long? CompareAt { get; set; }
+
+        /// <summary>Null AND <see cref="CostPriceGiven"/> false means "not in the file for this row": the existing
+        /// value (if any) is kept, unlike every other column, where an empty cell clears it.</summary>
+        public long? CostPrice { get; set; }
+        public bool CostPriceGiven { get; set; }
         public int? Stock { get; set; }
         public bool? Active { get; set; }
         public int? Sort { get; set; }
@@ -576,6 +582,24 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
             }
         }
 
+        if (has("cost_price"))
+        {
+            var cost = cell(row, "cost_price");
+            if (cost.Length > 0)
+            {
+                if (ParseWhole(cost) is { } cp && cp is >= 0 and <= ProductVariant.MaxPrice)
+                {
+                    variant.CostPrice = cp;
+                    variant.CostPriceGiven = true;
+                }
+                else
+                {
+                    plan.Error(row.Number, "cost_price", T("api.import.e.cost-invalid", ("max", ProductVariant.MaxPrice)));
+                    ok = false;
+                }
+            }
+        }
+
         if (has("stock"))
         {
             var stock = cell(row, "stock");
@@ -746,6 +770,7 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
             });
             variant.Action = variant.Price != v.Price || variant.CompareAt != v.CompareAtPrice || (variant.Stock is { } st && st != v.Stock)
                 || (variant.Active is { } act && act != v.IsActive) || (variant.Sort is { } so && so != v.SortOrder) || axisChanged
+                || (variant.CostPriceGiven && variant.CostPrice != v.CostPrice)
                 ? "update-variant" : "unchanged";
         }
     }
@@ -773,7 +798,12 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
             else
             {
                 var fresh = Product.Create(planned.CategoryId!.Value, planned.BrandId, planned.BrandName, planned.Name!, planned.Slug, planned.Description, planned.Status ?? ProductStatus.Draft, now);
-                fresh.Variants.AddRange(planned.Variants.Select(v => ProductVariant.Create(v.Sku, v.Price, v.CompareAt, v.Stock ?? 0, v.Active ?? true, v.Sort ?? 0)));
+                fresh.Variants.AddRange(planned.Variants.Select(v =>
+                {
+                    var created = ProductVariant.Create(v.Sku, v.Price, v.CompareAt, v.Stock ?? 0, v.Active ?? true, v.Sort ?? 0);
+                    created.SetCostPrice(v.CostPrice);
+                    return created;
+                }));
                 db.Products.Add(fresh);
                 created.Add((fresh, planned));
             }
@@ -847,6 +877,11 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
             {
                 var before = existing.Stock;
                 existing.Update(existing.Sku, variant.Price, variant.CompareAt, variant.Stock ?? existing.Stock, variant.Active ?? existing.IsActive, variant.Sort ?? existing.SortOrder);
+                if (variant.CostPriceGiven)
+                {
+                    existing.SetCostPrice(variant.CostPrice);
+                }
+
                 if (existing.Stock != before)
                 {
                     db.StockAdjustments.Add(StockAdjustment.Create(existing.Id, currentUser.UserId, existing.Stock - before, existing.Stock, null, StockAdjustment.ImportSource, now));
@@ -869,6 +904,7 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
             {
                 // A new variant of an existing product: its axis values are added after its id exists (see below).
                 var fresh = ProductVariant.Create(variant.Sku, variant.Price, variant.CompareAt, variant.Stock ?? 0, variant.Active ?? true, variant.Sort ?? 0);
+                fresh.SetCostPrice(variant.CostPrice);
                 product.Variants.Add(fresh);
                 pendingAxis.Add((product, fresh, variant));
             }

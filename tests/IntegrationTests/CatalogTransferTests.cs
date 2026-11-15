@@ -137,7 +137,8 @@ public sealed class CatalogTransferTests(ApiFixture fixture) : CatalogTestBase(f
         Assert.StartsWith("text/csv", csv.Content.Headers.ContentType!.MediaType);
         Assert.Contains("products-", csv.Content.Headers.ContentDisposition!.FileName);
         var table = CsvTable.Read(await csv.Content.ReadAsByteArrayAsync());
-        Assert.Equal(Header, table.Header.Take(Header.Length));
+        var exportedFixedHeader = Header.Take(10).Append("cost_price").Concat(Header.Skip(10)).ToArray(); // cost_price sits right after compare_at_price
+        Assert.Equal(exportedFixedHeader, table.Header.Take(exportedFixedHeader.Length));
         Assert.Contains("spec:base", table.Header);
         Assert.Contains("axis:wattage", table.Header);
 
@@ -473,5 +474,51 @@ public sealed class CatalogTransferTests(ApiFixture fixture) : CatalogTestBase(f
         Assert.Equal(("import", 1, 1, 1), (log.Kind, log.Rows, log.ProductsCreated, log.VariantsCreated));
         await admin.GetAsync($"{Base}/export?format=csv");
         Assert.True(await Fixture.WithDbAsync(db => db.CatalogTransferLogs.AnyAsync(l => l.Kind == "export")));
+    }
+
+    // cost_price has its own column (right after compare_at_price), used only in these tests so the shared Header/Row
+    // helpers above (and every test built on them) stay untouched.
+    private static readonly string[] HeaderWithCost =
+        ["product_slug", "product_name", "category", "brand", "status", "description", "path", "sku", "price", "compare_at_price", "cost_price", "stock", "variant_active", "sort_order", "image_ids"];
+
+    private static string[] RowWithCost(string slug, string name, string category, string sku, string price, string costPrice = "", string stock = "5", string status = "published") =>
+        [slug, name, category, "", status, "توضیح", "", sku, price, "", costPrice, stock, "1", "0", ""];
+
+    [Fact]
+    public async Task CostPrice_EmptyCellLeavesItUnchanged_AGivenValueUpdatesIt_AndAnInvalidOneIsARowError()
+    {
+        var admin = await LoginAdminAsync();
+        var (categoryPath, categorySlug, _) = await ReferencesAsync(admin);
+        var categories = await GetOkAsync<AdminCategoryBody[]>(admin, "/api/v1/admin/categories");
+        var slug = Unique("cost");
+        var product = await CreateProductAsync(admin, categories.Single(c => c.Slug == categorySlug).Id, slug, variants: [(100_000, 5)]);
+        var sku = product.Variants[0].Sku;
+
+        // Creates with a cost price.
+        var createFile = CsvTable.Write(HeaderWithCost, [RowWithCost(slug, "نام", categoryPath, sku, "100000", "60000")]);
+        await ApplyAsync(admin, createFile);
+        Assert.Equal(60_000L, (await ProductBySlugAsync(admin, slug)).Variants.Single().CostPrice);
+
+        // An empty cost_price cell: the preview reports no change, and applying it really leaves the value alone.
+        var emptyFile = CsvTable.Write(HeaderWithCost, [RowWithCost(slug, "نام", categoryPath, sku, "100000")]);
+        var unchangedPreview = await PreviewAsync(admin, emptyFile);
+        Assert.True(unchangedPreview.CanApply);
+        Assert.Equal(0, unchangedPreview.Summary.VariantsToUpdate);
+        await ApplyAsync(admin, emptyFile);
+        Assert.Equal(60_000L, (await ProductBySlugAsync(admin, slug)).Variants.Single().CostPrice);
+
+        // A given value updates it.
+        var updateFile = CsvTable.Write(HeaderWithCost, [RowWithCost(slug, "نام", categoryPath, sku, "100000", "70000")]);
+        var updatedPreview = await PreviewAsync(admin, updateFile);
+        Assert.Equal(1, updatedPreview.Summary.VariantsToUpdate);
+        await ApplyAsync(admin, updateFile);
+        Assert.Equal(70_000L, (await ProductBySlugAsync(admin, slug)).Variants.Single().CostPrice);
+
+        // An invalid (negative) cost price is a row error; nothing is written.
+        var badFile = CsvTable.Write(HeaderWithCost, [RowWithCost(slug, "نام", categoryPath, sku, "100000", "-1")]);
+        var badPreview = await PreviewAsync(admin, badFile);
+        Assert.False(badPreview.CanApply);
+        Assert.Contains(badPreview.Errors, e => e.Column == "cost_price");
+        Assert.Equal(70_000L, (await ProductBySlugAsync(admin, slug)).Variants.Single().CostPrice); // unchanged
     }
 }
