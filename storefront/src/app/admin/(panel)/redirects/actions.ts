@@ -16,7 +16,7 @@ function backTarget(formData: FormData): string {
 
 /**
  * Releases (deletes) an old path or the path of a deleted entity: it stops redirecting and can be taken by another entity.
- * Needs Routes.Manage (the API checks it) and is audited there.
+ * Needs Routes.Release (the API checks it) and is audited there.
  */
 export async function releaseRedirectAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const routeId = readId(formData);

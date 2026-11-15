@@ -7,9 +7,10 @@ import { formatNumber } from '@/lib/format';
 import styles from '../admin.module.css';
 
 export default async function DashboardPage() {
-  // The cards need two permissions; an account with others (a blogger) gets a welcome text instead of an error.
+  // The cards need Orders.View (the API endpoint's own gate); an account without it (a blogger) gets a welcome
+  // text instead of an error. F2 (docs/19) replaces this with a per-card permission check.
   const { perms } = await requireAdmin();
-  if (perms && !(perms.includes('Orders.Manage') && perms.includes('Settings.Manage'))) {
+  if (perms && !perms.includes('Orders.View')) {
     return (
       <>
         <h1 className="ui-heading-2">{adminMessages.nav.dashboard}</h1>

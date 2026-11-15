@@ -26,14 +26,14 @@ test('create a role through the form', async ({ page }) => {
   await axeCheck(page, '/admin/staff/roles/new');
   await page.fill('input[name="name"]', roleName);
   await page.fill('input[name="title"]', `نویسنده ${RUN}`);
-  await page.check('input[name="permissions"][value="Blog.Manage"]');
+  await page.check('input[name="permissions"][value="Blog.View"]');
   // Without the caller's password the form is refused next to that box.
   await page.locator('form button[type="submit"]').last().click();
   await expect(page.locator('.ui-error').first()).toBeVisible();
   await stepUp(page);
   await Promise.all([page.waitForURL(/\/admin\/staff\/roles\/[0-9a-f-]{36}$/), page.locator('form button[type="submit"]').last().click()]);
   await expect(page.locator('input[name="name"]')).toHaveValue(roleName);
-  await expect(page.locator('input[name="permissions"][value="Blog.Manage"]')).toBeChecked();
+  await expect(page.locator('input[name="permissions"][value="Blog.View"]')).toBeChecked();
   await axeCheck(page, '/admin/staff/roles/[id]');
 });
 

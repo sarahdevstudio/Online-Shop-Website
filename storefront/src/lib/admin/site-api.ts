@@ -4,7 +4,7 @@ import { siteMessages } from './site-messages';
 import type { AdminSiteDocument, PayloadByKind, SiteAuditPage, SiteKind, SiteOverviewItem, SiteVersionDocument } from './site-types';
 
 /**
- * Server-side client of `/api/v1/admin/site/*` (Site.Manage). Pages read with the `get*` helpers; Server Actions write with
+ * Server-side client of `/api/v1/admin/site/*` (Site.View/Site.Update). Pages read with the `get*` helpers; Server Actions write with
  * the functions below. The browser never sees the API: everything goes through `adminFetch` (session + CSRF).
  */
 

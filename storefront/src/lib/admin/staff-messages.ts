@@ -81,21 +81,46 @@ export const staffMessages = {
   get noAccess() { return t('admin.staff.no-access'); },
   /** Label of a permission code ("Orders.Manage"); an unknown code (a permission added later) shows as itself. */
   permissionLabel: (code: string): string => PERMISSION_KEYS[code] ? t(PERMISSION_KEYS[code]) : code,
+  /** The resource part of a "Resource.Action" code ("Orders.View" -> "سفارش‌ها"); unknown resources show as themselves. */
+  resourceLabel: (resource: string): string => RESOURCE_KEYS[resource] ? t(RESOURCE_KEYS[resource]) : resource,
+  /** The action part of a "Resource.Action" code ("Orders.View" -> "مشاهده"); unknown actions show as themselves. */
+  permissionActionLabel: (action: string): string => ACTION_LABEL_KEYS[action] ? t(ACTION_LABEL_KEYS[action]) : action,
+  get selectAllRow() { return t('admin.staff.permissions.select-all-row'); },
   /** Label of an audit action ("staff.created"); unknown ones show as themselves. */
   actionLabel: (action: string): string => ACTION_KEYS[action] ? t(ACTION_KEYS[action]) : action,
 };
 
 const PERMISSION_KEYS: Record<string, TextKey> = {
   'User.Manage': 'admin.staff.permissions.user-manage',
-  'Settings.Manage': 'admin.staff.permissions.settings-manage',
-  'Catalog.Manage': 'admin.staff.permissions.catalog-manage',
-  'Orders.Manage': 'admin.staff.permissions.orders-manage',
-  'Content.Manage': 'admin.staff.permissions.content-manage',
-  'Blog.Manage': 'admin.staff.permissions.blog-manage',
-  'Site.Manage': 'admin.staff.permissions.site-manage',
-  'Translations.Manage': 'admin.staff.permissions.translations-manage',
-  'Routes.Manage': 'admin.staff.permissions.routes-manage',
-  'Reviews.Manage': 'admin.staff.permissions.reviews-manage',
+};
+
+/** Resource part of a "Resource.Action" permission code, for the role editor's matrix (rows). */
+const RESOURCE_KEYS: Record<string, TextKey> = {
+  Catalog: 'admin.staff.resources.catalog',
+  Content: 'admin.staff.resources.content',
+  Blog: 'admin.staff.resources.blog',
+  Orders: 'admin.staff.resources.orders',
+  Settings: 'admin.staff.resources.settings',
+  Site: 'admin.staff.resources.site',
+  Routes: 'admin.staff.resources.routes',
+  Reviews: 'admin.staff.resources.reviews',
+  Translations: 'admin.staff.resources.translations',
+};
+
+/** Action part of a "Resource.Action" permission code, for the role editor's matrix (columns). */
+const ACTION_LABEL_KEYS: Record<string, TextKey> = {
+  View: 'admin.staff.permission-actions.view',
+  Create: 'admin.staff.permission-actions.create',
+  Update: 'admin.staff.permission-actions.update',
+  Delete: 'admin.staff.permission-actions.delete',
+  Import: 'admin.staff.permission-actions.import',
+  Export: 'admin.staff.permission-actions.export',
+  ConfirmPayment: 'admin.staff.permission-actions.confirm-payment',
+  Cancel: 'admin.staff.permission-actions.cancel',
+  Print: 'admin.staff.permission-actions.print',
+  Payment: 'admin.staff.permission-actions.payment',
+  Release: 'admin.staff.permission-actions.release',
+  Moderate: 'admin.staff.permission-actions.moderate',
 };
 
 const ACTION_KEYS: Record<string, TextKey> = {

@@ -8,7 +8,7 @@ import { adminMessages } from '@/lib/admin/messages';
 import { adminReviewMessages as t } from '@/lib/admin/review-messages';
 import { refreshCatalog } from '@/lib/admin/route-actions';
 
-/** Approve or reject one review (`decision` = approve | reject). The API checks Reviews.Manage and the row version (409 when someone decided meanwhile). */
+/** Approve or reject one review (`decision` = approve | reject). The API checks Reviews.Moderate and the row version (409 when someone decided meanwhile). */
 export async function moderateReviewAction(_previous: FormState, formData: FormData): Promise<FormState> {
   const id = whole(formData, 'id');
   const decision = text(formData, 'decision');

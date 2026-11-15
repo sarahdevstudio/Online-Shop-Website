@@ -22,8 +22,9 @@ export async function generateMetadata({ params }: { params: Promise<{ kind: str
 
 /**
  * The printable invoice and packing slip of one order (A4 or A5, Persian, RTL). Same permission as the order screen: the API
- * answers 403 for an account without Orders.Manage. No prices on the packing slip. The paper size is an @page rule, so it is
- * injected as a nonce-tagged style (the CSP allows no other inline style element).
+ * answers 403 for an account without Orders.View (Orders.Print only gates the button/link to this page, since the data
+ * read is the same order endpoint). No prices on the packing slip. The paper size is an @page rule, so it is injected
+ * as a nonce-tagged style (the CSP allows no other inline style element).
  */
 export default async function PrintPage({
   params,
