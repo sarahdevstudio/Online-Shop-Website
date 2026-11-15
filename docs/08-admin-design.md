@@ -48,3 +48,70 @@ Admin uses client components with Server Actions (`useActionState`); no no-JS re
 4. **Image upload ≤ 5 MB through Next:** a route handler streams the multipart body to the API (no 1 MB Server Action limit involved). 4.9 MB succeeds; 5 MB + 1 byte is rejected with a clear Persian message.
 5. **Login brute force:** per IP (API `auth` limiter on the real client IP, plus a Next limiter), per account (API throttle per e-mail, plus Identity lockout of **15 minutes after 5 failures**), and one generic error text for every failure, including lockout, throttling and non-admin accounts.
 6. Every `/admin` response sends `X-Robots-Tag: noindex, nofollow`; `/admin` is disallowed in robots.txt.
+
+## 6. Granular, dynamic permissions (F1, 2026-11-15)
+
+The coarse `X.Manage` permissions (one per resource) are replaced by per-action ones, "Resource.Action": `View`,
+`Create`, `Update`, `Delete` where the resource supports them, plus named special actions where that shape doesn't
+fit. `User.Manage` (staff accounts and roles) stays a single permission, unsplit — the person who can create an
+admin can do all of it. A custom role's permissions are still admin-editable at `/admin/staff/roles`, now shown as
+a matrix (rows = resources, columns = actions, a "select all" per row) instead of a flat checkbox list.
+
+### Action → permission table
+
+| Controller.Action | Permission |
+|---|---|
+| Attributes.List; Brands/Categories/Products/Variants/Images .List/.Get; Variants.StockHistory | `Catalog.View` |
+| Products.Create; Brands.Create; Categories.Create | `Catalog.Create` |
+| Attributes.AddOption; Brands/Categories/Products/Variants/Images .Update/AddVariant/SetAttributes/AddImage/ReorderImages/StockAdjust | `Catalog.Update` |
+| Brands.Delete; Categories.Delete | `Catalog.Delete` |
+| CatalogTransfer.Export | `Catalog.Export` |
+| CatalogTransfer.Preview/Apply | `Catalog.Import` |
+| ContentPages.List/Get/Audit | `Content.View` |
+| ContentPages.Update | `Content.Update` |
+| Blog.List/Get/Audit | `Blog.View` |
+| Blog.Create | `Blog.Create` |
+| Blog.Update | `Blog.Update` |
+| Blog.Delete | `Blog.Delete` |
+| Orders.List/Get; Dashboard | `Orders.View` |
+| Orders.SetStatus | `Orders.Update` |
+| Orders.ConfirmPayment | `Orders.ConfirmPayment` |
+| Orders.Cancel | `Orders.Cancel` |
+| the invoice/packing-slip page's button (reads the same Orders.Get endpoint — `Orders.View` is what's actually enforced) | `Orders.Print` |
+| Settings.Get/Audit | `Settings.View` |
+| Settings.Update | `Settings.Update`, plus `Settings.Payment` only when the request also changes CardNumber/CardHolderName/BankName/CardToCardEnabled (checked inside the one PUT, since it's a single endpoint for the whole row) |
+| Site.Overview/Audit/LinkTargets/Compiled/Get/GetVersion | `Site.View` |
+| Site.UploadImage/SaveDraft/Publish/Discard/Restore | `Site.Update` |
+| Routes.Redirects/Audit | `Routes.View` |
+| Routes.Get/Change (an entity's own path) | the entity's own `Catalog`/`Content`/`Blog` `.View`/`.Update` (docs/11 C-4: unchanged) |
+| Routes.Release | `Routes.Release` |
+| Staff.*/Roles.* (all 9 actions) | `User.Manage` (unsplit) |
+| Translations.List/Get/Areas/Audit | `Translations.View` |
+| Translations.Update/Reset | `Translations.Update` |
+| Reviews.List/Audit | `Reviews.View` |
+| Reviews.Approve/Reject | `Reviews.Moderate` |
+| SEO per-entity Get/Save | the entity's own `.View`/`.Update` (same as routes) |
+| Dashboard.Ping | `Settings.View` (placeholder endpoint) |
+
+### Migration (nobody loses access)
+
+`Permissions.PermissionsReplacedByManage` maps every retired `X.Manage` string to the granular permissions it
+expands to. `DatabaseInitializer.MigrateLegacyManagePermissionsAsync` runs once at every start, for every role
+(including custom ones the fixed `Roles.All` sync doesn't touch): a role claim still holding a legacy value is
+replaced by everything it now maps to. Naturally idempotent — once no role holds a legacy value, it's a cheap
+no-op scan. The built-in Admin role keeps getting every permission (`Roles.PermissionsFor(Admin) =>
+Permissions.All`), so the "at least one full admin" lock-out guard (`StaffService.SomeoneKeepsEverythingAsync`)
+needed no change: it already compares against `Permissions.All` dynamically.
+
+### Enforcement
+
+Every admin controller action carries its own `[Authorize(Policy = Permissions.X)]` (one ASP.NET Core policy per
+permission, auto-registered from `Permissions.All`); a controller's class-level `[Authorize]` only requires being
+signed in, never a specific permission, so every action must add its own. `PermissionCoverageTests.
+EveryAdminAction_RequiresAKnownPermission` reflects over the running app's route table and fails if any
+`/api/v1/admin/**` action has no policy that is in `Permissions.All` — except the handful whose permission is
+decided by the entity type in the URL at runtime (routes/seo per-entity endpoints) or that every signed-in admin
+needs regardless of role (`/admin/me`, the translations bundle), which are named explicitly in the test.
+
+F2 (docs/19) will make `/admin/dashboard` show each card only with its own permission instead of one blanket
+`Orders.View` gate on the whole endpoint.
