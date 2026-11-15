@@ -196,6 +196,8 @@ export const adminMessages = {
     get sku() { return t('admin.products.sku'); },
     get price() { return t('admin.products.price'); },
     get compareAt() { return t('admin.products.compare-at'); },
+    get costPrice() { return t('admin.products.cost-price'); },
+    get costPriceHint() { return t('admin.products.cost-price-hint'); },
     get stock() { return t('admin.products.stock'); },
     get setStock() { return t('admin.products.set-stock'); },
     get adjust() { return t('admin.products.adjust'); },

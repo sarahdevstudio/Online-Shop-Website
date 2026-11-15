@@ -18,6 +18,7 @@ interface VariantBody {
   stock: number;
   isActive: boolean;
   sortOrder: number;
+  costPrice: number | null;
 }
 
 function variantFrom(formData: FormData, prefix = ''): VariantBody {
@@ -28,6 +29,7 @@ function variantFrom(formData: FormData, prefix = ''): VariantBody {
     stock: whole(formData, `${prefix}stock`) ?? 0,
     isActive: prefix === '' ? checked(formData, 'isActive') : true,
     sortOrder: whole(formData, `${prefix}sortOrder`) ?? 0,
+    costPrice: whole(formData, `${prefix}costPrice`),
   };
 }
 

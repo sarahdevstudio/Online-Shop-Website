@@ -27,6 +27,7 @@ function VariantForm({ productId, variant }: { productId: number; variant: Admin
           <TextField name="sku" label={t.sku} ltr defaultValue={variant.sku} required />
           <TextField name="price" label={t.price} ltr inputMode="numeric" autoComplete="off" defaultValue={variant.price} required />
           <TextField name="compareAtPrice" label={t.compareAt} ltr inputMode="numeric" autoComplete="off" defaultValue={variant.compareAtPrice} />
+          <TextField name="costPrice" label={t.costPrice} hint={t.costPriceHint} ltr inputMode="numeric" autoComplete="off" defaultValue={variant.costPrice} />
           <TextField name="stock" label={t.setStock} ltr inputMode="numeric" autoComplete="off" defaultValue={variant.stock} required />
           <TextField name="sortOrder" label={t.sortOrder} ltr inputMode="numeric" autoComplete="off" defaultValue={variant.sortOrder} />
           <CheckField name="isActive" label={adminMessages.active} defaultChecked={variant.isActive} full />
@@ -84,6 +85,7 @@ function AddVariantForm({ productId }: { productId: number }) {
         <TextField name="sku" label={t.sku} ltr required />
         <TextField name="price" label={t.price} ltr inputMode="numeric" autoComplete="off" required />
         <TextField name="compareAtPrice" label={t.compareAt} ltr inputMode="numeric" autoComplete="off" />
+        <TextField name="costPrice" label={t.costPrice} hint={t.costPriceHint} ltr inputMode="numeric" autoComplete="off" />
         <TextField name="stock" label={t.stock} ltr inputMode="numeric" autoComplete="off" defaultValue={0} required />
         <CheckField name="isActive" label={adminMessages.active} defaultChecked full />
       </FormGrid>

@@ -76,6 +76,8 @@ export interface AdminVariant {
   isActive: boolean;
   sortOrder: number;
   rowVersion: string;
+  /** What the item cost the store (whole Toman); admin-only, never sent to the storefront. Null until entered. */
+  costPrice: number | null;
 }
 
 export interface AdminProduct {

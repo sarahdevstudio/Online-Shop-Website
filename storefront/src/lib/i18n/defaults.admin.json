@@ -161,6 +161,8 @@
   "admin.products.brand": "برند",
   "admin.products.category": "دسته‌بندی",
   "admin.products.compare-at": "قیمت قبل از تخفیف",
+  "admin.products.cost-price": "قیمت تمام‌شده",
+  "admin.products.cost-price-hint": "فقط برای گزارش سود، به مشتری نشان داده نمی‌شود.",
   "admin.products.created-ok": "محصول ایجاد شد.",
   "admin.products.description": "توضیحات",
   "admin.products.empty": "محصولی پیدا نشد.",
