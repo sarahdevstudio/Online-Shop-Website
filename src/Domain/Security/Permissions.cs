@@ -58,6 +58,10 @@ public static class Permissions
     /// <summary>Staff accounts and roles, kept as one permission (not split): the person who can create an admin can do all of it.</summary>
     public const string UserManage = "User.Manage";
 
+    /// <summary>Sales/profit reports and the dashboard's revenue cards (docs/19 F2). A standalone permission: reading
+    /// margins is more sensitive than reading the order list itself (Orders.View).</summary>
+    public const string ReportsView = "Reports.View";
+
     public static IReadOnlyList<string> All { get; } =
     [
         CatalogView, CatalogCreate, CatalogUpdate, CatalogDelete, CatalogImport, CatalogExport,
@@ -70,6 +74,7 @@ public static class Permissions
         ReviewsView, ReviewsModerate,
         TranslationsView, TranslationsUpdate,
         UserManage,
+        ReportsView,
     ];
 
     /// <summary>

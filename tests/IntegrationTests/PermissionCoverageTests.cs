@@ -21,7 +21,8 @@ public sealed class PermissionCoverageTests(ApiFixture fixture) : CatalogTestBas
     /// Actions whose permission is decided at runtime, by the entity type in the URL, not by a static policy
     /// attribute (AdminRoutesController.Get/Change, AdminSeoController.Get/Save: docs/11 C-4 — the entity's own
     /// permission is enough) — RoutesTests/SeoTests cover their enforcement directly. /admin/me and the
-    /// translations bundle are read by every signed-in admin, whatever they may edit.
+    /// translations bundle are read by every signed-in admin, whatever they may edit. /admin/dashboard is
+    /// field-level permission-aware INSIDE the service (docs/19 F2): the endpoint itself needs no single policy.
     /// </summary>
     private static readonly HashSet<string> DynamicOrUniversal =
     [
@@ -31,6 +32,7 @@ public sealed class PermissionCoverageTests(ApiFixture fixture) : CatalogTestBas
         "PUT /api/v1/admin/seo/{type}/{id:int}",
         "GET /api/v1/admin/me",
         "GET /api/v1/admin/translations/bundle",
+        "GET /api/v1/admin/dashboard",
     ];
 
     [Fact]

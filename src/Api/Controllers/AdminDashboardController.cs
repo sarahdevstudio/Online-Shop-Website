@@ -5,8 +5,8 @@ using Shop.Domain.Security;
 
 namespace Shop.Api.Controllers;
 
-// F2 (docs/19, reports and dashboard) replaces Dashboard with a field-level, permission-aware endpoint (each card
-// shown only with its own permission); until then it is gated by Orders.View, the permission its order counts need.
+// Dashboard (docs/19 F2) is field-level permission-aware: the service includes each card only when the caller
+// holds its own permission, so the one endpoint just needs a signed-in admin.
 [Route("api/v1/admin")]
 [Tags("Admin")]
 [Authorize]
@@ -17,8 +17,15 @@ public sealed class AdminDashboardController(IDashboardService dashboard) : ApiC
     [Authorize(Policy = Permissions.SettingsView)]
     public IActionResult Ping() => Http(Results.Ok(new { status = "ok" }));
 
-    // Counts only (new / waiting for confirmation / to ship / today / low stock).
     [HttpGet("dashboard")]
-    [Authorize(Policy = Permissions.OrdersView)]
-    public async Task<IActionResult> Dashboard(CancellationToken ct) => Http(Results.Ok(await dashboard.GetAsync(ct)));
+    public async Task<IActionResult> Dashboard(CancellationToken ct)
+    {
+        // Same rule as /admin/me: a signed-in account with no permission at all is a customer, not staff.
+        if (!User.FindAll(Permissions.ClaimType).Any(c => Permissions.All.Contains(c.Value)))
+        {
+            return Http(Results.Forbid());
+        }
+
+        return Http(Results.Ok(await dashboard.GetAsync(ct)));
+    }
 }

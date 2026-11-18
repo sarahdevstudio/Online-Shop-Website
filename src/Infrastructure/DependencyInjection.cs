@@ -75,6 +75,7 @@ public static class DependencyInjection
         services.AddScoped<IBlogService, BlogService>();
         services.AddScoped<IAdminBlogService, AdminBlogService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IReportsService, Shop.Infrastructure.Orders.ReportsService>();
         services.Configure<CheckoutOptions>(configuration.GetSection(CheckoutOptions.SectionName));
         services.Configure<StoreDefaultsOptions>(configuration.GetSection(StoreDefaultsOptions.SectionName));
         services.AddSingleton<StoreSettingsProvider>();

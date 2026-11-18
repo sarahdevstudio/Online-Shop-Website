@@ -5,6 +5,8 @@ using Shop.Application.Common;
 using Shop.Domain.Catalog;
 using Shop.Domain.Inventory;
 using Shop.Domain.Orders;
+using Shop.Domain.Reviews;
+using Shop.Domain.Security;
 using Shop.Infrastructure.Persistence;
 using Shop.Domain.Common;
 
@@ -88,24 +90,57 @@ internal sealed class StockAdminService(ShopDbContext db, ICurrentUser currentUs
     }
 }
 
-internal sealed class DashboardService(ShopDbContext db, TimeProvider clock) : IDashboardService
+internal sealed class DashboardService(ShopDbContext db, TimeProvider clock, ICurrentUser currentUser, IReportsService reports) : IDashboardService
 {
     public const int LowStockThreshold = 3;
-
-    // Iran has had no daylight saving since 2022: "today" starts at midnight at UTC+03:30.
-    private static readonly TimeSpan TehranOffset = TimeSpan.FromMinutes(210);
 
     public async Task<DashboardDto> GetAsync(CancellationToken ct)
     {
         var now = clock.GetUtcNow();
-        var localMidnight = new DateTimeOffset(now.ToOffset(TehranOffset).Date, TehranOffset).UtcDateTime;
+        var todayStartUtc = TehranTime.LocalMidnightUtc(now);
 
-        var newOrders = await db.Orders.CountAsync(o => o.Status == OrderStatus.Pending || o.Status == OrderStatus.AwaitingPayment, ct);
-        var waiting = await db.Orders.CountAsync(o => o.Status == OrderStatus.AwaitingPayment && o.TransferTracking != null, ct);
-        var toShip = await db.Orders.CountAsync(o => o.Status == OrderStatus.Confirmed, ct);
-        var today = await db.Orders.CountAsync(o => o.CreatedAtUtc >= localMidnight, ct);
-        var low = await db.ProductVariants.CountAsync(v =>
-            v.IsActive && v.Stock <= LowStockThreshold && db.Products.Any(p => p.Id == v.ProductId && p.Status == ProductStatus.Published), ct);
-        return new DashboardDto(newOrders, waiting, toShip, today, low, LowStockThreshold);
+        DashboardOrdersDto? orders = null;
+        if (currentUser.HasPermission(Permissions.OrdersView))
+        {
+            var newOrders = await db.Orders.CountAsync(o => o.Status == OrderStatus.Pending || o.Status == OrderStatus.AwaitingPayment, ct);
+            var waiting = await db.Orders.CountAsync(o => o.Status == OrderStatus.AwaitingPayment && o.TransferTracking != null, ct);
+            var toShip = await db.Orders.CountAsync(o => o.Status == OrderStatus.Confirmed, ct);
+            var today = await db.Orders.CountAsync(o => o.CreatedAtUtc >= todayStartUtc, ct);
+            orders = new DashboardOrdersDto(newOrders, waiting, toShip, today);
+        }
+
+        DashboardReportsDto? reportsCard = null;
+        if (currentUser.HasPermission(Permissions.ReportsView))
+        {
+            var monthStartUtc = TehranTime.LocalMidnightUtc(new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TehranTime.Offset));
+            var todayReport = await reports.GetAsync(todayStartUtc, todayStartUtc.AddDays(1), ct);
+            var monthReport = await reports.GetAsync(monthStartUtc, todayStartUtc.AddDays(1), ct);
+            var byDate = monthReport.Daily.ToDictionary(d => d.Date, d => d.Revenue);
+            var sparkline = Enumerable.Range(0, 30)
+                .Select(i => TehranTime.LocalDate(todayStartUtc.AddDays(-29 + i)))
+                .Select(date => byDate.GetValueOrDefault(date))
+                .ToList();
+            reportsCard = new DashboardReportsDto(
+                todayReport.Summary.Revenue, todayReport.Summary.GrossProfit,
+                monthReport.Summary.Revenue, monthReport.Summary.GrossProfit, sparkline);
+        }
+
+        int? pendingReviews = currentUser.HasPermission(Permissions.ReviewsView)
+            ? await db.ProductReviews.CountAsync(r => r.Status == ReviewStatus.Pending, ct)
+            : null;
+
+        DashboardLowStockDto? lowStock = null;
+        if (currentUser.HasPermission(Permissions.CatalogView))
+        {
+            var low = await db.ProductVariants.CountAsync(v =>
+                v.IsActive && v.Stock <= LowStockThreshold && db.Products.Any(p => p.Id == v.ProductId && p.Status == ProductStatus.Published), ct);
+            lowStock = new DashboardLowStockDto(low, LowStockThreshold);
+        }
+
+        int? draftProducts = currentUser.HasPermission(Permissions.CatalogView)
+            ? await db.Products.CountAsync(p => p.Status == ProductStatus.Draft, ct)
+            : null;
+
+        return new DashboardDto(orders, reportsCard, pendingReviews, lowStock, draftProducts);
     }
 }

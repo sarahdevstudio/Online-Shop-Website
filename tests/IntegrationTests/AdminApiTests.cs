@@ -7,12 +7,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Shop.Api.Commands;
+using Shop.Domain.Security;
 using Shop.Infrastructure.Accounts;
 using Shop.Infrastructure.Identity;
 
 namespace Shop.IntegrationTests;
 
-public sealed record DashboardBody(int NewOrders, int TransferReferenceWaiting, int ConfirmedToShip, int OrdersToday, int LowStockVariants, int LowStockThreshold);
+public sealed record DashboardOrdersBody(int NewOrders, int TransferReferenceWaiting, int ConfirmedToShip, int OrdersToday);
+
+public sealed record DashboardLowStockBody(int Count, int Threshold);
+
+public sealed record DashboardBody(DashboardOrdersBody? Orders, DashboardLowStockBody? LowStock, int? PendingReviews, int? DraftProducts);
 
 public sealed record StockResultBody(int VariantId, int Stock, byte[] RowVersion);
 
@@ -306,35 +311,52 @@ public sealed class AdminApiTests(ApiFixture fixture) : StoreTestBase(fixture)
     // ---- dashboard ----
 
     [Fact]
-    public async Task Dashboard_CountsOrders_AndRequiresTheOrdersPermission()
+    public async Task Dashboard_CountsOrders_AndOnlyShowsCardsTheCallerHasPermissionFor()
     {
         var admin = await LoginAdminAsync();
         Assert.Equal(HttpStatusCode.Unauthorized, (await NewClient().GetAsync("/api/v1/admin/dashboard")).StatusCode);
         var (customer, _, _) = await RegisterCustomerAsync();
         Assert.Equal(HttpStatusCode.Forbidden, (await customer.GetAsync("/api/v1/admin/dashboard")).StatusCode);
 
+        // A role with only Reviews.View sees that card and nothing else.
+        var role = await SendOkAsync<StaffRoleBody>(admin, HttpMethod.Post, "/api/v1/admin/staff/roles",
+            new { name = "ReviewsOnly" + Guid.NewGuid().ToString("N")[..6], title = "فقط نظرات", permissions = new[] { Permissions.ReviewsView }, currentPassword = Fixture.AdminPassword });
+        var username = "revonly-" + Guid.NewGuid().ToString("N")[..8];
+        var password = TestData.NewPassword() + "-Zz9";
+        await SendOkAsync<StaffUserBody>(admin, HttpMethod.Post, "/api/v1/admin/staff",
+            new { username, displayName = "x", email = (string?)null, password, roles = new[] { role.Name }, currentPassword = Fixture.AdminPassword });
+        var limited = NewClient();
+        Assert.Equal(HttpStatusCode.OK, (await PostAsync(limited, "/api/v1/auth/login", new { username, password })).StatusCode);
+        var limitedDashboard = await GetOkAsync<DashboardBody>(limited, "/api/v1/admin/dashboard");
+        Assert.Null(limitedDashboard.Orders);
+        Assert.Null(limitedDashboard.LowStock);
+        Assert.Null(limitedDashboard.DraftProducts);
+        Assert.NotNull(limitedDashboard.PendingReviews);
+
         var before = await GetOkAsync<DashboardBody>(admin, "/api/v1/admin/dashboard");
+        Assert.NotNull(before.Orders);
+        Assert.NotNull(before.LowStock);
         var variant = await CreateVariantAsync(admin, 100_000, 2); // 2 ≤ the low-stock threshold
         var shopper = NewShopper();
         await shopper.AddAsync(variant, 1);
         var placed = await PlaceOkAsync(shopper, method: "cardToCard");
         var withOrder = await GetOkAsync<DashboardBody>(admin, "/api/v1/admin/dashboard");
-        Assert.Equal(before.NewOrders + 1, withOrder.NewOrders);
-        Assert.Equal(before.OrdersToday + 1, withOrder.OrdersToday);
-        Assert.Equal(before.TransferReferenceWaiting, withOrder.TransferReferenceWaiting);
-        Assert.Equal(before.LowStockVariants + 1, withOrder.LowStockVariants);
-        Assert.Equal(3, withOrder.LowStockThreshold);
+        Assert.Equal(before.Orders!.NewOrders + 1, withOrder.Orders!.NewOrders);
+        Assert.Equal(before.Orders.OrdersToday + 1, withOrder.Orders.OrdersToday);
+        Assert.Equal(before.Orders.TransferReferenceWaiting, withOrder.Orders.TransferReferenceWaiting);
+        Assert.Equal(before.LowStock!.Count + 1, withOrder.LowStock!.Count);
+        Assert.Equal(3, withOrder.LowStock.Threshold);
 
         await shopper.SendAsync(HttpMethod.Post, $"/api/v1/store/orders/{placed.AccessToken}/transfer-reference",
             new { tracking = "12345678", time = "now", cardLast4 = "1234" });
-        Assert.Equal(before.TransferReferenceWaiting + 1, (await GetOkAsync<DashboardBody>(admin, "/api/v1/admin/dashboard")).TransferReferenceWaiting);
+        Assert.Equal(before.Orders.TransferReferenceWaiting + 1, (await GetOkAsync<DashboardBody>(admin, "/api/v1/admin/dashboard")).Orders!.TransferReferenceWaiting);
 
         var id = await OrderIdAsync(placed.Number);
         await SendAsync(admin, HttpMethod.Post, $"/api/v1/admin/orders/{id}/confirm-payment");
         var confirmed = await GetOkAsync<DashboardBody>(admin, "/api/v1/admin/dashboard");
-        Assert.Equal(before.NewOrders, confirmed.NewOrders);
-        Assert.Equal(before.TransferReferenceWaiting, confirmed.TransferReferenceWaiting);
-        Assert.Equal(before.ConfirmedToShip + 1, confirmed.ConfirmedToShip);
+        Assert.Equal(before.Orders.NewOrders, confirmed.Orders!.NewOrders);
+        Assert.Equal(before.Orders.TransferReferenceWaiting, confirmed.Orders.TransferReferenceWaiting);
+        Assert.Equal(before.Orders.ConfirmedToShip + 1, confirmed.Orders.ConfirmedToShip);
 
         await SendAsync(admin, HttpMethod.Post, $"/api/v1/admin/orders/{id}/cancel");
     }
