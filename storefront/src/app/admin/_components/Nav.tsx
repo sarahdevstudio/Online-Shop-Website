@@ -19,6 +19,7 @@ const items = (): { href: string; label: string; exact?: boolean; permission?: s
   { href: '/admin/translations', permission: 'Translations.View', label: adminMessages.nav.translations },
   { href: '/admin/settings', permission: 'Settings.View', label: adminMessages.nav.settings },
   { href: '/admin/reviews', permission: 'Reviews.View', label: adminMessages.nav.reviews },
+  { href: '/admin/reports', permission: 'Reports.View', label: adminMessages.nav.reports },
   { href: '/admin/staff', permission: 'User.Manage', label: adminMessages.nav.staff },
   { href: '/admin/account', label: adminMessages.nav.account },
 ];

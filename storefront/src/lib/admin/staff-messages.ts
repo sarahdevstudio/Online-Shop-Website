@@ -77,7 +77,6 @@ export const staffMessages = {
   get lockoutNote() { return t('admin.staff.lockout-note'); },
   /** The two built-in roles have fixed names; a custom role shows its own title (see roleLabel). */
   roleNames: () => ({ admin: t('admin.staff.role-admin'), customer: t('admin.staff.role-customer') }),
-  get welcome() { return t('admin.staff.welcome'); },
   get noAccess() { return t('admin.staff.no-access'); },
   /** Label of a permission code ("Orders.Manage"); an unknown code (a permission added later) shows as itself. */
   permissionLabel: (code: string): string => PERMISSION_KEYS[code] ? t(PERMISSION_KEYS[code]) : code,

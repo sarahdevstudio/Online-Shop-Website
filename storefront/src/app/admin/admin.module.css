@@ -22,6 +22,9 @@
 .cardNumber { font-size: var(--font-size-4xl); font-weight: var(--font-weight-bold); line-height: 1.1; }
 .panel { display: grid; gap: var(--space-4); padding: var(--space-5); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
 .panel h2 { margin: 0; }
+.quickActions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.sparkline { inline-size: 100%; max-inline-size: 24rem; block-size: 2.5rem; }
+.sparkline polyline { stroke: var(--color-primary); stroke-width: 2; }
 
 .tableWrap { overflow-x: auto; }
 .table { inline-size: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }

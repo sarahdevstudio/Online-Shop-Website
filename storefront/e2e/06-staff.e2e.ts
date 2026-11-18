@@ -65,7 +65,9 @@ test('create an account with that role; the person sees only the blog', async ({
   const links = await blogger.locator('nav a').evaluateAll((all) => all.map((a) => a.getAttribute('href')));
   check('the menu shows the blog', links.includes('/admin/blog'), links.join(' '));
   check('the menu hides the staff, settings and orders sections', !links.some((href) => ['/admin/staff', '/admin/settings', '/admin/orders'].includes(href ?? '')), links.join(' '));
-  await expect(blogger.locator('main')).toContainText('خوش آمدید'); // a welcome text, not a dashboard error
+  // A role without Orders/Reports/Reviews/Catalog shows the dashboard heading with no cards, not an error.
+  await expect(blogger.locator('h1')).toBeVisible();
+  await expect(blogger.locator('main')).not.toContainText('سفارش‌های جدید');
   await axeCheck(blogger, 'dashboard of a limited account');
   await blogger.goto('/admin/blog');
   await expect(blogger.locator('h1').first()).toBeVisible();

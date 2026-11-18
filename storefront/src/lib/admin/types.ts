@@ -9,13 +9,33 @@ export interface PagedList<T> {
   total: number;
 }
 
-export interface Dashboard {
+export interface DashboardOrders {
   newOrders: number;
   transferReferenceWaiting: number;
   confirmedToShip: number;
   ordersToday: number;
-  lowStockVariants: number;
-  lowStockThreshold: number;
+}
+
+export interface DashboardReports {
+  todayRevenue: number;
+  todayProfit: number;
+  monthRevenue: number;
+  monthProfit: number;
+  sparkline30d: number[];
+}
+
+export interface DashboardLowStock {
+  count: number;
+  threshold: number;
+}
+
+/** Each card is present only when the signed-in account holds its permission (docs/19 F2). */
+export interface Dashboard {
+  orders: DashboardOrders | null;
+  reports: DashboardReports | null;
+  pendingReviews: number | null;
+  lowStock: DashboardLowStock | null;
+  draftProducts: number | null;
 }
 
 export interface AdminOrderListItem {
@@ -254,4 +274,40 @@ export interface RouteAuditEntry {
   oldPath: string | null;
   newPath: string | null;
   adminUsername: string | null;
+}
+
+export interface ReportsSummary {
+  revenue: number;
+  shippingCollected: number;
+  costOfGoods: number;
+  grossProfit: number;
+  marginPercent: number;
+  orderCount: number;
+  averageOrderValue: number;
+  ordersWithoutCost: number;
+  itemsWithoutCost: number;
+}
+
+export interface ReportsDailyPoint {
+  date: string;
+  revenue: number;
+  profit: number;
+  orderCount: number;
+}
+
+export interface ReportsProduct {
+  productId: number;
+  productName: string;
+  slug: string;
+  revenue: number;
+  profit: number;
+}
+
+export interface Reports {
+  fromUtc: string;
+  toUtc: string;
+  summary: ReportsSummary;
+  daily: ReportsDailyPoint[];
+  topByRevenue: ReportsProduct[];
+  topByProfit: ReportsProduct[];
 }
