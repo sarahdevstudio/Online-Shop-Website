@@ -28,7 +28,7 @@ export function DailyChart({ daily }: { daily: ReportsDailyPoint[] }) {
   const profitPoints = scale(daily.map((d) => d.profit), width, height);
   return (
     <div className={styles.chartBlock}>
-      <h3 className="ui-heading-5">{t.dailyChartTitle}</h3>
+      <h2 className="ui-heading-5">{t.dailyChartTitle}</h2>
       {daily.length === 0 ? (
         <p className={styles.muted}>{t.noOrders}</p>
       ) : (
@@ -81,7 +81,7 @@ export function OrderCountChart({ daily }: { daily: ReportsDailyPoint[] }) {
   const gap = daily.length > 1 ? width / daily.length : 0;
   return (
     <div className={styles.chartBlock}>
-      <h3 className="ui-heading-5">{t.orderCountChartTitle}</h3>
+      <h2 className="ui-heading-5">{t.orderCountChartTitle}</h2>
       {daily.length === 0 ? (
         <p className={styles.muted}>{t.noOrders}</p>
       ) : (

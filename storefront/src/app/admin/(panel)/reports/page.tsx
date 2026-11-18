@@ -79,12 +79,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       <OrderCountChart daily={report.daily} />
 
       <section className={styles.chartBlock} aria-labelledby="top-revenue">
-        <h3 id="top-revenue" className="ui-heading-5">{t.topByRevenue}</h3>
+        <h2 id="top-revenue" className="ui-heading-5">{t.topByRevenue}</h2>
         <ProductTable products={report.topByRevenue} metric="revenue" />
       </section>
 
       <section className={styles.chartBlock} aria-labelledby="top-profit">
-        <h3 id="top-profit" className="ui-heading-5">{t.topByProfit}</h3>
+        <h2 id="top-profit" className="ui-heading-5">{t.topByProfit}</h2>
         <ProductTable products={report.topByProfit} metric="profit" />
       </section>
     </>
