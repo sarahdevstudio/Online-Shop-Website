@@ -56,7 +56,7 @@ export function DailyChart({ daily }: { daily: ReportsDailyPoint[] }) {
                 <tbody>
                   {daily.map((d) => (
                     <tr key={d.date}>
-                      <td>{formatJalaliDate(`${d.date}T12:00:00Z`)}</td>
+                      <td>{formatJalaliDate(`${d.date.slice(0, 10)}T12:00:00Z`)}</td>
                       <td>{formatToman(d.revenue)}</td>
                       <td>{formatToman(d.profit)}</td>
                       <td>{formatDigits(d.orderCount)}</td>

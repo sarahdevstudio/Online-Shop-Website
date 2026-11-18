@@ -37,6 +37,12 @@ only sums lines with a known cost, same rule as the summary. Top-10 tables aggre
 product (a variant's `ProductId` never changes — `OnDelete(Restrict)` on `OrderItem.VariantId` — so historical
 lines always resolve to a real product), summed over the whole period, not per day.
 
+`ReportsDailyPointDto.Date` is a date-only `DateTime` (`Kind.Unspecified`), so it serializes as
+`"2026-11-18T00:00:00"` — no `Z`. The admin page must not assume it is a bare `yyyy-MM-dd` and append a time:
+it slices the first 10 characters before building a Jalali-date string (`ReportsCharts.tsx`), otherwise the
+concatenation produces an invalid double-`T` string and the page 500s once `daily` is non-empty (found by the
+e2e suite once the throwaway stack had real orders in range, 2026-11-18).
+
 ### Worked example (from `ReportsTests.Summary_DailySeries_AndTop10_MatchAHandComputedWorkedExample`)
 
 One Tehran day, two counted orders (a third left pending, a fourth cancelled — neither counts):
