@@ -62,6 +62,11 @@ public static class Permissions
     /// margins is more sensitive than reading the order list itself (Orders.View).</summary>
     public const string ReportsView = "Reports.View";
 
+    public const string DiscountsView = "Discounts.View";
+    public const string DiscountsCreate = "Discounts.Create";
+    public const string DiscountsUpdate = "Discounts.Update";
+    public const string DiscountsDelete = "Discounts.Delete";
+
     public static IReadOnlyList<string> All { get; } =
     [
         CatalogView, CatalogCreate, CatalogUpdate, CatalogDelete, CatalogImport, CatalogExport,
@@ -75,6 +80,7 @@ public static class Permissions
         TranslationsView, TranslationsUpdate,
         UserManage,
         ReportsView,
+        DiscountsView, DiscountsCreate, DiscountsUpdate, DiscountsDelete,
     ];
 
     /// <summary>

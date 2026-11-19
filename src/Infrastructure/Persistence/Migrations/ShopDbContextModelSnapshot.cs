@@ -746,6 +746,107 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.ToTable("Customers", (string)null);
                 });
 
+            modelBuilder.Entity("Shop.Domain.Discounts.DiscountAuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<Guid?>("AdminUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code", "AtUtc")
+                        .HasDatabaseName("IX_DiscountAuditLogs_Code_AtUtc");
+
+                    b.ToTable("DiscountAuditLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Shop.Domain.Discounts.DiscountCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<long?>("MinSubtotal")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("PerMobileLimit")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UsageLimit")
+                        .HasColumnType("int");
+
+                    b.Property<long>("Value")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("UX_DiscountCodes_Code");
+
+                    b.ToTable("DiscountCodes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DiscountCodes_MinSubtotal", "[MinSubtotal] IS NULL OR [MinSubtotal] >= 0");
+
+                            t.HasCheckConstraint("CK_DiscountCodes_PerMobileLimit", "[PerMobileLimit] >= 1");
+
+                            t.HasCheckConstraint("CK_DiscountCodes_Type", "[Type] IN (0, 1)");
+
+                            t.HasCheckConstraint("CK_DiscountCodes_UsageLimit", "[UsageLimit] IS NULL OR [UsageLimit] >= 1");
+
+                            t.HasCheckConstraint("CK_DiscountCodes_Value", "[Value] > 0");
+                        });
+                });
+
             modelBuilder.Entity("Shop.Domain.Inventory.StockAdjustment", b =>
                 {
                     b.Property<int>("Id")
@@ -800,6 +901,11 @@ namespace Shop.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("DiscountCode")
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
 
                     b.Property<DateTime>("LastActivityAtUtc")
                         .HasColumnType("datetime2");
@@ -892,6 +998,14 @@ namespace Shop.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<long>("DiscountAmount")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("DiscountCode")
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -1000,6 +1114,9 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.HasIndex("ClientIp", "Status")
                         .HasDatabaseName("IX_Orders_ClientIp_Status");
 
+                    b.HasIndex("DiscountCode", "Status")
+                        .HasDatabaseName("IX_Orders_DiscountCode_Status");
+
                     b.HasIndex("Mobile", "Status")
                         .HasDatabaseName("IX_Orders_Mobile_Status");
 
@@ -1008,7 +1125,7 @@ namespace Shop.Infrastructure.Persistence.Migrations
 
                     b.ToTable("Orders", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Orders_Amounts", "[Subtotal] >= 0 AND [ShippingFee] >= 0");
+                            t.HasCheckConstraint("CK_Orders_Amounts", "[Subtotal] >= 0 AND [ShippingFee] >= 0 AND [DiscountAmount] >= 0 AND [DiscountAmount] <= [Subtotal]");
 
                             t.HasCheckConstraint("CK_Orders_PaymentMethod", "[PaymentMethod] IN (0, 1)");
 
@@ -1016,7 +1133,7 @@ namespace Shop.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("CK_Orders_Status", "[Status] IN (0, 1, 2, 3, 4, 5)");
 
-                            t.HasCheckConstraint("CK_Orders_Total", "[Total] = [Subtotal] + [ShippingFee]");
+                            t.HasCheckConstraint("CK_Orders_Total", "[Total] = [Subtotal] + [ShippingFee] - [DiscountAmount]");
                         });
                 });
 

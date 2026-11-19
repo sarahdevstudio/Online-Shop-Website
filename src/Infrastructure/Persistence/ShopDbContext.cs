@@ -5,6 +5,7 @@ using Shop.Domain.Blog;
 using Shop.Domain.Catalog;
 using Shop.Domain.Content;
 using Shop.Domain.Customers;
+using Shop.Domain.Discounts;
 using Shop.Domain.Inventory;
 using Shop.Domain.Orders;
 using Shop.Domain.Settings;
@@ -35,6 +36,8 @@ public sealed class ShopDbContext(DbContextOptions<ShopDbContext> options)
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<OrderStatusLog> OrderStatusLogs => Set<OrderStatusLog>();
+    public DbSet<DiscountCode> DiscountCodes => Set<DiscountCode>();
+    public DbSet<DiscountAuditLog> DiscountAuditLogs => Set<DiscountAuditLog>();
     public DbSet<StoreSetting> StoreSettings => Set<StoreSetting>();
     public DbSet<SettingsAuditLog> SettingsAuditLogs => Set<SettingsAuditLog>();
     public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
