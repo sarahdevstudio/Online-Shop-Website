@@ -20,6 +20,7 @@ const items = (): { href: string; label: string; exact?: boolean; permission?: s
   { href: '/admin/settings', permission: 'Settings.View', label: adminMessages.nav.settings },
   { href: '/admin/reviews', permission: 'Reviews.View', label: adminMessages.nav.reviews },
   { href: '/admin/reports', permission: 'Reports.View', label: adminMessages.nav.reports },
+  { href: '/admin/discounts', permission: 'Discounts.View', label: adminMessages.nav.discounts },
   { href: '/admin/staff', permission: 'User.Manage', label: adminMessages.nav.staff },
   { href: '/admin/account', label: adminMessages.nav.account },
 ];

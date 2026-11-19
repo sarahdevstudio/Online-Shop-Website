@@ -58,6 +58,32 @@ export interface AdminOrder {
   statusLog: { from: OrderStatus | null; to: OrderStatus; adminUserId: string | null; atUtc: string }[];
 }
 
+export type DiscountType = 'percent' | 'fixed';
+
+export interface AdminDiscountListItem {
+  id: number;
+  code: string;
+  type: DiscountType;
+  value: number;
+  minSubtotal: number | null;
+  usageLimit: number | null;
+  usedCount: number;
+  perMobileLimit: number;
+  expiresAtUtc: string | null;
+  isActive: boolean;
+}
+
+export interface AdminDiscount extends AdminDiscountListItem {
+  createdAtUtc: string;
+  rowVersion: string;
+}
+
+export interface DiscountAuditEntry {
+  atUtc: string;
+  action: string;
+  adminUsername: string | null;
+}
+
 export type ProductStatus = 'draft' | 'published' | 'archived';
 
 export interface AdminCategory {
