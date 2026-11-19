@@ -9,8 +9,10 @@ using Shop.Application.Admin;
 using Shop.Application.Catalog;
 using Shop.Application.Blog;
 using Shop.Application.Content;
+using Shop.Application.Discounts;
 using Shop.Infrastructure.Blog;
 using Shop.Infrastructure.Content;
+using Shop.Infrastructure.Discounts;
 using Shop.Application.Orders;
 using Shop.Application.Payments;
 using Shop.Application.Settings;
@@ -81,6 +83,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminContentService, AdminContentService>();
         services.AddScoped<IBlogService, BlogService>();
         services.AddScoped<IAdminBlogService, AdminBlogService>();
+        services.AddScoped<IAdminDiscountService, AdminDiscountService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IReportsService, Shop.Infrastructure.Orders.ReportsService>();
         services.Configure<CheckoutOptions>(configuration.GetSection(CheckoutOptions.SectionName));
