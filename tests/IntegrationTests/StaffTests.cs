@@ -211,22 +211,66 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
         Assert.Equal(HttpStatusCode.OK, (await session.GetAsync("/api/v1/admin/orders")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await session.GetAsync("/api/v1/admin/brands")).StatusCode);
 
-        // Adding a permission: the person's session ends (a new sign-in carries the new set).
+        // Adding a permission: the same open session already reflects it at its very next request, no re-login needed
+        // (permissions are resolved live — IPermissionCache — never carried in the sign-in cookie).
         var updated = await SendOkAsync<StaffRoleBody>(admin, HttpMethod.Put, $"{Url}/roles/{role.Id}",
             new { name = role.Name, title = "نقش ویرایش‌شده", permissions = new[] { Permissions.OrdersView, Permissions.CatalogView }, stamp = role.Stamp, currentPassword = Fixture.AdminPassword });
         Assert.Equal("نقش ویرایش‌شده", updated.Title);
         Assert.Equal(1, updated.UserCount);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await session.GetAsync("/api/v1/admin/orders")).StatusCode);
-        var again = await SignInAsync(user.Username, password);
-        Assert.Equal(HttpStatusCode.OK, (await again.GetAsync("/api/v1/admin/brands")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await session.GetAsync("/api/v1/admin/orders")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await session.GetAsync("/api/v1/admin/brands")).StatusCode);
+
+        // Removing one takes effect the same way.
+        var shrunk = await SendOkAsync<StaffRoleBody>(admin, HttpMethod.Put, $"{Url}/roles/{role.Id}",
+            new { name = role.Name, title = updated.Title, permissions = new[] { Permissions.CatalogView }, stamp = updated.Stamp, currentPassword = Fixture.AdminPassword });
+        Assert.Equal(HttpStatusCode.Forbidden, (await session.GetAsync("/api/v1/admin/orders")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await session.GetAsync("/api/v1/admin/brands")).StatusCode);
 
         // The old stamp is a 409; the wrong password a 403; an unknown permission a 400.
         await AssertProblemAsync(await SendAsync(admin, HttpMethod.Put, $"{Url}/roles/{role.Id}",
             new { name = role.Name, title = "x", permissions = new[] { Permissions.OrdersView }, stamp = role.Stamp, currentPassword = Fixture.AdminPassword }), 409, "concurrent_update");
         await AssertProblemAsync(await SendAsync(admin, HttpMethod.Put, $"{Url}/roles/{role.Id}",
-            new { name = role.Name, title = "x", permissions = new[] { Permissions.OrdersView }, stamp = updated.Stamp, currentPassword = "wrong" }), 403, "step_up_failed");
+            new { name = role.Name, title = "x", permissions = new[] { Permissions.OrdersView }, stamp = shrunk.Stamp, currentPassword = "wrong" }), 403, "step_up_failed");
         await AssertProblemAsync(await SendAsync(admin, HttpMethod.Put, $"{Url}/roles/{role.Id}",
-            new { name = role.Name, title = "x", permissions = new[] { "Nothing.Real" }, stamp = updated.Stamp, currentPassword = Fixture.AdminPassword }), 400);
+            new { name = role.Name, title = "x", permissions = new[] { "Nothing.Real" }, stamp = shrunk.Stamp, currentPassword = Fixture.AdminPassword }), 400);
+    }
+
+    [Fact]
+    public async Task ReassigningAUsersRoles_TakesEffectOnTheSameSession_NoReLoginNeeded()
+    {
+        var admin = await LoginAdminAsync();
+        var ordersRole = await NewRoleAsync(admin, Permissions.OrdersView);
+        var catalogRole = await NewRoleAsync(admin, Permissions.CatalogView);
+
+        var (user, password) = await CreateOkAsync(admin, ordersRole.Name);
+        var session = await SignInAsync(user.Username, password);
+        Assert.Equal(HttpStatusCode.OK, (await session.GetAsync("/api/v1/admin/orders")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await session.GetAsync("/api/v1/admin/brands")).StatusCode);
+
+        var reassigned = await RolesAsync(admin, await UserAsync(admin, user.Id), [catalogRole.Name]);
+        Assert.Equal(HttpStatusCode.OK, reassigned.StatusCode);
+
+        // The same session, no re-login: the old permission is gone, the new one already works.
+        Assert.Equal(HttpStatusCode.Forbidden, (await session.GetAsync("/api/v1/admin/orders")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await session.GetAsync("/api/v1/admin/brands")).StatusCode);
+    }
+
+    [Fact]
+    public async Task ASessionCookieForAUserHoldingEveryPermission_StaysUnder3000Bytes()
+    {
+        var admin = await LoginAdminAsync();
+        var everything = await NewRoleAsync(admin, [.. Permissions.All]);
+        var (user, password) = await CreateOkAsync(admin, everything.Name);
+
+        var client = NewClient();
+        var response = await PostAsync(client, "/api/v1/auth/login", new { username = user.Username, password });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var setCookie = response.Headers.TryGetValues("Set-Cookie", out var values) ? values.FirstOrDefault(v => v.StartsWith("shop_auth=")) : null;
+        Assert.NotNull(setCookie);
+        Assert.True(setCookie!.Length < 3000, $"shop_auth was {setCookie.Length} bytes for a user holding all {Permissions.All.Count} permissions");
+
+        // Don't leave another full-permission active user behind for the no-lock-out tests to trip over.
+        await ActiveAsync(admin, user, false);
     }
 
     [Fact]
@@ -276,7 +320,7 @@ public sealed class StaffTests(ApiFixture fixture) : CatalogTestBase(fixture)
         Assert.Equal(HttpStatusCode.OK, (await session.GetAsync("/api/v1/admin/content-pages")).StatusCode); // nothing changed yet
 
         Assert.Equal(HttpStatusCode.OK, (await RolesAsync(admin, user, [Roles.Admin])).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await session.GetAsync("/api/v1/admin/content-pages")).StatusCode); // must sign in again
+        Assert.Equal(HttpStatusCode.OK, (await session.GetAsync("/api/v1/admin/content-pages")).StatusCode); // same session, already Admin
         Assert.Equal([Roles.Admin], (await UserAsync(admin, user.Id)).Roles);
     }
 
