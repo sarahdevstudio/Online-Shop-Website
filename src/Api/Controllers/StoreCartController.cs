@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Shop.Api.Infrastructure;
+using Shop.Application.Discounts;
 using Shop.Application.Orders;
 
 namespace Shop.Api.Controllers;
@@ -39,6 +40,28 @@ public sealed class StoreCartController(ICartService carts) : ApiControllerBase
     [HttpDelete("items/{variantId:int}")]
     public async Task<IActionResult> RemoveItem(int variantId, CancellationToken ct) =>
         Http(await carts.SetQuantityAsync(CartToken(), variantId, 0, ct), Results.Ok);
+
+    private string? CartToken() => Request.Headers[StoreEndpointsPolicies.CartTokenHeader].FirstOrDefault();
+}
+
+/// <summary>Its own controller (not <see cref="StoreCartController"/>) so it gets its own, stricter rate-limit policy:
+/// guessing codes is an attack surface the rest of the cart is not.</summary>
+[Route("api/v1/store/cart/discount")]
+[Tags("Store")]
+[AllowAnonymous]
+[StorefrontApi]
+[StorefrontEndpoint]
+[EnableRateLimiting(StoreEndpointsPolicies.Discount)]
+public sealed class StoreCartDiscountController(ICartService carts) : ApiControllerBase
+{
+    [HttpPost]
+    [ValidateRequest<ApplyDiscountRequest>]
+    public async Task<IActionResult> Apply([FromBody] ApplyDiscountRequest body, CancellationToken ct) =>
+        Http(await carts.ApplyDiscountAsync(CartToken(), body.Code, ct), Results.Ok);
+
+    [HttpDelete]
+    public async Task<IActionResult> Remove(CancellationToken ct) =>
+        Http(Results.Ok(await carts.RemoveDiscountAsync(CartToken(), ct)));
 
     private string? CartToken() => Request.Headers[StoreEndpointsPolicies.CartTokenHeader].FirstOrDefault();
 }

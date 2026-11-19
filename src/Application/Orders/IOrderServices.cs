@@ -15,6 +15,12 @@ public interface ICartService
 
     /// <summary>Quantity 0 removes the line.</summary>
     Task<Result<CartMutationDto>> SetQuantityAsync(string? token, int variantId, int quantity, CancellationToken ct);
+
+    /// <summary>Validates the code exists, is active and not expired (usage limits are checked again, under lock, at
+    /// placement) and attaches it to the cart. A cart must already exist (non-empty).</summary>
+    Task<Result<CartDto>> ApplyDiscountAsync(string? token, string code, CancellationToken ct);
+
+    Task<CartDto> RemoveDiscountAsync(string? token, CancellationToken ct);
 }
 
 public interface IOrderService

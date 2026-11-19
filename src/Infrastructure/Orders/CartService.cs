@@ -140,6 +140,40 @@ internal sealed class CartService(
         return new CartMutationDto(null, await BuildAsync(cart, ct), clamped);
     }
 
+    public async Task<Result<CartDto>> ApplyDiscountAsync(string? token, string code, CancellationToken ct)
+    {
+        var cart = await CartStore.FindAsync(db, token, clock, ct);
+        if (cart is null || cart.Items.Count == 0)
+        {
+            return Error.Conflict("cart_empty", "api.error.cart-empty");
+        }
+
+        var normalized = Shop.Domain.Discounts.DiscountCode.Normalize(code);
+        var discount = await db.DiscountCodes.AsNoTracking().SingleOrDefaultAsync(d => d.Code == normalized, ct);
+        if (discount is null || !discount.IsActive)
+        {
+            return Error.NotFound("discount_not_found", "api.error.discount-code-not-found");
+        }
+
+        cart.ApplyDiscount(normalized);
+        cart.Touch(clock.GetUtcNow().UtcDateTime);
+        await db.SaveChangesAsync(ct);
+        return await BuildAsync(cart, ct);
+    }
+
+    public async Task<CartDto> RemoveDiscountAsync(string? token, CancellationToken ct)
+    {
+        var cart = await CartStore.FindAsync(db, token, clock, ct);
+        if (cart is not null && cart.DiscountCode is not null)
+        {
+            cart.RemoveDiscount();
+            cart.Touch(clock.GetUtcNow().UtcDateTime);
+            await db.SaveChangesAsync(ct);
+        }
+
+        return await BuildAsync(cart, ct);
+    }
+
     private async Task<CartDto> BuildAsync(Cart? cart, CancellationToken ct)
     {
         var store = await settings.GetAsync(ct);
@@ -171,10 +205,38 @@ internal sealed class CartService(
 
         var subtotal = lines.Sum(l => l.LineTotal);
         var shipping = OrderPricing.ShippingFee(subtotal, store.ShippingFlatFee, store.FreeShippingThreshold);
+        var discount = await ResolveDiscountAsync(cart?.DiscountCode, subtotal, ct);
+        var discountAmount = discount?.Reason is null ? discount?.Amount ?? 0 : 0;
         return new CartDto(
-            lines, lines.Sum(l => l.Quantity), subtotal, shipping, subtotal + shipping,
+            lines, lines.Sum(l => l.Quantity), subtotal, shipping, subtotal + shipping - discountAmount,
             store.FreeShippingThreshold,
             lines.Any(l => l.Notice is "unavailable" or "quantity_exceeds"),
-            new PaymentMethodsDto(store.CardToCardOffered, store.CashOnDeliveryEnabled));
+            new PaymentMethodsDto(store.CardToCardOffered, store.CashOnDeliveryEnabled),
+            discount);
+    }
+
+    /// <summary>The cart-side preview: usage limits are not counted here (that needs the placement-time lock), so a
+    /// code that is otherwise usable always previews its full amount even if it would later turn out exhausted.</summary>
+    private async Task<Shop.Application.Discounts.CartDiscountDto?> ResolveDiscountAsync(string? cartCode, long subtotal, CancellationToken ct)
+    {
+        if (cartCode is null)
+        {
+            return null;
+        }
+
+        var code = await db.DiscountCodes.AsNoTracking().SingleOrDefaultAsync(d => d.Code == cartCode, ct);
+        var now = clock.GetUtcNow().UtcDateTime;
+        if (code is null || !code.IsActive)
+        {
+            return new Shop.Application.Discounts.CartDiscountDto(cartCode, 0, "api.error.discount-code-not-found");
+        }
+
+        if (!code.IsUsable(subtotal, now))
+        {
+            var reason = code.ExpiresAtUtc <= now ? "api.error.discount-code-expired" : "api.error.discount-min-subtotal-not-met";
+            return new Shop.Application.Discounts.CartDiscountDto(cartCode, 0, reason);
+        }
+
+        return new Shop.Application.Discounts.CartDiscountDto(code.Code, code.ComputeDiscount(subtotal), null);
     }
 }

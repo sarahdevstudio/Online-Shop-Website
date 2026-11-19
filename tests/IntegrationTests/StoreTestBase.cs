@@ -8,8 +8,11 @@ public sealed record CartLineBody(
     int VariantId, string ProductName, string? VariantLabel, string Sku, long UnitPrice, int Quantity, int MaxQuantity,
     long LineTotal, bool Available, string? Notice, long? PreviousPrice, string? ProductPath = null);
 
+public sealed record CartDiscountBody(string Code, long Amount, string? Reason);
+
 public sealed record CartBody(
-    CartLineBody[] Lines, int ItemCount, long Subtotal, long ShippingFee, long Total, long? FreeShippingThreshold, bool HasBlockingIssue);
+    CartLineBody[] Lines, int ItemCount, long Subtotal, long ShippingFee, long Total, long? FreeShippingThreshold, bool HasBlockingIssue,
+    CartDiscountBody? Discount = null);
 
 public sealed record CartMutationBody(string? NewToken, CartBody Cart, bool Clamped);
 
@@ -24,7 +27,8 @@ public sealed record TransferReferenceBody(string Tracking, string Time, string 
 public sealed record OrderBody(
     int Number, string Status, string PaymentStatus, string PaymentMethod, string FullName, string Mobile, string Province, string City,
     string Address, string PostalCode, string? Note, OrderLineBody[] Lines, long Subtotal, long ShippingFee, long Total,
-    PaymentInstructionsBody? PaymentInstructions, TransferReferenceBody? TransferReference);
+    PaymentInstructionsBody? PaymentInstructions, TransferReferenceBody? TransferReference,
+    string? DiscountCode = null, long DiscountAmount = 0);
 
 public sealed record StatusLogBody(string? From, string To, Guid? AdminUserId);
 
@@ -120,6 +124,9 @@ public abstract class StoreTestBase(ApiFixture fixture) : CatalogTestBase(fixtur
     private static int _ipCounter = 1000;
 
     protected static string NewMobile() => "09" + Random.Shared.NextInt64(100_000_000, 999_999_999);
+
+    /// <summary>A discount code is alphanumeric only (no hyphen), unlike <see cref="CatalogTestBase.Unique"/>'s slug-shaped output.</summary>
+    protected static string UniqueCode(string prefix) => (prefix + Guid.NewGuid().ToString("N")[..10]).ToUpperInvariant();
 
     /// <summary>Every shopper gets its own address (outside the trusted loopback range), so tests never share IP limits.</summary>
     protected Shopper NewShopper()

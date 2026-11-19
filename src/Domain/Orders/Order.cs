@@ -43,6 +43,11 @@ public sealed class Order
 
     public long Subtotal { get; private set; }
     public long ShippingFee { get; private set; }
+
+    /// <summary>Snapshot of the discount code applied at placement; never changes even if the code is later edited or deleted.</summary>
+    public string? DiscountCode { get; private set; }
+
+    public long DiscountAmount { get; private set; }
     public long Total { get; private set; }
 
     /// <summary>Card details shown to the customer, copied from the store settings when the order was placed (card-to-card only).</summary>
@@ -68,7 +73,8 @@ public sealed class Order
     public static Order Create(
         string accessToken, Guid idempotencyKey, PaymentMethod method,
         string fullName, string mobile, string province, string city, string address, string postalCode, string? note,
-        string clientIp, long subtotal, long shippingFee, CardSnapshot? card, IEnumerable<OrderItem> items, DateTime utcNow)
+        string clientIp, long subtotal, long shippingFee, string? discountCode, long discountAmount,
+        CardSnapshot? card, IEnumerable<OrderItem> items, DateTime utcNow)
     {
         if (!Enum.IsDefined(method))
         {
@@ -78,6 +84,11 @@ public sealed class Order
         if (subtotal < 0 || shippingFee < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(subtotal));
+        }
+
+        if (discountAmount < 0 || discountAmount > subtotal)
+        {
+            throw new ArgumentOutOfRangeException(nameof(discountAmount));
         }
 
         if ((method == PaymentMethod.CardToCard) != (card is not null))
@@ -106,7 +117,9 @@ public sealed class Order
             PaymentBankName = card?.Bank,
             Subtotal = subtotal,
             ShippingFee = shippingFee,
-            Total = subtotal + shippingFee,
+            DiscountCode = discountCode,
+            DiscountAmount = discountAmount,
+            Total = subtotal + shippingFee - discountAmount,
             CreatedAtUtc = utcNow,
             UpdatedAtUtc = utcNow,
         };

@@ -9,7 +9,7 @@ public class OrderRulesTests
 
     private static Order NewOrder(PaymentMethod method) => Order.Create(
         "t".PadRight(43, 'x'), Guid.NewGuid(), method, "علی", "09123456789", "تهران", "تهران", "خیابان ولیعصر پلاک ۱", "1234567890", null,
-        "10.0.0.1", 200_000, 50_000,
+        "10.0.0.1", 200_000, 50_000, null, 0,
         method == PaymentMethod.CardToCard ? new CardSnapshot("6037991234567893", "رضا احمدی", "ملی") : null,
         [OrderItem.Create(1, "لامپ", "۹ وات", "SKU-1", 100_000, 2)], Now);
 
@@ -171,8 +171,8 @@ public class OrderRulesTests
     [Fact]
     public void Order_RequiresLines_AndNonNegativeAmounts()
     {
-        Assert.Throws<ArgumentException>(() => Order.Create("t", Guid.NewGuid(), PaymentMethod.CardToCard, "a", "09123456789", "p", "c", "addr", "1234567890", null, "ip", 1, 0, null, [], Now));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Order.Create("t", Guid.NewGuid(), PaymentMethod.CardToCard, "a", "09123456789", "p", "c", "addr", "1234567890", null, "ip", -1, 0, null, [OrderItem.Create(1, "n", null, "s", 1, 1)], Now));
+        Assert.Throws<ArgumentException>(() => Order.Create("t", Guid.NewGuid(), PaymentMethod.CardToCard, "a", "09123456789", "p", "c", "addr", "1234567890", null, "ip", 1, 0, null, 0, null, [], Now));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Order.Create("t", Guid.NewGuid(), PaymentMethod.CardToCard, "a", "09123456789", "p", "c", "addr", "1234567890", null, "ip", -1, 0, null, 0, null, [OrderItem.Create(1, "n", null, "s", 1, 1)], Now));
     }
 
     // ---- storefront key ----

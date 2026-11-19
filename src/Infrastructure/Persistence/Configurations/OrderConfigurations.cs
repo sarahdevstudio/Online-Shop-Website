@@ -13,6 +13,7 @@ internal sealed class CartConfiguration : IEntityTypeConfiguration<Cart>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.TokenHash).IsRequired().HasMaxLength(32).IsFixedLength();
+        builder.Property(x => x.DiscountCode).HasMaxLength(Shop.Domain.Discounts.DiscountCode.CodeMaxLength).IsUnicode(false);
         builder.Property(x => x.CreatedAtUtc).HasColumnType("datetime2");
         builder.Property(x => x.LastActivityAtUtc).HasColumnType("datetime2");
 
@@ -50,8 +51,8 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
             t.HasCheckConstraint("CK_Orders_Status", "[Status] IN (0, 1, 2, 3, 4, 5)");
             t.HasCheckConstraint("CK_Orders_PaymentStatus", "[PaymentStatus] IN (0, 1)");
             t.HasCheckConstraint("CK_Orders_PaymentMethod", "[PaymentMethod] IN (0, 1)");
-            t.HasCheckConstraint("CK_Orders_Amounts", "[Subtotal] >= 0 AND [ShippingFee] >= 0");
-            t.HasCheckConstraint("CK_Orders_Total", "[Total] = [Subtotal] + [ShippingFee]");
+            t.HasCheckConstraint("CK_Orders_Amounts", "[Subtotal] >= 0 AND [ShippingFee] >= 0 AND [DiscountAmount] >= 0 AND [DiscountAmount] <= [Subtotal]");
+            t.HasCheckConstraint("CK_Orders_Total", "[Total] = [Subtotal] + [ShippingFee] - [DiscountAmount]");
         });
         builder.HasKey(x => x.Id);
 
@@ -72,6 +73,7 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(x => x.TransferTracking).HasMaxLength(Order.TrackingMaxLength);
         builder.Property(x => x.TransferTime).HasMaxLength(Order.TransferTimeMaxLength);
         builder.Property(x => x.TransferCardLast4).HasMaxLength(4).IsUnicode(false).IsFixedLength();
+        builder.Property(x => x.DiscountCode).HasMaxLength(Shop.Domain.Discounts.DiscountCode.CodeMaxLength).IsUnicode(false);
         builder.Property(x => x.CreatedAtUtc).HasColumnType("datetime2");
         builder.Property(x => x.UpdatedAtUtc).HasColumnType("datetime2");
         builder.Property(x => x.RowVersion).IsRowVersion();
@@ -85,6 +87,7 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasIndex(x => new { x.Status, x.CreatedAtUtc }).HasDatabaseName("IX_Orders_Status_CreatedAtUtc");
         builder.HasIndex(x => new { x.Mobile, x.Status }).HasDatabaseName("IX_Orders_Mobile_Status");
         builder.HasIndex(x => new { x.ClientIp, x.Status }).HasDatabaseName("IX_Orders_ClientIp_Status");
+        builder.HasIndex(x => new { x.DiscountCode, x.Status }).HasDatabaseName("IX_Orders_DiscountCode_Status");
     }
 }
 

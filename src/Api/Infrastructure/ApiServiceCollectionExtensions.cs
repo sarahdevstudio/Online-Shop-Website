@@ -54,6 +54,7 @@ internal static class StoreEndpointsPolicies
     public const string Order = "store-order";
     public const string Lookup = "store-lookup";
     public const string Review = "store-review";
+    public const string Discount = "store-discount";
     public const string CartTokenHeader = "X-Cart-Token";
     public const string IdempotencyKeyHeader = "Idempotency-Key";
 }
@@ -218,6 +219,8 @@ public static class ApiServiceCollectionExtensions
             options.AddPolicy(StoreEndpointsPolicies.Lookup, http => ForIp(http, 30, TimeSpan.FromMinutes(1)));
             // A review takes a minute to write: a handful per address per ten minutes is generous for a person and a wall for a script.
             options.AddPolicy(StoreEndpointsPolicies.Review, http => ForIp(http, 5, TimeSpan.FromMinutes(10)));
+            // A handful of guesses per address per ten minutes: enough for a typo, a wall for brute-forcing codes.
+            options.AddPolicy(StoreEndpointsPolicies.Discount, http => ForIp(http, 10, TimeSpan.FromMinutes(10)));
             options.AddPolicy(StoreEndpointsPolicies.Order, http =>
             {
                 var checkout = http.RequestServices.GetRequiredService<IOptions<CheckoutOptions>>().Value;

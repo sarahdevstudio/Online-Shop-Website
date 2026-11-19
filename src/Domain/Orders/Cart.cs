@@ -15,12 +15,19 @@ public sealed class Cart
     public DateTime CreatedAtUtc { get; private set; }
     public DateTime LastActivityAtUtc { get; private set; }
 
+    /// <summary>The normalized code the customer typed, kept even if it later stops being usable (so the cart can say why).</summary>
+    public string? DiscountCode { get; private set; }
+
     public List<CartItem> Items { get; private set; } = [];
 
     public static Cart Create(byte[] tokenHash, DateTime utcNow) =>
         new() { TokenHash = tokenHash, CreatedAtUtc = utcNow, LastActivityAtUtc = utcNow };
 
     public void Touch(DateTime utcNow) => LastActivityAtUtc = utcNow;
+
+    public void ApplyDiscount(string code) => DiscountCode = code;
+
+    public void RemoveDiscount() => DiscountCode = null;
 }
 
 /// <summary>

@@ -96,12 +96,14 @@ internal sealed class OrderService(
 
         var subtotal = lines.Sum(l => infos[l.VariantId].Price * l.Quantity);
         var shipping = OrderPricing.ShippingFee(subtotal, store.ShippingFlatFee, store.FreeShippingThreshold);
-        if (subtotal + shipping != request.ExpectedTotal)
+        var now = clock.GetUtcNow().UtcDateTime;
+        var (discountCode, discountAmount) = await ResolveDiscountAsync(cart.DiscountCode, subtotal, mobile, now, ct);
+        if (subtotal + shipping - discountAmount != request.ExpectedTotal)
         {
             return Error.Conflict(
                 "price_changed",
                 "api.error.order-price-changed",
-                new Dictionary<string, object?> { ["total"] = subtotal + shipping, ["expectedTotal"] = request.ExpectedTotal });
+                new Dictionary<string, object?> { ["total"] = subtotal + shipping - discountAmount, ["expectedTotal"] = request.ExpectedTotal });
         }
 
         foreach (var line in lines)
@@ -122,7 +124,6 @@ internal sealed class OrderService(
             }
         }
 
-        var now = clock.GetUtcNow().UtcDateTime;
         var items = lines.Select(l =>
         {
             var info = infos[l.VariantId];
@@ -134,7 +135,7 @@ internal sealed class OrderService(
             PersianText.Normalize(request.Province), PersianText.Normalize(request.City),
             PersianText.NormalizeLetters(request.Address), postalCode,
             request.Note is null ? null : PersianText.NormalizeLetters(request.Note),
-            ip, subtotal, shipping,
+            ip, subtotal, shipping, discountCode, discountAmount,
             request.PaymentMethod == PaymentMethod.CardToCard ? new CardSnapshot(store.CardNumber, store.CardHolderName, store.BankName) : null,
             items, now);
 
@@ -200,6 +201,44 @@ internal sealed class OrderService(
         }
 
         return query.FirstOrDefaultAsync(o => o.AccessToken == accessToken, ct);
+    }
+
+    /// <summary>
+    /// Re-validates the cart's applied code under its own lock, so two concurrent checkouts sharing a usage-limited
+    /// code can never both win: they serialise here and the losing one's count already reflects the winner's order.
+    /// A code that is no longer usable is dropped silently (0 discount); the price-changed check above catches the
+    /// mismatch and the customer re-quotes.
+    /// </summary>
+    private async Task<(string? Code, long Amount)> ResolveDiscountAsync(string? cartCode, long subtotal, string mobile, DateTime utcNow, CancellationToken ct)
+    {
+        if (cartCode is null)
+        {
+            return (null, 0);
+        }
+
+        await LockAsync($"discount-code:{cartCode}", ct);
+        var code = await db.DiscountCodes.AsNoTracking().SingleOrDefaultAsync(d => d.Code == cartCode, ct);
+        if (code is null || !code.IsUsable(subtotal, utcNow))
+        {
+            return (null, 0);
+        }
+
+        var mobileUsed = await db.Orders.CountAsync(o => o.DiscountCode == code.Code && o.Mobile == mobile && o.Status != OrderStatus.Cancelled, ct);
+        if (mobileUsed >= code.PerMobileLimit)
+        {
+            return (null, 0);
+        }
+
+        if (code.UsageLimit is { } limit)
+        {
+            var used = await db.Orders.CountAsync(o => o.DiscountCode == code.Code && o.Status != OrderStatus.Cancelled, ct);
+            if (used >= limit)
+            {
+                return (null, 0);
+            }
+        }
+
+        return (code.Code, code.ComputeDiscount(subtotal));
     }
 
     private async Task<Error?> CheckUnpaidLimitAsync(string mobile, string ip, CancellationToken ct)
@@ -268,7 +307,7 @@ internal static class OrderMapper
         order.Items.OrderBy(i => i.Id)
             .Select(i => new OrderLineDto(i.ProductName, i.VariantLabel, i.Sku, i.UnitPrice, i.Quantity, i.LineTotal))
             .ToList(),
-        order.Subtotal, order.ShippingFee, order.Total,
+        order.Subtotal, order.ShippingFee, order.DiscountCode, order.DiscountAmount, order.Total,
         // The order's own snapshot, never the current settings: changing the card later must not alter existing orders.
         order is { PaymentMethod: PaymentMethod.CardToCard, Status: OrderStatus.AwaitingPayment, PaymentCardNumber: not null }
             ? new PaymentInstructionsDto(order.PaymentCardNumber, order.PaymentCardHolder ?? string.Empty, order.PaymentBankName ?? string.Empty, order.Total)

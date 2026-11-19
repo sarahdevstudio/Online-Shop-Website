@@ -34,7 +34,7 @@ public sealed record CartLineDto(
 
 public sealed record CartDto(
     IReadOnlyList<CartLineDto> Lines, int ItemCount, long Subtotal, long ShippingFee, long Total,
-    long? FreeShippingThreshold, bool HasBlockingIssue, PaymentMethodsDto PaymentMethods);
+    long? FreeShippingThreshold, bool HasBlockingIssue, PaymentMethodsDto PaymentMethods, Shop.Application.Discounts.CartDiscountDto? Discount);
 
 /// <summary><see cref="NewToken"/> is set only when this call created the cart; the storefront stores it in the cookie.</summary>
 public sealed record CartMutationDto(string? NewToken, CartDto Cart, bool Clamped);
@@ -67,7 +67,7 @@ public sealed record TransferReferenceDto(string Tracking, string Time, string C
 public sealed record OrderDto(
     int Number, OrderStatus Status, PaymentStatus PaymentStatus, PaymentMethod PaymentMethod, DateTime CreatedAtUtc,
     string FullName, string Mobile, string Province, string City, string Address, string PostalCode, string? Note,
-    IReadOnlyList<OrderLineDto> Lines, long Subtotal, long ShippingFee, long Total,
+    IReadOnlyList<OrderLineDto> Lines, long Subtotal, long ShippingFee, string? DiscountCode, long DiscountAmount, long Total,
     PaymentInstructionsDto? PaymentInstructions, TransferReferenceDto? TransferReference);
 
 public sealed record TransferReferenceRequest(string Tracking, string Time, string CardLast4);
