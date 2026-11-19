@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { CART_COOKIE, cartCookieOptions } from '@/lib/cart-cookie';
 import { cartErrorKey, parseQuantity, parseVariantId } from '@/lib/cart-input';
 import { storeFetch } from '@/lib/store-api';
-import type { CartMutationDto } from '@/lib/store-types';
+import type { CartDto, CartMutationDto } from '@/lib/store-types';
 
 /**
  * Cart mutations. Plain `<form action>` targets: they work without JavaScript (a normal POST, then a redirect), and Next
@@ -43,4 +43,21 @@ export async function removeItemAction(formData: FormData): Promise<void> {
   const variantId = parseVariantId(formData.get('variantId'));
   if (variantId === null) redirect('/cart?error=invalid');
   await mutate('DELETE', `/cart/items/${variantId}`);
+}
+
+export async function applyDiscountAction(formData: FormData): Promise<void> {
+  const code = String(formData.get('code') ?? '').trim();
+  if (!code) redirect('/cart?error=invalid');
+
+  const jar = await cookies();
+  const token = jar.get(CART_COOKIE)?.value;
+  const result = await storeFetch<CartDto>('POST', '/cart/discount', { body: { code }, cartToken: token });
+  redirect(result.ok ? '/cart' : `/cart?error=${cartErrorKey(result.status, result.problem.code)}`);
+}
+
+export async function removeDiscountAction(): Promise<void> {
+  const jar = await cookies();
+  const token = jar.get(CART_COOKIE)?.value;
+  await storeFetch<CartDto>('DELETE', '/cart/discount', { cartToken: token });
+  redirect('/cart');
 }

@@ -172,6 +172,14 @@ export default async function PrintPage({
                 <span>{messages.shipping}</span>
                 <span className={styles.num}>{order.shippingFee === 0 ? messages.shippingFree : formatNumber(order.shippingFee)}</span>
               </div>
+              {order.discountCode && (
+                <div>
+                  <span>
+                    {messages.discountLabel} ({order.discountCode})
+                  </span>
+                  <span className={styles.num}>− {formatNumber(order.discountAmount)}</span>
+                </div>
+              )}
               <div className={styles.grand}>
                 <span>{messages.total}</span>
                 <span className={styles.num}>{formatNumber(order.total)}</span>

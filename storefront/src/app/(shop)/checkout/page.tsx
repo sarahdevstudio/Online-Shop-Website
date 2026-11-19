@@ -51,6 +51,16 @@ export default async function CheckoutPage() {
             <span>{messages.shipping}</span>
             <span>{cart.shippingFee === 0 ? messages.shippingFree : `${formatNumber(cart.shippingFee)} ${messages.currencyUnit}`}</span>
           </div>
+          {cart.discount && cart.discount.amount > 0 && (
+            <div className={styles.row}>
+              <span>
+                {messages.discountLabel} ({cart.discount.code})
+              </span>
+              <span>
+                − {formatNumber(cart.discount.amount)} {messages.currencyUnit}
+              </span>
+            </div>
+          )}
           <div className={`${styles.row} ${styles.totalRow}`}>
             <span>{messages.total}</span>
             <span>

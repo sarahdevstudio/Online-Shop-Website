@@ -134,6 +134,14 @@ export default async function OrderPage({ params }: { params: Promise<{ token: s
               <span>{messages.shipping}</span>
               <span>{order.shippingFee === 0 ? messages.shippingFree : toman(order.shippingFee)}</span>
             </div>
+            {order.discountCode && (
+              <div className={styles.row}>
+                <span>
+                  {messages.discountLabel} ({order.discountCode})
+                </span>
+                <span>− {toman(order.discountAmount)}</span>
+              </div>
+            )}
             <div className={`${styles.row} ${styles.totalRow}`}>
               <span>{messages.total}</span>
               <span>{toman(order.total)}</span>

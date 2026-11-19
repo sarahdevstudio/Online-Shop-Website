@@ -18,6 +18,13 @@ export interface CartLineDto {
   previousPrice: number | null;
 }
 
+export interface CartDiscountDto {
+  code: string;
+  amount: number;
+  /** Set, with amount 0, when the applied code is no longer usable (expired, deactivated, or under its minimum). */
+  reason: string | null;
+}
+
 export interface CartDto {
   lines: CartLineDto[];
   itemCount: number;
@@ -27,6 +34,7 @@ export interface CartDto {
   freeShippingThreshold: number | null;
   hasBlockingIssue: boolean;
   paymentMethods: { cardToCard: boolean; cashOnDelivery: boolean };
+  discount: CartDiscountDto | null;
 }
 
 export interface CartMutationDto {
@@ -61,6 +69,8 @@ export interface OrderDto {
   lines: { productName: string; variantLabel: string | null; sku: string; unitPrice: number; quantity: number; lineTotal: number }[];
   subtotal: number;
   shippingFee: number;
+  discountCode: string | null;
+  discountAmount: number;
   total: number;
   paymentInstructions: { cardNumber: string; holderName: string; bankName: string; amount: number } | null;
   transferReference: { tracking: string; time: string; cardLast4: string } | null;

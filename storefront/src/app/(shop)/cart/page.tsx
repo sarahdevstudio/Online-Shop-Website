@@ -9,7 +9,7 @@ import type { SearchParams } from '@/lib/paging';
 import { pageMetadata } from '@/lib/seo';
 import { getCart } from '@/lib/store';
 import type { CartLineDto } from '@/lib/store-types';
-import { removeItemAction, updateQuantityAction } from './actions';
+import { applyDiscountAction, removeDiscountAction, removeItemAction, updateQuantityAction } from './actions';
 import styles from './cart.module.css';
 
 export async function generateMetadata() {
@@ -119,6 +119,31 @@ export default async function CartPage({ searchParams }: { searchParams: Promise
             {cart.freeShippingThreshold !== null && cart.subtotal < cart.freeShippingThreshold && (
               <p className="ui-text-sm ui-text-muted">{messages.freeShippingHint(formatNumber(cart.freeShippingThreshold - cart.subtotal))}</p>
             )}
+
+            {cart.discount ? (
+              <>
+                <div className={styles.row}>
+                  <span>
+                    {messages.discountLabel} ({cart.discount.code})
+                  </span>
+                  <span>
+                    {cart.discount.amount > 0 ? `− ${formatNumber(cart.discount.amount)} ${messages.currencyUnit}` : '—'}
+                  </span>
+                </div>
+                {cart.discount.reason && (
+                  <Alert variant="warning">{messages.discountNotUsable[cart.discount.reason] ?? messages.discountNotUsable['api.error.discount-code-not-found']}</Alert>
+                )}
+                <Form action={removeDiscountAction} inline>
+                  <SubmitButton variant="ghost">{messages.discountRemove}</SubmitButton>
+                </Form>
+              </>
+            ) : (
+              <Form action={applyDiscountAction} inline>
+                <TextField name="code" label={messages.discountCode} ltr autoComplete="off" />
+                <SubmitButton variant="secondary">{messages.discountApply}</SubmitButton>
+              </Form>
+            )}
+
             <div className={`${styles.row} ${styles.totalRow}`}>
               <span>{messages.total}</span>
               <span>

@@ -120,6 +120,14 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
                 <td colSpan={2}>{messages.shipping}</td>
                 <td className={styles.num}>{formatNumber(order.shippingFee)}</td>
               </tr>
+              {order.discountCode && (
+                <tr>
+                  <td colSpan={2}>
+                    {messages.discountLabel} ({order.discountCode})
+                  </td>
+                  <td className={styles.num}>− {formatNumber(order.discountAmount)}</td>
+                </tr>
+              )}
               <tr>
                 <td colSpan={2}>
                   <strong>{messages.total}</strong>

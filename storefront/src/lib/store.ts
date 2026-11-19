@@ -18,6 +18,7 @@ const EMPTY_CART: CartDto = {
   freeShippingThreshold: null,
   hasBlockingIssue: false,
   paymentMethods: { cardToCard: true, cashOnDelivery: true },
+  discount: null,
 };
 
 /** The live cart with current prices. No cookie = no API call. API failures propagate (error page). */
