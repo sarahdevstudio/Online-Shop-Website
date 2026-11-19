@@ -1,8 +1,10 @@
 DELETE /api/v1/admin/blog/{id:int} | auth: Blog.Delete+authenticated | - | rate: - | -
 DELETE /api/v1/admin/brands/{id:int} | auth: Catalog.Delete+authenticated | - | rate: - | -
 DELETE /api/v1/admin/categories/{id:int} | auth: Catalog.Delete+authenticated | - | rate: - | -
+DELETE /api/v1/admin/discounts/{id:int} | auth: Discounts.Delete+authenticated | - | rate: - | -
 DELETE /api/v1/admin/images/{id:int} | auth: Catalog.Update | - | rate: - | -
 DELETE /api/v1/admin/routes/{id:int} | auth: Routes.Release+authenticated | - | rate: - | -
+DELETE /api/v1/store/cart/discount | auth:  | anonymous | rate: store-discount | storefront
 DELETE /api/v1/store/cart/items/{variantId:int} | auth:  | anonymous | rate: store-cart | storefront
 GET /api/v1/admin/attributes | auth: Catalog.View+authenticated | - | rate: - | -
 GET /api/v1/admin/blog | auth: Blog.View+authenticated | - | rate: - | -
@@ -15,6 +17,9 @@ GET /api/v1/admin/content-pages | auth: Content.View+authenticated | - | rate: -
 GET /api/v1/admin/content-pages/{slug} | auth: Content.View+authenticated | - | rate: - | -
 GET /api/v1/admin/content-pages/{slug}/audit | auth: Content.View+authenticated | - | rate: - | -
 GET /api/v1/admin/dashboard | auth: authenticated | - | rate: - | -
+GET /api/v1/admin/discounts | auth: Discounts.View+authenticated | - | rate: - | -
+GET /api/v1/admin/discounts/{id:int} | auth: Discounts.View+authenticated | - | rate: - | -
+GET /api/v1/admin/discounts/{id:int}/audit | auth: Discounts.View+authenticated | - | rate: - | -
 GET /api/v1/admin/me | auth: authenticated | - | rate: - | -
 GET /api/v1/admin/orders | auth: Orders.View+authenticated | - | rate: - | -
 GET /api/v1/admin/orders/{id:int} | auth: Orders.View+authenticated | - | rate: - | -
@@ -75,6 +80,7 @@ POST /api/v1/admin/brands | auth: Catalog.Create+authenticated | - | rate: - | -
 POST /api/v1/admin/catalog/import/apply | auth: Catalog.Import+authenticated | - | rate: - | -
 POST /api/v1/admin/catalog/import/preview | auth: Catalog.Import+authenticated | - | rate: - | -
 POST /api/v1/admin/categories | auth: Catalog.Create+authenticated | - | rate: - | -
+POST /api/v1/admin/discounts | auth: Discounts.Create+authenticated | - | rate: - | -
 POST /api/v1/admin/orders/{id:int}/cancel | auth: Orders.Cancel+authenticated | - | rate: - | -
 POST /api/v1/admin/orders/{id:int}/confirm-payment | auth: Orders.ConfirmPayment+authenticated | - | rate: - | -
 POST /api/v1/admin/orders/{id:int}/status | auth: Orders.Update+authenticated | - | rate: - | -
@@ -96,6 +102,7 @@ POST /api/v1/auth/change-password | auth: authenticated | - | rate: auth | -
 POST /api/v1/auth/login | auth:  | anonymous | rate: auth | -
 POST /api/v1/auth/logout | auth: authenticated | - | rate: - | -
 POST /api/v1/auth/register | auth:  | anonymous | rate: auth | -
+POST /api/v1/store/cart/discount | auth:  | anonymous | rate: store-discount | storefront
 POST /api/v1/store/cart/items | auth:  | anonymous | rate: store-cart | storefront
 POST /api/v1/store/orders | auth:  | anonymous | rate: store-order | storefront
 POST /api/v1/store/orders/{token:length(43)}/transfer-reference | auth:  | anonymous | rate: store-lookup | storefront
@@ -104,6 +111,7 @@ PUT /api/v1/admin/blog/{id:int} | auth: Blog.Update+authenticated | - | rate: - 
 PUT /api/v1/admin/brands/{id:int} | auth: Catalog.Update+authenticated | - | rate: - | -
 PUT /api/v1/admin/categories/{id:int} | auth: Catalog.Update+authenticated | - | rate: - | -
 PUT /api/v1/admin/content-pages/{slug} | auth: Content.Update+authenticated | - | rate: - | -
+PUT /api/v1/admin/discounts/{id:int} | auth: Discounts.Update+authenticated | - | rate: - | -
 PUT /api/v1/admin/products/{id:int} | auth: Catalog.Update+authenticated | - | rate: - | -
 PUT /api/v1/admin/products/{id:int}/attributes | auth: Catalog.Update+authenticated | - | rate: - | -
 PUT /api/v1/admin/products/{id:int}/images/order | auth: Catalog.Update+authenticated | - | rate: - | -
