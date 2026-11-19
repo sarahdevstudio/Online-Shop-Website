@@ -140,4 +140,26 @@ public sealed class ReportsTests(ApiFixture fixture) : StoreTestBase(fixture)
         Assert.Equal(new DateTime(2026, 7, 2), report.Daily[1].Date);
         Assert.All(report.Daily, d => Assert.Equal(1, d.OrderCount));
     }
+
+    [Fact]
+    public async Task Revenue_IsNetOfTheDiscountAppliedAtCheckout_F3()
+    {
+        var admin = await LoginAdminAsync();
+        var discount = await SendOkAsync<AdminDiscountBody>(admin, HttpMethod.Post, "/api/v1/admin/discounts",
+            new { code = UniqueCode("REP"), type = "fixed", value = 30_000, minSubtotal = (long?)null, usageLimit = (int?)null, perMobileLimit = 1, expiresAtUtc = (DateTime?)null, isActive = true });
+        var variant = await CreateVariantAsync(admin, 200_000, 10);
+
+        var day = new DateTime(2026, 8, 1, 4, 30, 0, DateTimeKind.Utc);
+        var shopper = NewShopper();
+        await shopper.AddAsync(variant, 1);
+        await shopper.SendAsync(HttpMethod.Post, "/api/v1/store/cart/discount", new { code = discount.Code });
+        var placed = await PlaceOkAsync(shopper);
+        var id = await OrderIdAsync(placed.Number);
+        await SendOkAsync<AdminOrderBody>(admin, HttpMethod.Post, $"/api/v1/admin/orders/{id}/status", new { status = "confirmed" });
+        await SetCreatedAsync(id, day);
+
+        var report = await GetOkAsync<ReportsBody>(admin, $"{Url}?from={day.AddDays(-1):O}&to={day.AddDays(1):O}");
+        Assert.Equal(170_000, report.Summary.Revenue); // 200,000 subtotal − 30,000 discount
+        Assert.Equal(170_000, report.Daily.Single().Revenue);
+    }
 }

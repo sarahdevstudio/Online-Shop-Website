@@ -15,7 +15,7 @@ internal sealed class ReportsService(ShopDbContext db) : IReportsService
     {
         var orders = await db.Orders.AsNoTracking()
             .Where(o => CountedStatuses.Contains(o.Status) && o.CreatedAtUtc >= fromUtc && o.CreatedAtUtc < toUtc)
-            .Select(o => new { o.Id, o.CreatedAtUtc, o.Subtotal, o.ShippingFee, o.Total })
+            .Select(o => new { o.Id, o.CreatedAtUtc, o.Subtotal, o.DiscountAmount, o.ShippingFee, o.Total })
             .ToListAsync(ct);
         var orderIds = orders.Select(o => o.Id).ToList();
         var dateById = orders.ToDictionary(o => o.Id, o => TehranTime.LocalDate(o.CreatedAtUtc));
@@ -30,7 +30,7 @@ internal sealed class ReportsService(ShopDbContext db) : IReportsService
                 select new { i.OrderId, i.Quantity, i.UnitPrice, i.UnitCost, ProductId = p.Id, p.Name, p.Slug })
                 .ToListAsync(ct);
 
-        var revenue = orders.Sum(o => o.Subtotal);
+        var revenue = orders.Sum(o => o.Subtotal - o.DiscountAmount);
         var shippingCollected = orders.Sum(o => o.ShippingFee);
         var costOfGoods = items.Where(i => i.UnitCost is not null).Sum(i => i.UnitCost!.Value * i.Quantity);
         var grossProfit = revenue - costOfGoods;
@@ -45,9 +45,9 @@ internal sealed class ReportsService(ShopDbContext db) : IReportsService
         var daily = orders.GroupBy(o => dateById[o.Id])
             .Select(g => new ReportsDailyPointDto(
                 g.Key,
-                g.Sum(o => o.Subtotal),
+                g.Sum(o => o.Subtotal - o.DiscountAmount),
                 items.Where(i => dateById.TryGetValue(i.OrderId, out var d) && d == g.Key && i.UnitCost is not null)
-                    .Sum(i => i.UnitPrice * i.Quantity - i.UnitCost!.Value * i.Quantity),
+                    .Sum(i => i.UnitPrice * i.Quantity - i.UnitCost!.Value * i.Quantity) - g.Sum(o => o.DiscountAmount),
                 g.Count()))
             .OrderBy(d => d.Date)
             .ToList();
