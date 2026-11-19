@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -62,6 +63,12 @@ public static class DependencyInjection
             .AddErrorDescriber<PersianIdentityErrorDescriber>()
             .AddEntityFrameworkStores<ShopDbContext>()
             .AddSignInManager();
+
+        // Overrides Identity's own (Try-registered) default: the sign-in ticket never carries permission claims.
+        services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, MinimalClaimsPrincipalFactory>();
+        services.AddMemoryCache();
+        services.AddScoped<IPermissionCache, PermissionCache>();
+        services.AddScoped<IClaimsTransformation, LivePermissionsClaimsTransformation>();
 
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<LoginThrottle>();

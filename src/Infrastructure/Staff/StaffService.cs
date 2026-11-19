@@ -17,7 +17,8 @@ namespace Shop.Infrastructure.Staff;
 /// own password again (a wrong one counts as a failed sign-in).
 /// </summary>
 internal sealed class StaffService(
-    ShopDbContext db, UserManager<ApplicationUser> users, RoleManager<ApplicationRole> roles, ICurrentUser currentUser, TimeProvider clock) : IStaffService
+    ShopDbContext db, UserManager<ApplicationUser> users, RoleManager<ApplicationRole> roles, IPermissionCache permissionCache,
+    ICurrentUser currentUser, TimeProvider clock) : IStaffService
 {
     private const int PageSize = 50;
     public const int DisplayNameMaxLength = 128;
@@ -208,8 +209,8 @@ internal sealed class StaffService(
             await users.AddToRolesAsync(user, toAdd);
         }
 
-        // Permissions are read when the session is created: a new security stamp makes the person sign in again with the new set.
-        await users.UpdateSecurityStampAsync(user);
+        // Permissions are resolved live (IPermissionCache): invalidating it is enough, no re-login needed.
+        permissionCache.Invalidate(user.Id);
         Audit(StaffAuditActions.RolesChanged, user.UserName, $"{string.Join(",", current)} -> {string.Join(",", wanted)}");
         await db.SaveChangesAsync(ct);
         if (!await SomeoneKeepsEverythingAsync(ct))
@@ -253,6 +254,7 @@ internal sealed class StaffService(
             await users.UpdateSecurityStampAsync(user); // every session of the person ends with the next request
         }
 
+        permissionCache.Invalidate(user.Id);
         Audit(request.IsActive ? StaffAuditActions.Activated : StaffAuditActions.Deactivated, user.UserName, null);
         await db.SaveChangesAsync(ct);
         if (!await SomeoneKeepsEverythingAsync(ct))
@@ -403,11 +405,8 @@ internal sealed class StaffService(
             await roles.AddClaimAsync(role, new System.Security.Claims.Claim(Permissions.ClaimType, added));
         }
 
-        // The role's members get the new permission set at their next request.
-        foreach (var member in await users.GetUsersInRoleAsync(role.Name!))
-        {
-            await users.UpdateSecurityStampAsync(member);
-        }
+        // Permissions are resolved live (IPermissionCache): every member gets the new set at their next request.
+        permissionCache.InvalidateAll();
 
         await roles.UpdateAsync(role); // new concurrency stamp
         Audit(before.Length == 0 && id is null ? StaffAuditActions.RoleCreated : StaffAuditActions.RoleUpdated, role.Name,
