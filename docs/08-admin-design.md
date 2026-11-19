@@ -115,3 +115,42 @@ needs regardless of role (`/admin/me`, the translations bundle), which are named
 
 F2 (docs/19) will make `/admin/dashboard` show each card only with its own permission instead of one blanket
 `Orders.View` gate on the whole endpoint.
+
+### Live permission resolution (session-size fix, 2026-11-19)
+
+Until this fix, every permission the account held was baked into the sign-in ticket as a claim (ASP.NET Identity's
+default `UserClaimsPrincipalFactory` copies each held role's `RoleClaims` into the ticket at sign-in), which the
+`shop_auth` cookie then carried for the whole session. That has two problems that only got worse as F1–F3 added
+permissions: the cookie grows with the permission count — a user holding every permission crossed the ~4096-byte
+limit browsers enforce on a single cookie, so the browser silently refused to store it and the session was lost on
+the very next request — and a permission or role change needed the affected accounts to sign in again before it
+took effect (`StaffService` used to force this by bumping their `SecurityStamp`), which fights F1's "dynamic
+permissions" promise.
+
+**The ticket now carries identity only** (id, username, role names, security stamp) — `MinimalClaimsPrincipalFactory`
+(`src/Infrastructure/Identity/MinimalClaimsPrincipalFactory.cs`) overrides ASP.NET Identity's default factory and
+strips every `Permissions.ClaimType` claim from the principal it builds, replacing the `IUserClaimsPrincipalFactory<ApplicationUser>`
+registration Identity itself adds.
+
+**Permissions are resolved live, on every request**, by `LivePermissionsClaimsTransformation`
+(`src/Infrastructure/Identity/LivePermissionsClaimsTransformation.cs`, an `IClaimsTransformation`) which adds the
+account's current effective permissions (its own direct claims, plus every held role's claims) back onto
+`HttpContext.User` before any `[Authorize(Policy=...)]` or `ICurrentUser.HasPermission` check runs — both already
+read live off the principal, so neither needed to change. The resolution itself is `IPermissionCache`
+(`src/Infrastructure/Identity/PermissionCache.cs`), backed by `IMemoryCache`, keyed `permissions:{generation}:{userId}`
+with a 60-second TTL; a deactivated user resolves to no permissions (defense in depth — their session already ends
+outright via the existing security-stamp check, `ValidationInterval = TimeSpan.Zero`, unchanged).
+
+**Invalidation**: `StaffService.SetRolesAsync` calls `IPermissionCache.Invalidate(userId)` for that one user instead
+of bumping their security stamp; `SaveRoleAsync` (a role's own permissions changed) calls `InvalidateAll()` — one
+shared generation counter bump, cheaper than enumerating every member and correct even for members who aren't
+the one being edited; `SetActiveAsync` invalidates the deactivated user's entry too, defensively. None of this
+touches the last-admin lock-out guard (`SomeoneKeepsEverythingAsync`, unchanged) or CSRF/step-up.
+
+**Net effect**: a role edit or a user's role reassignment takes effect on the next request of every open session
+for the affected account(s) — no re-login, no forced logout. Measured on the seed admin (every permission): the
+raw `shop_auth` cookie went from 2502 bytes to 859 bytes. `StaffTests.ASessionCookieForAUserHoldingEveryPermission_StaysUnder3000Bytes`
+guards the ceiling; `ReassigningAUsersRoles_TakesEffectOnTheSameSession_NoReLoginNeeded` and the rewritten
+`ARoleDecidesWhatTheUserCanDo_AndEditingItChangesItAtOnce` guard the no-re-login behavior;
+`Deactivating_EndsTheSessions_AndBlocksSignIn_UntilReactivated` (pre-existing, unchanged) guards that a locked
+account still ends its session on the next request.
