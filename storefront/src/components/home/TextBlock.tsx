@@ -1,11 +1,12 @@
 import { renderMarkdown } from '@/lib/markdown';
 import type { HomeBlock } from '@/lib/site-config';
+import styles from './TextBlock.module.css';
 
 type Data = Extract<HomeBlock, { type: 'text' }>['data'];
 
 export function TextBlock({ data, headingId }: { data: Data; headingId: string }) {
   return (
-    <section className="ui-container ui-section" aria-labelledby={data.heading ? headingId : undefined}>
+    <section className={`ui-container ui-section ${styles.block}`} aria-labelledby={data.heading ? headingId : undefined}>
       {data.heading && (
         <h2 id={headingId} className="ui-heading-3">
           {data.heading}

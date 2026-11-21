@@ -69,11 +69,12 @@ export function HeroSlider({ slides, autoplaySeconds }: HeroSliderProps) {
         {slides.map((slide, i) => (
           <div
             key={i}
-            className={`${styles.slide} ${slide.image ? styles.withImage : styles.textOnly}`}
+            className={`${styles.slide} ${slide.image ? styles.withImage : styles.textOnly} ${i === index ? styles.active : ''}`}
             role="group"
             aria-roledescription="slide"
             aria-label={messages.slideOf(formatNumber(i + 1), formatNumber(slides.length))}
-            hidden={i !== index}
+            aria-hidden={i !== index}
+            inert={i !== index}
           >
             {slide.image && (
               <Image className={styles.image} src={slide.image.url} alt={slide.alt} fill sizes="100vw" priority={i === 0} fetchPriority={i === 0 ? 'high' : undefined} loading={i === 0 ? undefined : 'lazy'} />

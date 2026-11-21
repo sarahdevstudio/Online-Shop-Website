@@ -11,11 +11,16 @@
   border-radius: var(--radius-lg);
   transition:
     box-shadow var(--duration-base) var(--ease-standard),
-    border-color var(--duration-base) var(--ease-standard);
+    border-color var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
 }
 .card:hover {
   border-color: var(--color-border-control);
   box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.card:active {
+  transform: scale(0.98);
 }
 .card:focus-within {
   box-shadow: var(--focus-ring);
@@ -90,6 +95,15 @@
 }
   
 .skeleton { overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
-.skelMedia { aspect-ratio: 1; background: var(--color-surface-sunken); }
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skelMedia, .skelLine {
+  background-image: linear-gradient(90deg, var(--color-surface-sunken) 25%, var(--color-surface-muted) 50%, var(--color-surface-sunken) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+.skelMedia { aspect-ratio: 1; }
 .skelInfo { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); }
-.skelLine { block-size: 1em; border-radius: var(--radius-sm); background: var(--color-surface-sunken); }
+.skelLine { block-size: 1em; border-radius: var(--radius-sm); }

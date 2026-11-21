@@ -6,22 +6,27 @@
 .viewport {
   position: relative;
 }
+.viewport:has(.withImage) {
+  aspect-ratio: 4 / 3;
+}
+.viewport:not(:has(.withImage)) {
+  min-block-size: 16rem;
+}
 .slide {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: grid;
   align-items: end;
-  min-block-size: 18rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-slow) var(--ease-standard);
 }
-.slide[hidden] {
-  display: none;
-}
-.withImage {
-  aspect-ratio: 4 / 3;
-  background: var(--color-primary);
+.slide.active {
+  opacity: 1;
+  pointer-events: auto;
 }
 .textOnly {
   align-items: center;
-  min-block-size: 16rem;
 }
 .image {
   object-fit: cover;
@@ -152,7 +157,7 @@
   background: linear-gradient(to top, rgb(0 0 0 / 0.35), transparent);
 }
 @media (min-width: 768px) {
-  .withImage {
+  .viewport:has(.withImage) {
     aspect-ratio: 21 / 8;
   }
   .caption {
