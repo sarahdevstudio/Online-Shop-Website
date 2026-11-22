@@ -1,7 +1,11 @@
 // The admin panel: the gate (no session → login), a wrong password, the order the checkout spec placed (list, detail, advance
 // the status), and a product edit that shows on the storefront and is put back.
+import { mkdirSync } from 'node:fs';
+import sharp from 'sharp';
 import { expect, test } from './fixtures';
 import { ADMIN_PASS, ADMIN_USER, BASE, RUN, api, axeCheck, check, login, raw, shot } from './helpers';
+
+const dir = 'e2e-results/admin';
 
 test('the admin is closed without a session and refuses a wrong password', async ({ page, context }) => {
   const gate = await raw(context, '/admin/orders');
@@ -48,6 +52,19 @@ test('editing a product in the admin changes the storefront, and is undone', asy
   const edited = `${product.name} ${RUN}`;
   await page.goto(`/admin/products/${id}`);
   await axeCheck(page, `/admin/products/${id}`);
+
+  // G1: the upload pipeline converts a JPEG to WebP (auto-rotate, strip metadata, resize, SEO file name).
+  mkdirSync(dir, { recursive: true });
+  const jpegPath = `${dir}/upload.jpg`;
+  await sharp({ create: { width: 1200, height: 900, channels: 3, background: { r: 120, g: 40, b: 40 } } }).jpeg().toFile(jpegPath);
+  await page.setInputFiles('input[name="file"]', jpegPath);
+  await Promise.all([page.waitForLoadState('networkidle'), page.locator('form:has(input[name="file"]) button[type="submit"]').first().click()]);
+  await page.waitForTimeout(500);
+  const uploadedImg = page.locator('img[src*="/media/products/"]').last();
+  await expect(uploadedImg).toBeVisible();
+  const src = await uploadedImg.getAttribute('src');
+  check('the uploaded image was converted to WebP', /\.webp$/.test(src ?? ''), src ?? '');
+
   await page.fill('input[name="name"]', edited);
   await Promise.all([page.waitForLoadState('networkidle'), page.locator('form:has(input[name="name"]) button[type="submit"]').first().click()]);
   await page.waitForTimeout(600);

@@ -218,6 +218,7 @@
   "admin.products.image-failed": "بارگذاری تصویر انجام نشد.",
   "admin.products.image-required": "یک تصویر انتخاب کنید.",
   "admin.products.image-too-big": "حجم تصویر بیشتر از ۵ مگابایت است.",
+  "admin.products.image-too-small": "ابعاد تصویر خیلی کوچک است؛ کوچک‌ترین ضلع باید حداقل {minPx} پیکسل باشد.",
   "admin.products.image-uploaded": "تصویر بارگذاری شد.",
   "admin.products.images": "تصاویر",
   "admin.products.move-down": "پایین‌تر",

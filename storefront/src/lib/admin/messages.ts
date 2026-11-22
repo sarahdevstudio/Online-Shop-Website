@@ -236,6 +236,7 @@ export const adminMessages = {
     get createdOk() { return t('admin.products.created-ok'); },
     get imageRequired() { return t('admin.products.image-required'); },
     get imageTooBig() { return t('admin.products.image-too-big'); },
+    imageTooSmall: (minPx: string) => tf('admin.products.image-too-small', { minPx }),
     get imageBadType() { return t('admin.products.image-bad-type'); },
     get imageFailed() { return t('admin.products.image-failed'); },
     get imageUploaded() { return t('admin.products.image-uploaded'); },
