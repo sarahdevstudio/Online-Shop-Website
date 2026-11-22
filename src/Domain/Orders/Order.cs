@@ -60,6 +60,12 @@ public sealed class Order
     public string? TransferTime { get; private set; }
     public string? TransferCardLast4 { get; private set; }
 
+    /// <summary>Shop (the customer's own checkout) or Admin (a phone order placed from the admin panel, G3).</summary>
+    public OrderSource Source { get; private set; }
+
+    /// <summary>The admin who placed this order; null for a Shop-sourced order.</summary>
+    public Guid? CreatedByAdminUserId { get; private set; }
+
     public DateTime CreatedAtUtc { get; private set; }
     public DateTime UpdatedAtUtc { get; private set; }
     public byte[] RowVersion { get; private set; } = [];
@@ -74,7 +80,8 @@ public sealed class Order
         string accessToken, Guid idempotencyKey, PaymentMethod method,
         string fullName, string mobile, string province, string city, string address, string postalCode, string? note,
         string clientIp, long subtotal, long shippingFee, string? discountCode, long discountAmount,
-        CardSnapshot? card, IEnumerable<OrderItem> items, DateTime utcNow)
+        CardSnapshot? card, IEnumerable<OrderItem> items, DateTime utcNow,
+        OrderSource source = OrderSource.Shop, Guid? createdByAdminUserId = null)
     {
         if (!Enum.IsDefined(method))
         {
@@ -122,6 +129,8 @@ public sealed class Order
             Total = subtotal + shippingFee - discountAmount,
             CreatedAtUtc = utcNow,
             UpdatedAtUtc = utcNow,
+            Source = source,
+            CreatedByAdminUserId = createdByAdminUserId,
         };
         order.Items.AddRange(items);
         if (order.Items.Count == 0)
@@ -129,7 +138,7 @@ public sealed class Order
             throw new ArgumentException("An order needs at least one line.", nameof(items));
         }
 
-        order.StatusLog.Add(OrderStatusLog.Create(null, initial, null, utcNow));
+        order.StatusLog.Add(OrderStatusLog.Create(null, initial, createdByAdminUserId, utcNow));
         return order;
     }
 

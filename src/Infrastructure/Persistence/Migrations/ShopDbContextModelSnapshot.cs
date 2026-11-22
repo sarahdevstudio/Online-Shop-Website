@@ -999,6 +999,9 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("CreatedByAdminUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<long>("DiscountAmount")
                         .HasColumnType("bigint");
 
@@ -1071,6 +1074,9 @@ namespace Shop.Infrastructure.Persistence.Migrations
                     b.Property<long>("ShippingFee")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("Source")
+                        .HasColumnType("int");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -1130,6 +1136,8 @@ namespace Shop.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("CK_Orders_PaymentMethod", "[PaymentMethod] IN (0, 1)");
 
                             t.HasCheckConstraint("CK_Orders_PaymentStatus", "[PaymentStatus] IN (0, 1)");
+
+                            t.HasCheckConstraint("CK_Orders_Source", "[Source] IN (0, 1)");
 
                             t.HasCheckConstraint("CK_Orders_Status", "[Status] IN (0, 1, 2, 3, 4, 5)");
 

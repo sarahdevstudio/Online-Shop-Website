@@ -32,6 +32,10 @@ public static class Permissions
     public const string OrdersCancel = "Orders.Cancel";
     public const string OrdersPrint = "Orders.Print";
 
+    /// <summary>Placing a phone order from the admin panel (G3) — a separate action from Orders.View/Update: reading
+    /// and advancing orders is not the same as being allowed to create one on a customer's behalf.</summary>
+    public const string OrdersCreate = "Orders.Create";
+
     public const string SettingsView = "Settings.View";
     public const string SettingsUpdate = "Settings.Update";
 
@@ -72,7 +76,7 @@ public static class Permissions
         CatalogView, CatalogCreate, CatalogUpdate, CatalogDelete, CatalogImport, CatalogExport,
         ContentView, ContentUpdate,
         BlogView, BlogCreate, BlogUpdate, BlogDelete,
-        OrdersView, OrdersUpdate, OrdersConfirmPayment, OrdersCancel, OrdersPrint,
+        OrdersView, OrdersUpdate, OrdersConfirmPayment, OrdersCancel, OrdersPrint, OrdersCreate,
         SettingsView, SettingsUpdate, SettingsPayment,
         SiteView, SiteUpdate,
         RoutesView, RoutesUpdate, RoutesRelease,

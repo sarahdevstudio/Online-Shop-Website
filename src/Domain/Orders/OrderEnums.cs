@@ -24,3 +24,10 @@ public enum PaymentMethod
     CardToCard = 0,
     CashOnDelivery = 1,
 }
+
+/// <summary>Where an order came from: the shop's own checkout, or an admin placing a phone order (G3).</summary>
+public enum OrderSource
+{
+    Shop = 0,
+    Admin = 1,
+}

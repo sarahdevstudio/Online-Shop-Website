@@ -51,6 +51,7 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
             t.HasCheckConstraint("CK_Orders_Status", "[Status] IN (0, 1, 2, 3, 4, 5)");
             t.HasCheckConstraint("CK_Orders_PaymentStatus", "[PaymentStatus] IN (0, 1)");
             t.HasCheckConstraint("CK_Orders_PaymentMethod", "[PaymentMethod] IN (0, 1)");
+            t.HasCheckConstraint("CK_Orders_Source", "[Source] IN (0, 1)");
             t.HasCheckConstraint("CK_Orders_Amounts", "[Subtotal] >= 0 AND [ShippingFee] >= 0 AND [DiscountAmount] >= 0 AND [DiscountAmount] <= [Subtotal]");
             t.HasCheckConstraint("CK_Orders_Total", "[Total] = [Subtotal] + [ShippingFee] - [DiscountAmount]");
         });
