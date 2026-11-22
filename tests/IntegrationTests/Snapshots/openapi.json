@@ -1931,6 +1931,34 @@
         ]
       }
     },
+    "/api/v1/admin/catalog/template": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "Admin catalog import and export"
+        ]
+      }
+    },
     "/api/v1/admin/categories": {
       "get": {
         "responses": {

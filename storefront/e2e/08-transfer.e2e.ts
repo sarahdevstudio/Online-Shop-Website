@@ -1,6 +1,6 @@
 // Product export and import in the browser (docs/16): download the table, upload a file with an error (the per-row Persian message
 // shows and nothing can be applied), fix it, preview, apply, and the product is on the shop. axe on every state.
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { expect, test } from './fixtures';
 import { RUN, api, axeCheck, check, login, shot } from './helpers';
 
@@ -24,6 +24,15 @@ test('export, a failing import, a fixed import', async ({ page }) => {
   await csv.saveAs(csvPath);
   const [xlsx] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'دریافت اکسل (xlsx)' }).click()]);
   expect(xlsx.suggestedFilename()).toMatch(/\.xlsx$/);
+
+  // G2: the template download (headers, a Persian hint row, one example row).
+  const [template] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'دریافت الگوی CSV' }).click()]);
+  expect(template.suggestedFilename()).toBe('products-template.csv');
+  const templatePath = `${dir}/template.csv`;
+  await template.saveAs(templatePath);
+  const templateText = readFileSync(templatePath, 'utf8');
+  check('template has the seo columns', templateText.includes('seo_title') && templateText.includes('seo_noindex'));
+  check('template has a header, a hint row and one example row', templateText.trim().split('\n').length === 3, String(templateText.trim().split('\n').length));
 
   const categories = (await api('/catalog/categories')) as { path: string }[];
   const category = categories[0].path;

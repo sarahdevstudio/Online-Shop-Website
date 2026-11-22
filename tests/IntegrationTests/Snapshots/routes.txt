@@ -12,6 +12,7 @@ GET /api/v1/admin/blog/{id:int} | auth: Blog.View+authenticated | - | rate: - | 
 GET /api/v1/admin/blog/{id:int}/audit | auth: Blog.View+authenticated | - | rate: - | -
 GET /api/v1/admin/brands | auth: Catalog.View+authenticated | - | rate: - | -
 GET /api/v1/admin/catalog/export | auth: Catalog.Export+authenticated | - | rate: - | -
+GET /api/v1/admin/catalog/template | auth: Catalog.Import+authenticated | - | rate: - | -
 GET /api/v1/admin/categories | auth: Catalog.View+authenticated | - | rate: - | -
 GET /api/v1/admin/content-pages | auth: Content.View+authenticated | - | rate: - | -
 GET /api/v1/admin/content-pages/{slug} | auth: Content.View+authenticated | - | rate: - | -

@@ -1,10 +1,13 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Shop.Application.Catalog.Transfer;
 using Shop.Domain.Security;
+using Shop.Infrastructure.Identity;
 
 namespace Shop.IntegrationTests;
 
@@ -76,6 +79,12 @@ public sealed class CatalogTransferTests(ApiFixture fixture) : CatalogTestBase(f
     private static string[] Row(string slug, string name, string category, string sku, string price, string stock = "5", string status = "published", string brand = "", string compare = "", string path = "") =>
         [slug, name, category, brand, status, "توضیح", path, sku, price, compare, stock, "1", "0", ""];
 
+    private static readonly string[] HeaderWithSeo =
+        ["product_slug", "product_name", "category", "brand", "status", "description", "seo_title", "seo_description", "seo_noindex", "path", "sku", "price", "compare_at_price", "stock", "variant_active", "sort_order", "image_ids"];
+
+    private static string[] RowWithSeo(string slug, string name, string category, string sku, string price, string seoTitle = "", string seoDescription = "", string seoNoIndex = "", string status = "published", string stock = "5") =>
+        [slug, name, category, "", status, "توضیح", seoTitle, seoDescription, seoNoIndex, "", sku, price, "", stock, "1", "0", ""];
+
     private async Task<XferProductBody> ProductBySlugAsync(HttpClient admin, string slug)
     {
         var list = await GetOkAsync<PagedBody<AdminListItemBody>>(admin, $"/api/v1/admin/products?q={slug}");
@@ -88,6 +97,30 @@ public sealed class CatalogTransferTests(ApiFixture fixture) : CatalogTestBase(f
     private sealed record AdminListItemBody(int Id, string Slug);
 
     private Task<bool> ProductExistsAsync(string slug) => Fixture.WithDbAsync(db => db.Products.AnyAsync(p => p.Slug == slug));
+
+    /// <summary>A user holding exactly these permissions (direct claims, no role), logged in. Mirrors RoutesTests.LoginWithAsync.</summary>
+    private async Task<HttpClient> LoginWithAsync(params string[] permissions)
+    {
+        var email = TestData.NewEmail();
+        var password = TestData.NewPassword();
+        using (var scope = Fixture.Factory.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = new ApplicationUser { Id = Guid.NewGuid(), UserName = email, Email = email, EmailConfirmed = true, CreatedAtUtc = DateTime.UtcNow };
+            Assert.True((await users.CreateAsync(user, password)).Succeeded);
+            foreach (var permission in permissions)
+            {
+                Assert.True((await users.AddClaimAsync(user, new Claim("permission", permission))).Succeeded);
+            }
+        }
+
+        var client = NewClient();
+        Assert.Equal(HttpStatusCode.OK, (await PostAsync(client, "/api/v1/auth/login", new { username = email, password })).StatusCode);
+        return client;
+    }
+
+    private async Task<AdminSeoBody> SeoOfAsync(HttpClient admin, int productId) =>
+        await GetOkAsync<AdminSeoBody>(admin, $"/api/v1/admin/seo/product/{productId}");
 
     // ---- access ---------------------------------------------------------------------------------------------------------------
 
@@ -137,7 +170,8 @@ public sealed class CatalogTransferTests(ApiFixture fixture) : CatalogTestBase(f
         Assert.StartsWith("text/csv", csv.Content.Headers.ContentType!.MediaType);
         Assert.Contains("products-", csv.Content.Headers.ContentDisposition!.FileName);
         var table = CsvTable.Read(await csv.Content.ReadAsByteArrayAsync());
-        var exportedFixedHeader = Header.Take(10).Append("cost_price").Concat(Header.Skip(10)).ToArray(); // cost_price sits right after compare_at_price
+        // cost_price sits right after compare_at_price; seo_title/seo_description/seo_noindex sit right after description.
+        var exportedFixedHeader = Header.Take(6).Concat(["seo_title", "seo_description", "seo_noindex"]).Concat(Header.Skip(6).Take(4)).Append("cost_price").Concat(Header.Skip(10)).ToArray();
         Assert.Equal(exportedFixedHeader, table.Header.Take(exportedFixedHeader.Length));
         Assert.Contains("spec:base", table.Header);
         Assert.Contains("axis:wattage", table.Header);
@@ -520,5 +554,193 @@ public sealed class CatalogTransferTests(ApiFixture fixture) : CatalogTestBase(f
         Assert.False(badPreview.CanApply);
         Assert.Contains(badPreview.Errors, e => e.Column == "cost_price");
         Assert.Equal(70_000L, (await ProductBySlugAsync(admin, slug)).Variants.Single().CostPrice); // unchanged
+    }
+
+    // ---- G2: SEO columns -------------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Seo_EmptyIsNoChange_DashClears_AndAGivenValueSets()
+    {
+        var admin = await LoginAdminAsync();
+        var (categoryPath, _, _) = await ReferencesAsync(admin);
+        var slug = Unique("seo-imp");
+        var sku = slug + "-0";
+
+        // Creates with SEO title/description/noindex set.
+        await ApplyAsync(admin, CsvTable.Write(HeaderWithSeo, [RowWithSeo(slug, "نام", categoryPath, sku, "100000", "عنوان سئو", "توضیح سئو", "1")]));
+        var product = await ProductBySlugAsync(admin, slug);
+        var seo = await SeoOfAsync(admin, product.Id);
+        Assert.Equal("عنوان سئو", seo.Seo.MetaTitle);
+        Assert.Equal("توضیح سئو", seo.Seo.MetaDescription);
+        Assert.True(seo.Seo.NoIndex);
+
+        // Empty cells: no change.
+        await ApplyAsync(admin, CsvTable.Write(HeaderWithSeo, [RowWithSeo(slug, "نام", categoryPath, sku, "100000")]));
+        seo = await SeoOfAsync(admin, product.Id);
+        Assert.Equal("عنوان سئو", seo.Seo.MetaTitle);
+        Assert.Equal("توضیح سئو", seo.Seo.MetaDescription);
+        Assert.True(seo.Seo.NoIndex);
+
+        // A single "-" clears title/description and turns noindex back off.
+        await ApplyAsync(admin, CsvTable.Write(HeaderWithSeo, [RowWithSeo(slug, "نام", categoryPath, sku, "100000", "-", "-", "-")]));
+        seo = await SeoOfAsync(admin, product.Id);
+        Assert.Null(seo.Seo.MetaTitle);
+        Assert.Null(seo.Seo.MetaDescription);
+        Assert.False(seo.Seo.NoIndex);
+    }
+
+    [Fact]
+    public async Task Seo_TooLongTitleOrDescription_IsARowError()
+    {
+        var admin = await LoginAdminAsync();
+        var (categoryPath, _, _) = await ReferencesAsync(admin);
+        var slug = Unique("seo-long");
+        var longTitle = new string('ا', 121);
+
+        var preview = await PreviewAsync(admin, CsvTable.Write(HeaderWithSeo, [RowWithSeo(slug, "نام", categoryPath, slug + "-0", "100000", longTitle)]));
+        Assert.False(preview.CanApply);
+        Assert.Contains(preview.Errors, e => e.Column == "seo_title");
+    }
+
+    // ---- G2: template download --------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Template_HasHeadersHintsAndOneExampleRow_InCsvAndXlsx()
+    {
+        var admin = await LoginAdminAsync();
+
+        var csv = await admin.GetAsync($"{Base}/template?format=csv");
+        Assert.Equal(HttpStatusCode.OK, csv.StatusCode);
+        Assert.Contains("products-template", csv.Content.Headers.ContentDisposition!.FileName);
+        var table = CsvTable.Read(await csv.Content.ReadAsByteArrayAsync());
+        Assert.Contains("product_slug", table.Header);
+        Assert.Contains("seo_title", table.Header);
+        Assert.Equal(2, table.Rows.Count); // the hint row, then one example row
+        var col = table.Header.Select((h, i) => (h, i)).ToDictionary(x => x.h, x => x.i);
+        Assert.False(string.IsNullOrEmpty(table.Rows[0].Cells[col["product_slug"]])); // a Persian hint, not empty
+        Assert.False(Shop.Domain.Catalog.Slug.IsValid(table.Rows[0].Cells[col["product_slug"]])); // it is a hint, not a usable slug
+        Assert.True(Shop.Domain.Catalog.Slug.IsValid(table.Rows[1].Cells[col["product_slug"]])); // the example row is a usable row
+
+        var xlsx = await admin.GetAsync($"{Base}/template?format=xlsx");
+        Assert.Equal(HttpStatusCode.OK, xlsx.StatusCode);
+        var excel = TableCodec.Read(new MemoryStream(await xlsx.Content.ReadAsByteArrayAsync()), "t.xlsx");
+        Assert.Equal(table.Header, excel.Header);
+        Assert.Equal(2, excel.Rows.Count);
+    }
+
+    // ---- G2: round trip ---------------------------------------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("csv")]
+    [InlineData("xlsx")]
+    public async Task RoundTrip_ExportThenImportUnchanged_Is0Changes(string format)
+    {
+        var admin = await LoginAdminAsync();
+        var (categoryPath, categorySlug, _) = await ReferencesAsync(admin);
+        var category = (await GetOkAsync<AdminCategoryBody[]>(admin, "/api/v1/admin/categories")).Single(c => c.Slug == categorySlug);
+        var slug = Unique("rt");
+        await CreateProductAsync(admin, category.Id, slug, variants: [(120_000, 7)]);
+
+        var exported = await admin.GetAsync($"{Base}/export?format={format}");
+        Assert.Equal(HttpStatusCode.OK, exported.StatusCode);
+        var bytes = await exported.Content.ReadAsByteArrayAsync();
+
+        var preview = await PreviewAsync(admin, bytes, $"roundtrip.{format}");
+        Assert.True(preview.CanApply, string.Join(", ", preview.Errors.Select(e => e.Message)));
+        Assert.Equal(0, preview.Summary.ProductsToCreate);
+        Assert.Equal(0, preview.Summary.ProductsToUpdate);
+        Assert.Equal(0, preview.Summary.VariantsToCreate);
+        Assert.Equal(0, preview.Summary.VariantsToUpdate);
+
+        var applied = await ApplyAsync(admin, bytes, $"roundtrip.{format}");
+        Assert.Equal(0, applied.Summary.ProductsToCreate);
+        Assert.Equal(0, applied.Summary.ProductsToUpdate);
+        Assert.Equal(0, applied.Summary.VariantsToCreate);
+        Assert.Equal(0, applied.Summary.VariantsToUpdate);
+    }
+
+    // ---- G2: permission gating ----------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task ImportOnly_CannotCreate_CannotUpdate_CannotPublish()
+    {
+        var admin = await LoginAdminAsync();
+        var (categoryPath, _, _) = await ReferencesAsync(admin);
+        var slug = Unique("perm-i");
+        await CreateProductAsync(admin, (await GetOkAsync<AdminCategoryBody[]>(admin, "/api/v1/admin/categories")).First(c => $"/category/{c.Slug}" == categoryPath).Id, slug, variants: [(100_000, 5)]);
+        var product = await ProductBySlugAsync(admin, slug);
+
+        var importer = await LoginWithAsync(Permissions.CatalogImport);
+
+        // Cannot create.
+        var createRow = Row(Unique("perm-i-new"), "نام", categoryPath, Unique("perm-i-new") + "-0", "100000");
+        var createPreview = await PreviewAsync(importer, Csv(Header, createRow));
+        Assert.False(createPreview.CanApply);
+        Assert.Contains(createPreview.Errors, e => e.Message.Contains("Catalog.Create"));
+
+        // Cannot update an existing field.
+        var updateRow = Row(slug, "نام تغییریافته", categoryPath, product.Variants[0].Sku, "100000");
+        var updatePreview = await PreviewAsync(importer, Csv(Header, updateRow));
+        Assert.False(updatePreview.CanApply);
+        Assert.Contains(updatePreview.Errors, e => e.Message.Contains("Catalog.Update"));
+
+        // Cannot change status (to published or anything else).
+        var statusRow = Row(slug, product.Name, categoryPath, product.Variants[0].Sku, "100000", status: "archived");
+        var statusPreview = await PreviewAsync(importer, Csv(Header, statusRow));
+        Assert.False(statusPreview.CanApply);
+        Assert.Contains(statusPreview.Errors, e => e.Message.Contains("Catalog.Update"));
+
+        // A true no-op (same values) needs no permission beyond Import and reports 0 changes.
+        var sameRow = Row(slug, product.Name, categoryPath, product.Variants[0].Sku, "100000");
+        var samePreview = await PreviewAsync(importer, Csv(Header, sameRow));
+        Assert.True(samePreview.CanApply, string.Join(", ", samePreview.Errors.Select(e => e.Message)));
+    }
+
+    [Fact]
+    public async Task ImportAndUpdate_CanUpdateAndPublish_ButNotCreate()
+    {
+        var admin = await LoginAdminAsync();
+        var (categoryPath, _, _) = await ReferencesAsync(admin);
+        var categoryId = (await GetOkAsync<AdminCategoryBody[]>(admin, "/api/v1/admin/categories")).First(c => $"/category/{c.Slug}" == categoryPath).Id;
+        var slug = Unique("perm-u");
+        await CreateProductAsync(admin, categoryId, slug, variants: [(100_000, 5)], status: "draft");
+        var product = await ProductBySlugAsync(admin, slug);
+
+        var updater = await LoginWithAsync(Permissions.CatalogImport, Permissions.CatalogUpdate);
+
+        // Can update and publish an existing product.
+        var publishRow = Row(slug, "نام", categoryPath, product.Variants[0].Sku, "100000", status: "published");
+        var applied = await ApplyAsync(updater, Csv(Header, publishRow));
+        Assert.Equal(1, applied.Summary.ProductsToUpdate);
+        Assert.Equal("published", (await ProductBySlugAsync(admin, slug)).Status);
+
+        // Cannot create a new product.
+        var newSlug = Unique("perm-u-new");
+        var createRow = Row(newSlug, "نام", categoryPath, newSlug + "-0", "100000");
+        var createPreview = await PreviewAsync(updater, Csv(Header, createRow));
+        Assert.False(createPreview.CanApply);
+        Assert.Contains(createPreview.Errors, e => e.Message.Contains("Catalog.Create"));
+    }
+
+    [Fact]
+    public async Task ImportAndCreate_CanCreateDrafts_ButPublishingOnCreateAlsoNeedsUpdate()
+    {
+        var admin = await LoginAdminAsync();
+        var (categoryPath, _, _) = await ReferencesAsync(admin);
+        var creator = await LoginWithAsync(Permissions.CatalogImport, Permissions.CatalogCreate);
+
+        // Can create a draft.
+        var draftSlug = Unique("perm-c-draft");
+        var draftRow = Row(draftSlug, "نام", categoryPath, draftSlug + "-0", "100000", status: "draft");
+        var applied = await ApplyAsync(creator, Csv(Header, draftRow));
+        Assert.Equal(1, applied.Summary.ProductsToCreate);
+
+        // Creating with status=published also needs Catalog.Update.
+        var publishedSlug = Unique("perm-c-pub");
+        var publishedRow = Row(publishedSlug, "نام", categoryPath, publishedSlug + "-0", "100000", status: "published");
+        var publishedPreview = await PreviewAsync(creator, Csv(Header, publishedRow));
+        Assert.False(publishedPreview.CanApply);
+        Assert.Contains(publishedPreview.Errors, e => e.Message.Contains("Catalog.Update"));
+        Assert.False(await ProductExistsAsync(publishedSlug)); // nothing written
     }
 }
