@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { HomeBlocks } from '@/components/home/HomeBlocks';
+import { JsonLd } from '@/components/JsonLd';
 import { ProductCard } from '@/components/ProductCard';
 import { getCategoryTree, getProducts } from '@/lib/catalog';
 import { messages } from '@/lib/messages';
-import { pageMetadata, site } from '@/lib/seo';
+import { contactJsonLd, pageMetadata, site } from '@/lib/seo';
 import { getSiteConfig } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 
 /** The home title is used as is (not run through the title template). */
 export async function generateMetadata() {
@@ -14,6 +16,13 @@ export async function generateMetadata() {
 
 const NEWEST_COUNT = 8;
 
+/** Store/LocalBusiness structured data for the home page, from the same real settings the contact page uses. */
+async function HomeJsonLd() {
+  const info = await getStoreInfo();
+  if (!info) return null;
+  return <JsonLd data={contactJsonLd({ phone: info.storePhone, address: info.storeAddress, hours: info.workingHours, instagram: info.instagramHandle })} />;
+}
+
 export default async function HomePage() {
   const { home, seo } = await getSiteConfig();
   // The configured blocks, in order; with none configured (or the API unreachable) the built-in home page below.
@@ -21,6 +30,7 @@ export default async function HomePage() {
     return (
       <>
         <h1 className="ui-visually-hidden">{seo.siteName}</h1>
+        <HomeJsonLd />
         <HomeBlocks blocks={home.blocks} />
       </>
     );
@@ -30,6 +40,7 @@ export default async function HomePage() {
 
   return (
     <div className="ui-container ui-section ui-stack">
+      <HomeJsonLd />
       <h1 className="ui-heading-1">{site.name}</h1>
       <p className="ui-text-muted">{site.description}</p>
 

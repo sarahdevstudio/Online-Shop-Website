@@ -129,6 +129,10 @@ interface ProductJsonLdInput {
   offers: readonly OfferInput[];
   /** Approved reviews only. Rating and Review are emitted only when there is at least one: never invented, never seeded. */
   reviews?: ReviewsInput;
+  /** The store's real, admin-configured flat shipping fee (Toman). Omitted when unknown; never a guessed number.
+   * There is no structured return-window setting anywhere (the returns page is free-text content, editable
+   * independently), so `hasMerchantReturnPolicy` is deliberately never emitted - it would risk going stale. */
+  shippingFeeToman?: number | null;
 }
 
 /** The date part of a UTC timestamp from the API (it has no zone suffix). */
@@ -171,6 +175,15 @@ export function productJsonLd(p: ProductJsonLdInput) {
             price: offer.priceToman * IRR_PER_TOMAN,
             availability: `https://schema.org/${offer.availability}`,
             itemCondition: 'https://schema.org/NewCondition',
+            ...(p.shippingFeeToman != null
+              ? {
+                  shippingDetails: {
+                    '@type': 'OfferShippingDetails',
+                    shippingRate: { '@type': 'MonetaryAmount', value: p.shippingFeeToman * IRR_PER_TOMAN, currency: site.currency },
+                    shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'IR' },
+                  },
+                }
+              : {}),
           })),
         }
       : {}),
@@ -186,15 +199,18 @@ export interface ContactInfo {
 }
 
 /**
- * Structured data for the contact page: a LocalBusiness only when a street address is set (it needs one to be valid),
- * otherwise a plain Organization with a customer-service phone. Empty fields are left out, never invented.
+ * Structured data for the home and contact pages: a Store (a LocalBusiness subtype) only when a street address is
+ * set (it needs one to be valid), otherwise a plain Organization with a customer-service phone. `openingHours` is
+ * the store's own free-text hours (there is no structured open/close time anywhere in the settings); geo is never
+ * invented and left out since no coordinates are stored anywhere. Empty fields are left out, never invented.
  */
 export function contactJsonLd(info: ContactInfo) {
   const address = info.address.trim();
   const phone = info.phone.trim();
+  const hours = info.hours.trim();
   const base = {
     '@context': 'https://schema.org',
-    '@type': address ? 'LocalBusiness' : 'Organization',
+    '@type': address ? 'Store' : 'Organization',
     name: site.name,
     url: site.url,
   };
@@ -203,6 +219,7 @@ export function contactJsonLd(info: ContactInfo) {
     ...(phone && address ? { telephone: phone } : {}),
     ...(phone && !address ? { contactPoint: { '@type': 'ContactPoint', telephone: phone, contactType: 'customer service', availableLanguage: 'fa' } } : {}),
     ...(address ? { address: { '@type': 'PostalAddress', streetAddress: address, addressCountry: 'IR' } } : {}),
+    ...(address && hours ? { openingHours: hours } : {}),
     ...(info.instagram ? { sameAs: [`https://www.instagram.com/${info.instagram}/`] } : {}),
   };
 }
@@ -218,6 +235,24 @@ export function withSeoOverrides<T extends { title: string; description: string;
     description: seo.description ?? input.description,
     image: seo.ogImageUrl ? absoluteUrl(seo.ogImageUrl) : input.image,
     noindex: seo.noIndex ? input.noindex || 'follow' : input.noindex,
+  };
+}
+
+/** A category/listing page: its products as an ItemList, position = on-page order. Null when the page has none. */
+export function collectionPageJsonLd(items: readonly { name: string; path: string }[]) {
+  if (items.length === 0) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: items.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: absoluteUrl(item.path),
+        name: item.name,
+      })),
+    },
   };
 }
 
