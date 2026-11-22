@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { breadcrumbJsonLd, contactJsonLd, organizationJsonLd, productJsonLd, websiteJsonLd } from '../src/lib/seo';
+import { breadcrumbJsonLd, collectionPageJsonLd, contactJsonLd, organizationJsonLd, productJsonLd, websiteJsonLd } from '../src/lib/seo';
 import { validateJsonLd } from './helpers/jsonld-shapes';
 
 const valid = (doc: unknown) => expect(validateJsonLd(doc)).toEqual([]);
@@ -21,6 +21,21 @@ describe('JSON-LD of each page type matches the schema.org shapes', () => {
     );
   });
 
+  it('Product offers carry shippingDetails only when a real shipping fee is known', () => {
+    const withShipping = productJsonLd({
+      name: 'لامپ',
+      description: 'توضیح',
+      path: '/product/led-9w',
+      images: [],
+      offers: [{ sku: 'A1', priceToman: 98_000, availability: 'InStock', path: '/product/led-9w' }],
+      shippingFeeToman: 50_000,
+    });
+    valid(withShipping);
+    expect(withShipping.offers![0].shippingDetails).toMatchObject({ '@type': 'OfferShippingDetails', shippingRate: { value: 500_000, currency: 'IRR' } });
+    const withoutShipping = productJsonLd({ name: 'لامپ', description: 'توضیح', path: '/product/led-9w', images: [], offers: [{ sku: 'A1', priceToman: 98_000, availability: 'InStock', path: '/product/led-9w' }] });
+    expect(withoutShipping.offers![0]).not.toHaveProperty('shippingDetails'); // not sourced from real data: omitted, never guessed
+  });
+
   it('a product without any offer is not valid (nothing to show)', () => {
     expect(validateJsonLd(productJsonLd({ name: 'x', description: '', path: '/product/x', images: [], offers: [] }))).toContain('jsonld: needs offers, aggregateRating or review');
   });
@@ -31,7 +46,7 @@ describe('JSON-LD of each page type matches the schema.org shapes', () => {
     expect(validateJsonLd(broken).join(' ')).toContain('only the last item may omit');
   });
 
-  it('Organization, WebSite and the contact page', () => {
+  it('Organization, WebSite and the contact/home page (Store subtype, real hours only)', () => {
     valid(organizationJsonLd());
     expect(organizationJsonLd().logo).toMatch(/^https?:\/\/.+\/brand\/logo\.png$/); // the fallback logo, absolute
     valid(organizationJsonLd({ sameAs: ['https://www.instagram.com/shop/'] }));
@@ -41,6 +56,41 @@ describe('JSON-LD of each page type matches the schema.org shapes', () => {
     valid(websiteJsonLd());
     valid(contactJsonLd({ phone: '021-123', address: 'تهران', hours: '', instagram: 'shop' }));
     valid(contactJsonLd({ phone: '021-123', address: '', hours: '', instagram: '' }));
+
+    const withAddress = contactJsonLd({ phone: '021-123', address: 'تهران، خیابان آزادی', hours: 'شنبه تا پنجشنبه ۹ تا ۱۸', instagram: 'shop' });
+    expect(withAddress['@type']).toBe('Store'); // a LocalBusiness subtype, not plain Organization, once there is a real address
+    expect(withAddress.openingHours).toBe('شنبه تا پنجشنبه ۹ تا ۱۸');
+    valid(withAddress);
+    // No address: no openingHours either (it would be meaningless without a place), and no invented geo ever appears.
+    const noAddress = contactJsonLd({ phone: '021-123', address: '', hours: 'شنبه تا پنجشنبه ۹ تا ۱۸', instagram: '' });
+    expect(noAddress).not.toHaveProperty('openingHours');
+    expect(noAddress).not.toHaveProperty('geo');
+  });
+
+  it('CollectionPage/ItemList for a category listing: sequential positions, absolute URLs', () => {
+    const doc = collectionPageJsonLd([{ name: 'لامپ ۹ وات', path: '/product/led-9w' }, { name: 'لامپ ۱۲ وات', path: '/product/led-12w' }]);
+    valid(doc);
+    expect(collectionPageJsonLd([])).toBeNull(); // an empty listing gets no ItemList at all
+  });
+
+  it('BlogPosting: headline/image/dates/author=Organization/publisher with logo', () => {
+    const publisher = organizationJsonLd({ logoUrl: '/media/site/logo.webp' });
+    const doc = {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: 'راهنمای خرید لامپ',
+      description: 'خلاصه',
+      image: 'http://localhost:3000/media/site/share.webp',
+      datePublished: '2026-10-01T00:00:00Z',
+      dateModified: '2026-10-02T00:00:00Z',
+      inLanguage: 'fa-IR',
+      mainEntityOfPage: 'http://localhost:3000/blog/guide',
+      author: publisher,
+      publisher,
+    };
+    valid(doc);
+    expect(doc.author['@type']).toBe('Organization');
+    expect(doc.publisher.logo).toMatch(/^https?:\/\//);
   });
 
   it('the validator really rejects bad data', () => {

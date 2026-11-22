@@ -132,10 +132,34 @@ test('every entity page has exactly one valid BreadcrumbList and valid structure
     if (url !== '/' && url !== '/blog') check(`${url}: exactly one BreadcrumbList`, byType(docs, 'BreadcrumbList').length === 1, String(byType(docs, 'BreadcrumbList').length));
   }
   await page.goto('/blog/perf-guide');
-  check('a blog post has a BlogPosting', byType(await jsonLd(page), 'BlogPosting').length === 1);
+  const post = await jsonLd(page);
+  check('a blog post has a BlogPosting', byType(post, 'BlogPosting').length === 1);
+  check('its BlogPosting has an author and a publisher (both Organization)', byType(post, 'BlogPosting').every((d: any) => d.author?.['@type'] === 'Organization' && d.publisher?.['@type'] === 'Organization'));
+  await page.goto(categories[0].path);
+  check('a category has a CollectionPage/ItemList of its products', byType(await jsonLd(page), 'CollectionPage').length === 1);
   await page.goto('/');
   const home = await jsonLd(page);
   check('home: Organization and WebSite', byType(home, 'Organization').length >= 1 && byType(home, 'WebSite').length === 1);
+});
+
+test('every indexable page type has exactly one canonical, one h1, a non-empty title and meta description', async ({ page }) => {
+  const product = (await api('/catalog/products?pageSize=1')).items[0];
+  const categories = (await api('/catalog/categories')) as { path: string }[];
+  const pages = (await api('/catalog/pages')) as { path: string }[];
+  const urls = ['/', categories[0].path, product.path, '/blog', '/blog/perf-guide', pages[0].path];
+  for (const url of urls) {
+    const response = await page.goto(url);
+    expect(response?.status(), `${url} status`).toBe(200);
+    const canonical = page.locator('link[rel="canonical"]');
+    check(`${url}: exactly one canonical`, (await canonical.count()) === 1, String(await canonical.count()));
+    expect(await canonical.getAttribute('href'), `${url} canonical is absolute`).toMatch(/^https?:\/\//);
+    const h1 = page.locator('h1');
+    check(`${url}: exactly one h1`, (await h1.count()) === 1, String(await h1.count()));
+    expect((await h1.first().innerText()).trim().length, `${url} h1 is not empty`).toBeGreaterThan(0);
+    expect((await page.title()).trim().length, `${url} title is not empty`).toBeGreaterThan(0);
+    const description = await page.locator('meta[name="description"]').getAttribute('content');
+    expect(description?.trim().length ?? 0, `${url} meta description is not empty`).toBeGreaterThan(0);
+  }
 });
 
 test('the sitemap index and the four sitemaps', async ({ request }) => {

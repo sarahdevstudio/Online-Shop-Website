@@ -32,6 +32,14 @@ const checks: Record<string, Check> = {
     const availability = String(node.availability ?? '');
     if (node.availability !== undefined && !SCHEMA_AVAILABILITY.some((a) => availability === `https://schema.org/${a}`)) problems.push(`${at}: availability must be a schema.org ItemAvailability URL`);
     if (node.url !== undefined && !isUrl(node.url)) problems.push(`${at}: url must be absolute`);
+    if (node.shippingDetails !== undefined && isObject(node.shippingDetails)) validateNode(node.shippingDetails, `${at}.shippingDetails`, problems, 'OfferShippingDetails');
+  },
+  OfferShippingDetails(node, at, problems) {
+    required(node, ['shippingRate', 'shippingDestination'], at, problems);
+    if (isObject(node.shippingRate)) {
+      required(node.shippingRate, ['value', 'currency'], `${at}.shippingRate`, problems);
+      if (node.shippingRate.currency !== undefined && !/^[A-Z]{3}$/.test(String(node.shippingRate.currency))) problems.push(`${at}.shippingRate: currency must be an ISO 4217 code`);
+    }
   },
   Brand(node, at, problems) {
     required(node, ['name'], at, problems);
@@ -102,6 +110,7 @@ const checks: Record<string, Check> = {
     if (node.image !== undefined && !asArray(node.image).every(isUrl)) problems.push(`${at}: image must be absolute URLs`);
     if (node.mainEntityOfPage !== undefined && !isUrl(node.mainEntityOfPage)) problems.push(`${at}: mainEntityOfPage must be an absolute URL`);
     if (node.publisher !== undefined && !(isObject(node.publisher) && isString(node.publisher.name))) problems.push(`${at}: publisher needs a name`);
+    if (node.author !== undefined && !(isObject(node.author) && isString(node.author.name))) problems.push(`${at}: author needs a name`);
   },
   Organization(node, at, problems) {
     required(node, ['name', 'url'], at, problems);
@@ -112,6 +121,23 @@ const checks: Record<string, Check> = {
   LocalBusiness(node, at, problems) {
     required(node, ['name', 'address'], at, problems);
     if (isObject(node.address)) required(node.address, ['streetAddress'], `${at}.address`, problems);
+    if (node.openingHours !== undefined && !isString(node.openingHours)) problems.push(`${at}: openingHours must be text`);
+  },
+  CollectionPage(node, at, problems) {
+    if (!isObject(node.mainEntity)) problems.push(`${at}: mainEntity is required`);
+    else validateNode(node.mainEntity, `${at}.mainEntity`, problems, 'ItemList');
+  },
+  ItemList(node, at, problems) {
+    const items = asArray(node.itemListElement);
+    if (items.length === 0) problems.push(`${at}: itemListElement is empty`);
+    items.forEach((item, index) => {
+      const here = `${at}.itemListElement[${index}]`;
+      if (!isObject(item)) return void problems.push(`${here} is not an object`);
+      typed(item, here, problems, 'ListItem');
+      required(item, ['position', 'name', 'url'], here, problems);
+      if (item.position !== index + 1) problems.push(`${here}: position should be ${index + 1}`);
+      if (item.url !== undefined && !isUrl(item.url)) problems.push(`${here}: url must be absolute`);
+    });
   },
   WebSite(node, at, problems) {
     required(node, ['name', 'url'], at, problems);
@@ -123,6 +149,8 @@ const checks: Record<string, Check> = {
     }
   },
 };
+// Store is a LocalBusiness subtype (schema.org/Store): same required shape.
+checks.Store = checks.LocalBusiness;
 
 function validateNode(node: Json, at: string, problems: string[], expectedType?: string) {
   const type = String(node['@type'] ?? '');

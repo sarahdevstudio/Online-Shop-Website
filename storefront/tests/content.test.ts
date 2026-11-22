@@ -110,12 +110,13 @@ describe('info page metadata', () => {
 });
 
 describe('contact structured data', () => {
-  it('is a LocalBusiness only when an address is set', () => {
+  it('is a Store (LocalBusiness subtype) only when an address is set, with its real opening hours', () => {
     const withAddress = contactJsonLd({ phone: '02112345678', address: 'تهران، خیابان آزادی', hours: '۹ تا ۱۸', instagram: 'myshop' });
-    expect(withAddress['@type']).toBe('LocalBusiness');
+    expect(withAddress['@type']).toBe('Store');
     expect(withAddress).toMatchObject({
       telephone: '02112345678',
       address: { '@type': 'PostalAddress', streetAddress: 'تهران، خیابان آزادی', addressCountry: 'IR' },
+      openingHours: '۹ تا ۱۸',
       sameAs: ['https://www.instagram.com/myshop/'],
     });
   });
@@ -139,7 +140,7 @@ describe('contact structured data', () => {
       if (path === '/catalog/sitemap') {
         return {
           categories: [{ slug: 'lamps', path: '/shop/lamps', updatedAtUtc: null }],
-          products: [{ slug: 'crystal-9', path: '/lustre/crystal-9', updatedAtUtc: '2026-10-20T08:00:00' }],
+          products: [{ slug: 'crystal-9', path: '/lustre/crystal-9', updatedAtUtc: '2026-10-20T08:00:00', images: [] }],
         };
       }
       if (path === '/catalog/pages') return INFO_SLUGS.map((slug) => ({ slug, path: slug === 'about' ? '/about-us' : `/${slug}`, title: slug, updatedAtUtc: '2026-10-26T10:30:00' }));

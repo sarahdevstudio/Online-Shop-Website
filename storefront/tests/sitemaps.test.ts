@@ -12,7 +12,10 @@ function api(overrides: Record<string, unknown> = {}) {
     if (path === '/catalog/sitemap') {
       return {
         categories: [{ slug: 'lamps', path: '/category/lamps', updatedAtUtc: '2026-10-20T08:00:00' }, { slug: 'old', path: '/category/old', updatedAtUtc: null }],
-        products: [{ slug: 'led', path: '/product/led', updatedAtUtc: '2026-10-22T09:30:00' }, { slug: 'hidden', path: '/product/hidden', updatedAtUtc: '2026-10-23T09:30:00' }],
+        products: [
+          { slug: 'led', path: '/product/led', updatedAtUtc: '2026-10-22T09:30:00', images: [{ url: '/media/products/1/led.webp', title: 'لامپ LED' }] },
+          { slug: 'hidden', path: '/product/hidden', updatedAtUtc: '2026-10-23T09:30:00', images: [] },
+        ],
       };
     }
     if (path === '/catalog/pages') return [{ slug: 'about', path: '/about', title: 'x', updatedAtUtc: '2026-10-26T10:30:00' }, { slug: 'privacy', path: '/privacy', title: 'x', updatedAtUtc: '2026-10-25T10:30:00' }];
@@ -33,8 +36,8 @@ describe('split sitemaps', () => {
     api();
     const products = await entriesFor('products');
     expect(products).toEqual([
-      { loc: 'http://localhost:3000/product/led', lastmod: '2026-10-22T09:30:00.000Z' },
-      { loc: 'http://localhost:3000/product/hidden', lastmod: '2026-10-23T09:30:00.000Z' },
+      { loc: 'http://localhost:3000/product/led', lastmod: '2026-10-22T09:30:00.000Z', images: [{ url: 'http://localhost:3000/media/products/1/led.webp', title: 'لامپ LED' }] },
+      { loc: 'http://localhost:3000/product/hidden', lastmod: '2026-10-23T09:30:00.000Z', images: [] },
     ]);
     expect((await entriesFor('categories')).find((e) => e.loc.endsWith('/old'))?.lastmod).toBeNull(); // no date is better than a made-up one
     expect((await entriesFor('pages')).map((e) => e.loc)).toEqual(['http://localhost:3000/', 'http://localhost:3000/blog', 'http://localhost:3000/about', 'http://localhost:3000/privacy']);
@@ -58,8 +61,17 @@ describe('split sitemaps', () => {
     const xml = urlsetXml([{ loc: 'http://x/a?b=1&c="2"<3>', lastmod: '2026-10-22T09:30:00.000Z' }, { loc: 'http://x/b', lastmod: null }]);
     expect(xml).toContain('<loc>http://x/a?b=1&amp;c=&quot;2&quot;&lt;3&gt;</loc><lastmod>2026-10-22T09:30:00.000Z</lastmod>');
     expect(xml).toContain('<url><loc>http://x/b</loc></url>');
-    expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')).toBe(true);
+    expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">')).toBe(true);
     expect(escapeXml(`<a href="x">&'</a>`)).toBe('&lt;a href=&quot;x&quot;&gt;&amp;&apos;&lt;/a&gt;');
+  });
+
+  it('a product URL carries its images, each with a title; a product with none gets no <image:image>', async () => {
+    api();
+    const products = await entriesFor('products');
+    const withImage = urlsetXml(products);
+    expect(withImage).toContain('<image:image><image:loc>http://localhost:3000/media/products/1/led.webp</image:loc><image:title>لامپ LED</image:title></image:image>');
+    const hiddenUrlBlock = withImage.slice(withImage.indexOf('/product/hidden'));
+    expect(hiddenUrlBlock).not.toContain('<image:image>');
   });
 
   it('the index lists only non-empty sitemaps, each with the newest lastmod inside it', async () => {
