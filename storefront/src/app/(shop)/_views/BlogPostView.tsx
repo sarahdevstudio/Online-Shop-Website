@@ -6,9 +6,9 @@ import { getBlogPost } from '@/lib/blog';
 import { formatJalaliDate } from '@/lib/format';
 import { renderMarkdown } from '@/lib/markdown';
 import { messages } from '@/lib/messages';
-import { absoluteUrl, pageMetadata, site, withSeoOverrides } from '@/lib/seo';
+import { absoluteUrl, organizationJsonLd, pageMetadata, withSeoOverrides } from '@/lib/seo';
 import { getEntitySeo } from '@/lib/entity-seo';
-import { seoDefaults } from '@/lib/site-config';
+import { getSiteConfig, seoDefaults } from '@/lib/site-config';
 import styles from '../blog/blog.module.css';
 
 type Props = { slug: string };
@@ -26,6 +26,11 @@ export async function BlogPostView({ slug }: Props) {
 
   const path = post.path;
   const crumbs = [{ label: messages.home, href: '/' }, { label: messages.blog, href: '/blog' }, { label: post.title }];
+  // Posts have no cover image field of their own: the site's own share image (real, already-configured data) stands
+  // in, the same fallback the OG image already uses - never an invented picture.
+  const { theme, seo } = await getSiteConfig();
+  const organization = organizationJsonLd({ logoUrl: theme.logo?.url });
+  const image = seo.defaultOgImage ? absoluteUrl(seo.defaultOgImage.url) : undefined;
 
   return (
     <article className="ui-container ui-section ui-stack">
@@ -35,11 +40,13 @@ export async function BlogPostView({ slug }: Props) {
           '@type': 'BlogPosting',
           headline: post.title,
           description: post.excerpt,
+          ...(image ? { image } : {}),
           datePublished: post.publishedAtUtc,
           dateModified: post.updatedAtUtc,
           inLanguage: 'fa-IR',
           mainEntityOfPage: absoluteUrl(path),
-          publisher: { '@type': 'Organization', name: site.name, url: site.url },
+          author: organization,
+          publisher: organization,
         }}
       />
       <Breadcrumb items={crumbs} />
