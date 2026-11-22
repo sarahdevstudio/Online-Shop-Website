@@ -21,6 +21,7 @@ import { ReviewsSection } from '@/components/ReviewsSection';
 import { getProductReviews } from '@/lib/reviews';
 import { FaqSection } from '@/components/FaqSection';
 import { seoDefaults } from '@/lib/site-config';
+import { getStoreInfo } from '@/lib/store-info';
 import { pickVariant, selectionFromParams, variantQuery } from '@/lib/variants';
 
 type Props = { slug: string; searchParams: SearchParams };
@@ -60,7 +61,7 @@ function specRows(product: ProductDetailDto, variant: VariantDto | null): SpecRo
 }
 
 export async function ProductView({ slug, searchParams }: Props) {
-  const [product, seo, reviews] = await Promise.all([getProduct(slug), getEntitySeo('product', slug), getProductReviews(slug)]);
+  const [product, seo, reviews, storeInfo] = await Promise.all([getProduct(slug), getEntitySeo('product', slug), getProductReviews(slug), getStoreInfo()]);
   if (!product) notFound();
 
   const basePath = product.path;
@@ -79,6 +80,7 @@ export async function ProductView({ slug, searchParams }: Props) {
           images: product.images.map((image) => absoluteUrl(image.url)),
           brand: product.brand?.name,
           reviews,
+          shippingFeeToman: storeInfo?.shippingFlatFee ?? null,
           offers: product.variants.map((v) => ({
             sku: v.sku,
             priceToman: v.price,
