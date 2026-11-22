@@ -32,7 +32,7 @@ public sealed record OrderBody(
 
 public sealed record StatusLogBody(string? From, string To, Guid? AdminUserId);
 
-public sealed record AdminOrderBody(int Id, OrderBody Order, string ClientIp, StatusLogBody[] StatusLog);
+public sealed record AdminOrderBody(int Id, OrderBody Order, string ClientIp, string Source, StatusLogBody[] StatusLog);
 
 public sealed record AdminOrderListBody(AdminOrderListItemBody[] Items, int Total);
 
