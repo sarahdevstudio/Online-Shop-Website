@@ -22,7 +22,8 @@ import {
 } from '@/lib/listing';
 import { messages } from '@/lib/messages';
 import { isPageInRange, type SearchParams } from '@/lib/paging';
-import { pageMetadata, withSeoOverrides } from '@/lib/seo';
+import { collectionPageJsonLd, pageMetadata, withSeoOverrides } from '@/lib/seo';
+import { JsonLd } from '@/components/JsonLd';
 import { EMPTY_SEO, getEntitySeo } from '@/lib/entity-seo';
 import { renderMarkdown } from '@/lib/markdown';
 import { FaqSection } from '@/components/FaqSection';
@@ -97,6 +98,7 @@ export async function CategoryView(props: Props) {
           { label: category.name },
         ]}
       />
+      {result.items.length > 0 && <JsonLd data={collectionPageJsonLd(result.items.map((p) => ({ name: p.name, path: p.path })))!} />}
       <h1 className="ui-heading-2">{category.name}</h1>
       {category.description && <p className="ui-text-muted">{category.description}</p>}
       {category.children.length > 0 && (
