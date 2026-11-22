@@ -99,7 +99,7 @@ export interface ProductDetailDto {
 
 interface SitemapDto {
   categories: { slug: string; path: string; updatedAtUtc: string | null }[];
-  products: { slug: string; path: string; updatedAtUtc: string | null }[];
+  products: { slug: string; path: string; updatedAtUtc: string | null; images: { url: string; title: string }[] }[];
 }
 
 // ---- page models ----

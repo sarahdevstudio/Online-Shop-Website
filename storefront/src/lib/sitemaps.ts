@@ -15,6 +15,7 @@ export type SitemapName = (typeof SITEMAP_NAMES)[number];
 export interface SitemapEntry {
   loc: string;
   lastmod: string | null;
+  images?: readonly { url: string; title: string }[];
 }
 
 export const escapeXml = (value: string) =>
@@ -31,7 +32,9 @@ export async function entriesFor(name: SitemapName): Promise<SitemapEntry[]> {
   switch (name) {
     case 'products': {
       const { products } = await getSitemap();
-      return products.filter((p) => !noindex.product.has(p.slug)).map((p) => entry(p.path, p.updatedAtUtc));
+      return products
+        .filter((p) => !noindex.product.has(p.slug))
+        .map((p) => ({ ...entry(p.path, p.updatedAtUtc), images: p.images.map((i) => ({ url: absoluteUrl(i.url), title: i.title })) }));
     }
     case 'categories': {
       const { categories } = await getSitemap();
@@ -49,8 +52,13 @@ export async function entriesFor(name: SitemapName): Promise<SitemapEntry[]> {
 }
 
 export function urlsetXml(entries: readonly SitemapEntry[]): string {
-  const urls = entries.map((e) => `<url><loc>${escapeXml(e.loc)}</loc>${e.lastmod ? `<lastmod>${e.lastmod}</lastmod>` : ''}</url>`).join('');
-  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`;
+  const urls = entries
+    .map((e) => {
+      const images = (e.images ?? []).map((i) => `<image:image><image:loc>${escapeXml(i.url)}</image:loc><image:title>${escapeXml(i.title)}</image:title></image:image>`).join('');
+      return `<url><loc>${escapeXml(e.loc)}</loc>${e.lastmod ? `<lastmod>${e.lastmod}</lastmod>` : ''}${images}</url>`;
+    })
+    .join('');
+  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">${urls}</urlset>`;
 }
 
 export function indexXml(parts: readonly { name: SitemapName; entries: readonly SitemapEntry[] }[]): string {
