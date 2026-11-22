@@ -121,6 +121,7 @@ internal sealed class AdminOrderService(
         order.Id,
         OrderMapper.ToDto(order),
         order.ClientIp,
+        order.Source,
         order.StatusLog.OrderBy(l => l.AtUtc).ThenBy(l => l.Id)
             .Select(l => new OrderStatusLogDto(l.FromStatus, l.ToStatus, l.AdminUserId, l.AtUtc)).ToList());
 

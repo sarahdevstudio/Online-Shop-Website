@@ -242,9 +242,11 @@ internal sealed class CatalogAdminService(
     public async Task<PagedList<AdminProductListItemDto>> GetProductsAsync(string? q, ProductStatus? status, int page, CancellationToken ct)
     {
         var query = db.Products.AsNoTracking();
+        // A SKU is plain ASCII, so it is matched against the raw token as typed (SearchKey/Slug have already dropped
+        // Persian punctuation, which never appears in a SKU anyway).
         foreach (var token in PersianText.SearchKey(q).Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
-            query = query.Where(p => p.SearchKey.Contains(token) || p.Slug.Contains(token));
+            query = query.Where(p => p.SearchKey.Contains(token) || p.Slug.Contains(token) || p.Variants.Any(v => v.Sku.Contains(token)));
         }
 
         if (status is not null)

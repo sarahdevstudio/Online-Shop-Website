@@ -78,7 +78,9 @@ internal sealed class OrderService(
 
         await LockAsync($"order-mobile:{mobile}", ct);
 
-        var limit = await CheckUnpaidLimitAsync(mobile, ip, ct);
+        // The per-mobile/per-IP unpaid-order limit is an anti-abuse rule for the public checkout; it does not apply
+        // to an admin placing a phone order.
+        var limit = context.Source == OrderSource.Admin ? null : await CheckUnpaidLimitAsync(mobile, ip, ct);
         if (limit is not null)
         {
             return limit;
@@ -137,7 +139,7 @@ internal sealed class OrderService(
             request.Note is null ? null : PersianText.NormalizeLetters(request.Note),
             ip, subtotal, shipping, discountCode, discountAmount,
             request.PaymentMethod == PaymentMethod.CardToCard ? new CardSnapshot(store.CardNumber, store.CardHolderName, store.BankName) : null,
-            items, now);
+            items, now, context.Source, context.AdminUserId);
 
         db.Orders.Add(order);
         db.Carts.Remove(cart);

@@ -51,8 +51,12 @@ public sealed record PlaceOrderRequest(
     string FullName, string Mobile, string Province, string City, string Address, string PostalCode, string? Note,
     PaymentMethod PaymentMethod, long ExpectedTotal);
 
-/// <summary>What the transport layer knows: the cart cookie value, the idempotency key header and the client address.</summary>
-public sealed record PlaceOrderContext(string? CartToken, Guid IdempotencyKey, string ClientIp);
+/// <summary>
+/// What the transport layer knows: the cart cookie value, the idempotency key header and the client address.
+/// <see cref="Source"/>/<see cref="AdminUserId"/> are set only for an admin-placed phone order (G3): it skips the
+/// per-mobile/per-IP unpaid-order limit (an anti-abuse rule that does not apply to staff) but nothing else differs.
+/// </summary>
+public sealed record PlaceOrderContext(string? CartToken, Guid IdempotencyKey, string ClientIp, OrderSource Source = OrderSource.Shop, Guid? AdminUserId = null);
 
 public sealed record PlacedOrderDto(string AccessToken, int Number, bool Replayed);
 
@@ -81,6 +85,6 @@ public sealed record AdminOrderListItemDto(
 public sealed record OrderStatusLogDto(OrderStatus? From, OrderStatus To, Guid? AdminUserId, DateTime AtUtc);
 
 public sealed record AdminOrderDto(
-    int Id, OrderDto Order, string ClientIp, IReadOnlyList<OrderStatusLogDto> StatusLog);
+    int Id, OrderDto Order, string ClientIp, OrderSource Source, IReadOnlyList<OrderStatusLogDto> StatusLog);
 
 public sealed record SetOrderStatusRequest(OrderStatus Status);
