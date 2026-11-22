@@ -9,6 +9,8 @@ using Shop.Domain.Catalog;
 using Shop.Domain.Common;
 using Shop.Domain.Inventory;
 using Shop.Domain.Routing;
+using Shop.Domain.Security;
+using Shop.Domain.Seo;
 using Shop.Infrastructure.Persistence;
 
 namespace Shop.Infrastructure.Catalog;
@@ -27,7 +29,8 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
     // Fixed columns, in file order. Attribute columns follow: spec:<code> (a value of the whole product), axis:<code> (per variant).
     private static readonly string[] Fixed =
     [
-        "product_slug", "product_name", "category", "brand", "status", "description", "path",
+        "product_slug", "product_name", "category", "brand", "status", "description",
+        "seo_title", "seo_description", "seo_noindex", "path",
         "sku", "price", "compare_at_price", "cost_price", "stock", "variant_active", "sort_order", "image_ids",
     ];
 
@@ -49,22 +52,26 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
         var productPaths = await CurrentPathsAsync(RouteTargetTypes.Product, ct);
         var products = await db.Products.AsNoTracking().Include(p => p.Variants).Include(p => p.AttributeValues).Include(p => p.Images)
             .AsSplitQuery().OrderBy(p => p.Slug).ToListAsync(ct);
+        var seoMetas = await db.SeoMetas.AsNoTracking().Where(m => m.TargetType == RouteTargetTypes.Product).ToDictionaryAsync(m => m.TargetId, ct);
 
-        var header = Fixed.Concat(attributes.Select(a => SpecPrefix + a.Code)).Concat(attributes.Select(a => AxisPrefix + a.Code)).ToList();
-        var numeric = header.Select((name, i) => (name, i)).Where(x => NumericColumns.Contains(x.name)).Select(x => x.i).ToHashSet();
+        var header = Header(attributes);
+        var numeric = NumericIndexes(header);
         var rows = new List<IReadOnlyList<string>>();
         foreach (var product in products)
         {
             var optionText = attributes.SelectMany(a => a.Options.Select(o => (o.Id, o.Value))).ToDictionary(x => x.Id, x => x.Value);
             string ValueOf(ProductAttributeValue v) => v.OptionId is { } id ? optionText.GetValueOrDefault(id, string.Empty) : v.Text ?? string.Empty;
             var images = string.Join(',', product.Images.OrderBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => i.Id));
+            var seo = seoMetas.GetValueOrDefault(product.Id);
             foreach (var variant in product.Variants.OrderBy(v => v.SortOrder).ThenBy(v => v.Id))
             {
                 var row = new List<string>
                 {
                     product.Slug, product.Name, categoryPaths.GetValueOrDefault(product.CategoryId, categories.GetValueOrDefault(product.CategoryId)?.Slug ?? string.Empty),
                     product.BrandId is { } b ? brands.GetValueOrDefault(b, string.Empty) : string.Empty,
-                    product.Status.ToString().ToLowerInvariant(), product.Description ?? string.Empty, productPaths.GetValueOrDefault(product.Id, string.Empty),
+                    product.Status.ToString().ToLowerInvariant(), product.Description ?? string.Empty,
+                    seo?.MetaTitle ?? string.Empty, seo?.MetaDescription ?? string.Empty, seo?.NoIndex == true ? "1" : "0",
+                    productPaths.GetValueOrDefault(product.Id, string.Empty),
                     variant.Sku, variant.Price.ToString(CultureInfo.InvariantCulture), variant.CompareAtPrice?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
                     variant.CostPrice?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
                     variant.Stock.ToString(CultureInfo.InvariantCulture), variant.IsActive ? "1" : "0", variant.SortOrder.ToString(CultureInfo.InvariantCulture), images,
@@ -91,6 +98,47 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
         await db.SaveChangesAsync(ct);
         return new ExportFile(name, format == "xlsx" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "text/csv; charset=utf-8", bytes);
     }
+
+    public async Task<ExportFile> TemplateAsync(string format, CancellationToken ct)
+    {
+        format = format == "xlsx" ? "xlsx" : "csv";
+        var attributes = await db.Attributes.AsNoTracking().Include(a => a.Options).OrderBy(a => a.SortOrder).ThenBy(a => a.Code).ToListAsync(ct);
+        var header = Header(attributes);
+        var numeric = NumericIndexes(header);
+        var category = await db.Categories.AsNoTracking().OrderBy(c => c.Id).Select(c => c.Slug).FirstOrDefaultAsync(ct) ?? string.Empty;
+
+        // Reuses the same column-help texts the transfer screen already shows (admin.transfer.columns.*), so there is
+        // one place that documents a column, not two that could drift apart.
+        string HintFor(string column) =>
+            Fixed.Contains(column) ? T("admin.transfer.columns." + column.Replace('_', '-')) :
+            column.StartsWith(SpecPrefix, StringComparison.Ordinal) || column.StartsWith(AxisPrefix, StringComparison.Ordinal) ? T("admin.transfer.columns.attributes") :
+            string.Empty;
+
+        var hints = header.Select(HintFor).Select(Safe).ToList();
+        var example = header.Select(column => column switch
+        {
+            "product_slug" => "namune-mahsul",
+            "product_name" => T("admin.transfer.example-product-name"),
+            "category" => category,
+            "status" => "draft",
+            "sku" => "SAMPLE-0001",
+            "price" => "1000000",
+            "stock" => "10",
+            "variant_active" => "1",
+            "sort_order" => "0",
+            _ => string.Empty,
+        }).Select(Safe).ToList();
+
+        var bytes = TableCodec.Write(format, header, [hints, example], numeric);
+        var name = $"products-template.{format}";
+        return new ExportFile(name, format == "xlsx" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "text/csv; charset=utf-8", bytes);
+    }
+
+    private static List<string> Header(IReadOnlyList<AttributeDefinition> attributes) =>
+        Fixed.Concat(attributes.Select(a => SpecPrefix + a.Code)).Concat(attributes.Select(a => AxisPrefix + a.Code)).ToList();
+
+    private static HashSet<int> NumericIndexes(IReadOnlyList<string> header) =>
+        header.Select((name, i) => (name, i)).Where(x => NumericColumns.Contains(x.name)).Select(x => x.i).ToHashSet();
 
     /// <summary>A cell that a spreadsheet program could take for a formula gets a leading apostrophe (the import takes it off again).</summary>
     private static string Safe(string value) => value.Length > 0 && value[0] is '=' or '+' or '-' or '@' or '\t' or '\r' ? "'" + value : value;
@@ -203,6 +251,15 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
         public ProductStatus? Status { get; set; }
         public string? Description { get; set; }
         public string? Path { get; set; }
+
+        /// <summary>SEO fields (E3): null + not-given = no change; given with a null value = the file's "-" clears it.</summary>
+        public string? SeoTitle { get; set; }
+        public bool SeoTitleGiven { get; set; }
+        public string? SeoDescription { get; set; }
+        public bool SeoDescriptionGiven { get; set; }
+        public bool? SeoNoIndex { get; set; }
+        public bool SeoNoIndexGiven { get; set; }
+        public SeoMeta? ExistingSeo { get; set; }
         public List<PlannedVariant> Variants { get; } = [];
         public Dictionary<int, AttrValue?> Spec { get; } = [];
         public HashSet<int> SpecColumns { get; } = [];
@@ -310,6 +367,10 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
             .Join(db.Products.AsNoTracking(), v => v.ProductId, p => p.Id, (v, p) => new { v.Sku, p.Slug }).ToListAsync(ct);
         var skuOwner = elsewhere.ToDictionary(x => x.Sku, x => x.Slug, StringComparer.OrdinalIgnoreCase);
         var productPaths = await CurrentPathsAsync(RouteTargetTypes.Product, ct);
+        var existingIds = existing.Values.Select(p => p.Id).ToList();
+        IQueryable<SeoMeta> seoQuery = db.SeoMetas;
+        seoQuery = tracking ? seoQuery : seoQuery.AsNoTracking();
+        var seoMetas = await seoQuery.Where(m => m.TargetType == RouteTargetTypes.Product && existingIds.Contains(m.TargetId)).ToDictionaryAsync(m => m.TargetId, ct);
 
         // ---- rows ----
         var byProduct = new Dictionary<string, PlannedProduct>(StringComparer.Ordinal);
@@ -341,7 +402,8 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
 
             if (!byProduct.TryGetValue(slug, out var product))
             {
-                product = new PlannedProduct(slug, row.Number) { Existing = existing.GetValueOrDefault(slug) };
+                var existingProduct = existing.GetValueOrDefault(slug);
+                product = new PlannedProduct(slug, row.Number) { Existing = existingProduct, ExistingSeo = existingProduct is not null ? seoMetas.GetValueOrDefault(existingProduct.Id) : null };
                 byProduct[slug] = product;
                 plan.Products.Add(product);
             }
@@ -394,6 +456,7 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
             ValidateAttributeRules(plan, product, attributes.Values.ToDictionary(a => a.Id, a => a.Code));
             ValidateImages(plan, product);
             ClassifyVariants(product);
+            CheckPermissions(plan, product);
         }
 
         return plan;
@@ -492,6 +555,70 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
         }
 
         product.Path = Field("path", product.Path, s => s);
+
+        // SEO (E3): empty cell = no change; a single "-" clears the field; anything else sets it. Multiple rows of
+        // the same product must agree, like every other product-level column.
+        var seoTitleRaw = cell(row, "seo_title");
+        if (seoTitleRaw.Length > 0)
+        {
+            var value = seoTitleRaw == "-" ? null : PersianText.Normalize(seoTitleRaw);
+            if (value is { Length: > SeoMeta.TitleMaxLength })
+            {
+                plan.Error(row.Number, "seo_title", T("api.validation.text-max-length", ("max", SeoMeta.TitleMaxLength)));
+            }
+            else if (product.SeoTitleGiven && !string.Equals(product.SeoTitle, value, StringComparison.Ordinal))
+            {
+                plan.Error(row.Number, "seo_title", T("api.import.e.product-differs", ("row", product.FirstRow)));
+            }
+            else
+            {
+                product.SeoTitle = value;
+                product.SeoTitleGiven = true;
+            }
+        }
+
+        var seoDescriptionRaw = cell(row, "seo_description");
+        if (seoDescriptionRaw.Length > 0)
+        {
+            var value = seoDescriptionRaw == "-" ? null : PersianText.NormalizeLetters(seoDescriptionRaw);
+            if (value is { Length: > SeoMeta.DescriptionMaxLength })
+            {
+                plan.Error(row.Number, "seo_description", T("api.validation.text-max-length", ("max", SeoMeta.DescriptionMaxLength)));
+            }
+            else if (product.SeoDescriptionGiven && !string.Equals(product.SeoDescription, value, StringComparison.Ordinal))
+            {
+                plan.Error(row.Number, "seo_description", T("api.import.e.product-differs", ("row", product.FirstRow)));
+            }
+            else
+            {
+                product.SeoDescription = value;
+                product.SeoDescriptionGiven = true;
+            }
+        }
+
+        var noIndexRaw = cell(row, "seo_noindex");
+        if (noIndexRaw.Length > 0)
+        {
+            bool? value = noIndexRaw == "-" ? false : ToAscii(noIndexRaw).ToLowerInvariant() switch
+            {
+                "1" or "yes" or "true" or "y" => true,
+                "0" or "no" or "false" or "n" => false,
+                _ => null,
+            };
+            if (value is null)
+            {
+                plan.Error(row.Number, "seo_noindex", T("api.import.e.active-invalid"));
+            }
+            else if (product.SeoNoIndexGiven && product.SeoNoIndex != value)
+            {
+                plan.Error(row.Number, "seo_noindex", T("api.import.e.product-differs", ("row", product.FirstRow)));
+            }
+            else
+            {
+                product.SeoNoIndex = value;
+                product.SeoNoIndexGiven = true;
+            }
+        }
 
         // image ids (existing products only; checked once the group is complete)
         var images = cell(row, "image_ids");
@@ -750,7 +877,8 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
                 || (product.Status is { } s && s != p.Status)
                 || (product.Description is not null && product.Description != p.Description)
                 || (product.ImageOrder is { } order && !order.SequenceEqual(p.Images.OrderBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => i.Id)))
-                || SpecChanged(product, p);
+                || SpecChanged(product, p)
+                || SeoChanged(product);
             product.ProductChanged = changed;
         }
 
@@ -773,6 +901,59 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
                 || (variant.CostPriceGiven && variant.CostPrice != v.CostPrice)
                 ? "update-variant" : "unchanged";
         }
+    }
+
+    /// <summary>
+    /// Mirrors the product editor: creating a product needs Catalog.Create; any actual change to an existing product
+    /// or its variants (status included) needs Catalog.Update; creating a product that is immediately published needs
+    /// both. A no-op row (e.g. the unchanged half of a round-trip) needs neither.
+    /// </summary>
+    private void CheckPermissions(Plan plan, PlannedProduct product)
+    {
+        if (product.IsNew)
+        {
+            if (!currentUser.HasPermission(Permissions.CatalogCreate))
+            {
+                foreach (var variant in product.Variants)
+                {
+                    plan.Error(variant.Row, "product_slug", T("api.import.e.permission-create"));
+                }
+
+                return;
+            }
+
+            if (product.Status == ProductStatus.Published && !currentUser.HasPermission(Permissions.CatalogUpdate))
+            {
+                foreach (var variant in product.Variants)
+                {
+                    plan.Error(variant.Row, "status", T("api.import.e.permission-update"));
+                }
+            }
+
+            return;
+        }
+
+        var variantsChange = product.Variants.Any(v => v.Action != "unchanged");
+        if ((product.ProductChanged || variantsChange) && !currentUser.HasPermission(Permissions.CatalogUpdate))
+        {
+            foreach (var variant in product.Variants)
+            {
+                plan.Error(variant.Row, "product_slug", T("api.import.e.permission-update"));
+            }
+        }
+    }
+
+    private static bool SeoChanged(PlannedProduct product)
+    {
+        if (!product.SeoTitleGiven && !product.SeoDescriptionGiven && !product.SeoNoIndexGiven)
+        {
+            return false;
+        }
+
+        var current = product.ExistingSeo;
+        return (product.SeoTitleGiven && !string.Equals(product.SeoTitle, current?.MetaTitle, StringComparison.Ordinal))
+            || (product.SeoDescriptionGiven && !string.Equals(product.SeoDescription, current?.MetaDescription, StringComparison.Ordinal))
+            || (product.SeoNoIndexGiven && product.SeoNoIndex != (current?.NoIndex ?? false));
     }
 
     private static bool SpecChanged(PlannedProduct product, Product existing) =>
@@ -833,9 +1014,30 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
             {
                 throw new DbUpdateException("The product's path was taken meanwhile.");
             }
+
+            ApplySeo(product.Id, planned, null, now);
         }
 
         await db.SaveChangesAsync(ct);
+    }
+
+    private void ApplySeo(int productId, PlannedProduct planned, SeoMeta? existingMeta, DateTime now)
+    {
+        if (!planned.SeoTitleGiven && !planned.SeoDescriptionGiven && !planned.SeoNoIndexGiven)
+        {
+            return;
+        }
+
+        var meta = existingMeta ?? SeoMeta.Create(RouteTargetTypes.Product, productId);
+        if (existingMeta is null)
+        {
+            db.SeoMetas.Add(meta);
+        }
+
+        var title = planned.SeoTitleGiven ? planned.SeoTitle : meta.MetaTitle;
+        var description = planned.SeoDescriptionGiven ? planned.SeoDescription : meta.MetaDescription;
+        var noIndex = planned.SeoNoIndexGiven ? planned.SeoNoIndex!.Value : meta.NoIndex;
+        meta.Apply(title, description, meta.OgMediaId, noIndex, currentUser.UserId, now);
     }
 
     private static ProductAttributeValue Make(int attributeId, AttrValue value, int? variantId) =>
@@ -918,6 +1120,7 @@ internal sealed class CatalogTransferService(ShopDbContext db, IRouteService rou
             }
         }
 
+        ApplySeo(product.Id, planned, planned.ExistingSeo, now);
         product.Touch(now);
     }
 

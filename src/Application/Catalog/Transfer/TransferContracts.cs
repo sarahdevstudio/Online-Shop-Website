@@ -23,6 +23,9 @@ public interface ICatalogTransferService
 {
     Task<ExportFile> ExportAsync(string format, CancellationToken ct);
 
+    /// <summary>An empty file with the current column headers, a row of Persian hints per column, and one example data row.</summary>
+    Task<ExportFile> TemplateAsync(string format, CancellationToken ct);
+
     /// <summary>The dry run: reads the file and reports what it would create and update, and every problem per row. Writes nothing.</summary>
     Task<Result<ImportPreviewDto>> PreviewAsync(Stream file, string fileName, CancellationToken ct);
 

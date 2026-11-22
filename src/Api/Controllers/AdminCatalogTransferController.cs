@@ -24,6 +24,14 @@ public sealed class AdminCatalogTransferController(ICatalogTransferService trans
         return Http(Results.File(file.Content, file.ContentType, file.FileName));
     }
 
+    [HttpGet("template")]
+    [Authorize(Policy = Permissions.CatalogImport)]
+    public async Task<IActionResult> Template([FromQuery] string? format, CancellationToken ct)
+    {
+        var file = await transfer.TemplateAsync(format ?? "csv", ct);
+        return Http(Results.File(file.Content, file.ContentType, file.FileName));
+    }
+
     [HttpPost("import/preview")]
     [Authorize(Policy = Permissions.CatalogImport)]
     [RequireMultipartForm]

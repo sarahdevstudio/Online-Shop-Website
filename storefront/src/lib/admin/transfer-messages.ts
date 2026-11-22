@@ -13,6 +13,10 @@ export const transferMessages = {
   get exportHint() { return t('admin.transfer.export-hint'); },
   get exportCsv() { return t('admin.transfer.export-csv'); },
   get exportXlsx() { return t('admin.transfer.export-xlsx'); },
+  get templateTitle() { return t('admin.transfer.template-title'); },
+  get templateHint() { return t('admin.transfer.template-hint'); },
+  get templateCsv() { return t('admin.transfer.template-csv'); },
+  get templateXlsx() { return t('admin.transfer.template-xlsx'); },
   get importTitle() { return t('admin.transfer.import-title'); },
   get file() { return t('admin.transfer.file'); },
   get fileHint() { return t('admin.transfer.file-hint'); },
@@ -59,4 +63,8 @@ const ACTIONS: Record<string, TextKey> = {
 };
 
 /** The fixed columns, in file order, as documented on the screen. */
-export const TRANSFER_COLUMNS = ["product_slug", "product_name", "category", "brand", "status", "description", "path", "sku", "price", "compare_at_price", "stock", "variant_active", "sort_order", "image_ids"] as const;
+export const TRANSFER_COLUMNS = [
+  "product_slug", "product_name", "category", "brand", "status", "description",
+  "seo_title", "seo_description", "seo_noindex", "path",
+  "sku", "price", "compare_at_price", "cost_price", "stock", "variant_active", "sort_order", "image_ids",
+] as const;

@@ -28,6 +28,21 @@ export default function TransferPage() {
         </p>
       </section>
 
+      <section className={styles.panel} aria-labelledby="template">
+        <h2 id="template" className="ui-heading-4">
+          {t.templateTitle}
+        </h2>
+        <p>{t.templateHint}</p>
+        <p>
+          <a href="/admin/api/catalog/template?format=csv" className="ui-control" style={{ inlineSize: 'auto', textDecoration: 'none' }} download>
+            {t.templateCsv}
+          </a>{' '}
+          <a href="/admin/api/catalog/template?format=xlsx" className="ui-control" style={{ inlineSize: 'auto', textDecoration: 'none' }} download>
+            {t.templateXlsx}
+          </a>
+        </p>
+      </section>
+
       <TransferForm />
 
       <section className={styles.panel} aria-labelledby="format">
