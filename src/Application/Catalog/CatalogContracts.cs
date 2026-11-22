@@ -63,7 +63,11 @@ public sealed record ProductDetailDto(
 
 public sealed record SitemapEntryDto(string Slug, string Path, DateTime? UpdatedAtUtc);
 
-public sealed record CatalogSitemapDto(IReadOnlyList<SitemapEntryDto> Categories, IReadOnlyList<SitemapEntryDto> Products);
+public sealed record SitemapImageDto(string Url, string Title);
+
+public sealed record SitemapProductEntryDto(string Slug, string Path, DateTime? UpdatedAtUtc, IReadOnlyList<SitemapImageDto> Images);
+
+public sealed record CatalogSitemapDto(IReadOnlyList<SitemapEntryDto> Categories, IReadOnlyList<SitemapProductEntryDto> Products);
 
 public enum ProductSort
 {

@@ -237,9 +237,13 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media, IRou
         var products = await db.Products.AsNoTracking()
             .Where(p => p.Status == ProductStatus.Published && p.Variants.Any(v => v.IsActive))
             .OrderBy(p => p.Id)
-            .Select(p => new { p.Id, p.Slug, p.UpdatedAtUtc })
+            .Select(p => new { p.Id, p.Slug, p.Name, p.UpdatedAtUtc, Images = p.Images.OrderBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => new { i.Path, i.Alt }) })
             .ToListAsync(ct);
-        return new CatalogSitemapDto(categories, products.Select(p => new SitemapEntryDto(p.Slug, routes.PathOf(RouteTargetTypes.Product, p.Id, p.Slug), p.UpdatedAtUtc)).ToList());
+        return new CatalogSitemapDto(
+            categories,
+            products.Select(p => new SitemapProductEntryDto(
+                p.Slug, routes.PathOf(RouteTargetTypes.Product, p.Id, p.Slug), p.UpdatedAtUtc,
+                p.Images.Select(i => new SitemapImageDto(media.GetUrl(i.Path), string.IsNullOrWhiteSpace(i.Alt) ? p.Name : i.Alt)).ToList())).ToList());
     }
 
     // ---- listing internals ----
