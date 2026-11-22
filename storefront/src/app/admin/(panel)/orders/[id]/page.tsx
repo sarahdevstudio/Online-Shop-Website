@@ -47,6 +47,7 @@ export default async function AdminOrderPage({ params }: { params: Promise<{ id:
             {adminMessages.orders.date}: {formatJalaliDate(order.createdAtUtc)}
           </p>
           <p className={`${styles.muted} ${styles.ltr}`}>{data.clientIp}</p>
+          {data.source === 'admin' && <p className={`${styles.badge} ${styles.flag}`}>{adminMessages.orders.phoneOrder}</p>}
         </section>
 
         <section className={styles.panel} aria-labelledby="customer">

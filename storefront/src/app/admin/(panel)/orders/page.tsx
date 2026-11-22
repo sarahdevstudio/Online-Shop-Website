@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Form, SelectField, SubmitButton, TextField } from '@/components/form';
-import { adminGet } from '@/lib/admin/api';
+import { adminGet, requireAdmin } from '@/lib/admin/api';
 import { adminMessages } from '@/lib/admin/messages';
 import type { AdminOrderListItem, PagedList } from '@/lib/admin/types';
 import { formatJalaliDate, formatNumber } from '@/lib/format';
@@ -22,6 +22,8 @@ async function load(status: string, paymentStatus: string, q: string, page: numb
 }
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const session = await requireAdmin();
+  const canCreate = session.perms?.includes('Orders.Create') ?? false;
   const sp = await searchParams;
   const status = first(sp.status);
   const paymentStatus = first(sp.paymentStatus);
@@ -60,6 +62,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <h1 className="ui-heading-2">{adminMessages.orders.title}</h1>
+      {canCreate && (
+        <p>
+          <Link href="/admin/orders/new" className="ui-control" style={{ inlineSize: 'auto', textDecoration: 'none' }}>
+            {adminMessages.orders.newOrder.title}
+          </Link>
+        </p>
+      )}
 
       <Form method="get" inline>
         <SelectField name="status" label={adminMessages.orders.status} defaultValue={status}>

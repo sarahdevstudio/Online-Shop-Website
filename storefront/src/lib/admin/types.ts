@@ -55,6 +55,8 @@ export interface AdminOrder {
   id: number;
   order: OrderDto;
   clientIp: string;
+  /** "shop" (the customer's own checkout) or "admin" (a phone order placed from the admin panel, G3). */
+  source: 'shop' | 'admin';
   statusLog: { from: OrderStatus | null; to: OrderStatus; adminUserId: string | null; atUtc: string }[];
 }
 
