@@ -26,15 +26,27 @@ The permission is the existing `User.Manage` (the spec said `Users.Manage`; the 
 - The packing slip has **no prices**: a larger recipient block, a tick box per line and the item count.
 - The print stylesheet hides the controls and the grey desk; the paper size is an `@page` rule injected as a nonce-tagged `<style>` (the CSP allows no other inline style element). The e2e suite renders both sizes to PDF and checks the page boxes (595×842 pt and 420×595 pt).
 
-## 3. Product export and import (`Catalog.Manage`)
+## 3. Product export and import (`Catalog.Export` / `Catalog.Import`, plus `Catalog.Create` / `Catalog.Update` per row)
 
-Screen `/admin/products/transfer`. API: `GET /api/v1/admin/catalog/export?format=csv|xlsx`, `POST …/import/preview` and `POST …/import/apply` (multipart `file`).
+Screen `/admin/products/transfer`. API: `GET /api/v1/admin/catalog/export?format=csv|xlsx`, `GET …/template?format=csv|xlsx`, `POST …/import/preview` and `POST …/import/apply` (multipart `file`).
 
-**Format.** One row per variant. Fixed columns: `product_slug, product_name, category, brand, status, description, path, sku, price, compare_at_price, stock, variant_active, sort_order, image_ids`; then one `spec:<code>` column per attribute (a value of the whole product) and one `axis:<code>` per attribute (a value of that variant). Required: `product_slug, product_name, sku, price`. Rows with the same `product_slug` are the variants of one product; product-level cells may repeat on every row but must agree. Export and import use the same columns, so an exported file imports back as "no changes" (tested).
+**Format.** One row per variant. Fixed columns: `product_slug, product_name, category, brand, status, description, seo_title, seo_description, seo_noindex, path, sku, price, compare_at_price, cost_price, stock, variant_active, sort_order, image_ids`; then one `spec:<code>` column per attribute (a value of the whole product) and one `axis:<code>` per attribute (a value of that variant). Required: `product_slug, product_name, sku, price`. Rows with the same `product_slug` are the variants of one product; product-level cells may repeat on every row but must agree. Export and import use the same columns, so an exported file imports back as "no changes" (tested, both CSV and xlsx).
+
+**SEO columns (E3, `seo_title` / `seo_description` / `seo_noindex`).** Same length limits as the SEO panel (120 / 320 characters). Unlike every other column, an empty cell here means "no change" **and** a single `-` explicitly clears the field (title/description back to the generated default, `seo_noindex` back to `0`/not-noindexed) — every other column's "no change" is just an empty cell, with no separate "clear" marker.
+
+**Permissions, per row (docs/08 §6).** The whole endpoint still needs `Catalog.Import` (and export needs `Catalog.Export`). On top of that, each row is checked against the caller's live permissions (resolved server-side via `IPermissionCache`/`ICurrentUser.HasPermission`, never the cookie), mirroring the product editor:
+- a row that **creates** a product needs `Catalog.Create`;
+- a row that changes an **existing** product or variant in any way (including its status, to any value) needs `Catalog.Update`;
+- creating a product whose `status` is `published` needs **both** (`Catalog.Create` to make it, `Catalog.Update` to publish it);
+- a row that matches the current data exactly (a true no-op, e.g. the unchanged half of a round trip) needs neither.
+
+A missing permission is a normal row error (`{row, column, message}`), reported the same way by the dry run; it never partially writes that row or any other.
+
+**Template.** `GET …/template?format=csv|xlsx` downloads an empty file: the current header, a row of Persian hints per column (reusing the same text the "ستون‌های فایل" panel shows), and one example data row. Both rows must be deleted before a real import (the hint row fails validation on its own, by design, so it can't be imported by accident).
 
 **Dry run.** `preview` parses and validates everything and answers what would be created / updated per row and every problem as `{row, column, message}` with a Persian message (up to 200, then a "truncated" flag). It writes nothing. `apply` runs the same planner **inside one transaction**: any problem in any row refuses the whole file; a database conflict (a race for a path or SKU, a variant changed meanwhile) rolls back and answers 409.
 
-**Rules.** An existing product is found by slug, a variant by SKU (a SKU that belongs to another product is an error). Variants missing from the file are **not** deleted and no product is ever deleted. Existing products: an empty product-level cell means "leave as is"; the `path` of an existing product cannot be changed here (use the product page, which records the redirect). Stock changes are written to the stock history with source `import`. Numbers accept Persian digits and thousands separators. Brands and categories must already exist. An attribute cannot be both a product spec and a variant axis (same rule as the product screen).
+**Rules.** An existing product is found by slug, a variant by SKU (a SKU that belongs to another product is an error). Variants missing from the file are **not** deleted and no product is ever deleted. Existing products: an empty product-level cell means "leave as is" (except the SEO columns, see above); the `path` of an existing product cannot be changed here (use the product page, which records the redirect). `stock` is the absolute value (not a delta) and is written to the stock history with source `import`. Numbers accept Persian digits and thousands separators. Brands and categories must already exist. An attribute cannot be both a product spec and a variant axis (same rule as the product screen).
 
 **Images.** Nothing is fetched from a URL (no outgoing calls). `image_ids` accepts only the ids of the product's own images, to reorder them (the complete set); a URL or a foreign id is a row error with an explanation; a new product cannot take images (upload them on the product page).
 

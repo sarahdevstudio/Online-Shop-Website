@@ -65,8 +65,9 @@ a matrix (rows = resources, columns = actions, a "select all" per row) instead o
 | Products.Create; Brands.Create; Categories.Create | `Catalog.Create` |
 | Attributes.AddOption; Brands/Categories/Products/Variants/Images .Update/AddVariant/SetAttributes/AddImage/ReorderImages/StockAdjust | `Catalog.Update` |
 | Brands.Delete; Categories.Delete | `Catalog.Delete` |
-| CatalogTransfer.Export | `Catalog.Export` |
-| CatalogTransfer.Preview/Apply | `Catalog.Import` |
+| CatalogTransfer.Export/Template | `Catalog.Export` resp. `Catalog.Import` (template needs only Import: the whole endpoint, not per-row) |
+| CatalogTransfer.Preview/Apply (the endpoint) | `Catalog.Import` |
+| CatalogTransfer.Preview/Apply, per row (G2, 2026-11-22): a row that creates a product; an existing product/variant changed in any way, status included; publishing a just-created product needs both | `Catalog.Create`; `Catalog.Update`; `Catalog.Create` **and** `Catalog.Update` |
 | ContentPages.List/Get/Audit | `Content.View` |
 | ContentPages.Update | `Content.Update` |
 | Blog.List/Get/Audit | `Blog.View` |
