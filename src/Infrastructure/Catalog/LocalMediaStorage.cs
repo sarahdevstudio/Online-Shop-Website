@@ -49,10 +49,21 @@ internal sealed class LocalMediaStorage(IOptions<MediaOptions> options, IHostEnv
 {
     private readonly string _root = options.Value.GetFullRoot(environment);
 
-    public async Task<string> SaveAsync(Stream content, string folder, string extension, CancellationToken ct)
+    public async Task<string> SaveAsync(Stream content, string folder, string extension, string? desiredName, CancellationToken ct)
     {
-        var relative = $"{folder.Trim('/')}/{Guid.NewGuid():N}{extension}";
+        var trimmedFolder = folder.Trim('/');
+        var relative = $"{trimmedFolder}/{desiredName ?? Guid.NewGuid().ToString("N")}{extension}";
         var fullPath = Resolve(relative);
+        // A desired name can collide with an existing file (e.g. a re-uploaded image at the same position); fall
+        // back to a numbered suffix rather than fail the upload.
+        var attempt = 1;
+        while (desiredName is not null && File.Exists(fullPath))
+        {
+            attempt++;
+            relative = $"{trimmedFolder}/{desiredName}-{attempt}{extension}";
+            fullPath = Resolve(relative);
+        }
+
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
 
         await using var file = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write);

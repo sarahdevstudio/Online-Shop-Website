@@ -64,7 +64,9 @@ public interface IStockService
 /// <summary>Stores uploaded files under the media root; paths are relative and use forward slashes.</summary>
 public interface IMediaStorage
 {
-    Task<string> SaveAsync(Stream content, string folder, string extension, CancellationToken ct);
+    /// <param name="desiredName">File name (without extension) to use instead of a random one, e.g. an SEO slug; must
+    /// already be a safe ASCII file name segment. Null keeps the default random name.</param>
+    Task<string> SaveAsync(Stream content, string folder, string extension, string? desiredName, CancellationToken ct);
 
     Task DeleteAsync(string path, CancellationToken ct);
 

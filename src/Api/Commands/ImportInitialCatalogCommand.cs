@@ -227,7 +227,7 @@ public static class ImportInitialCatalogCommand
                     var manifestImage = manifestProduct.Images[i];
                     var sourcePath = Path.Combine(catalogDir, "images", manifestImage.File);
                     await using var fileStream = File.OpenRead(sourcePath);
-                    var storedPath = await media.SaveAsync(fileStream, $"products/{product.Id}", ".webp", CancellationToken.None);
+                    var storedPath = await media.SaveAsync(fileStream, $"products/{product.Id}", ".webp", null, CancellationToken.None);
                     savedMediaPaths.Add(storedPath);
                     product.Images.Add(ProductImage.Create(storedPath, manifestImage.Alt, i));
                 }

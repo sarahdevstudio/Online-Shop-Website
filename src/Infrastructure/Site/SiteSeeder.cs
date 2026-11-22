@@ -103,7 +103,7 @@ public sealed class SiteSeeder(ShopDbContext db, IMediaStorage media, TimeProvid
         }
 
         buffer.Position = 0;
-        var path = await media.SaveAsync(buffer, "site", info.Extension, ct);
+        var path = await media.SaveAsync(buffer, "site", info.Extension, null, ct);
         var row = SiteMedia.Create(path, info.ContentType, info.Width, info.Height, buffer.Length, purpose, null, now);
         db.SiteMedia.Add(row);
         await db.SaveChangesAsync(ct);

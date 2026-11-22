@@ -227,6 +227,7 @@ public sealed class CatalogAdminTests(ApiFixture fixture) : CatalogTestBase(fixt
         Assert.StartsWith("/media/products/", image.Url, StringComparison.Ordinal);
         Assert.EndsWith(".png", image.Url, StringComparison.Ordinal);
         Assert.Equal("محصول " + product.Slug, image.Alt); // defaults to the product name
+        Assert.Equal("محصول " + product.Slug + " - تصویر 2", image2.Alt); // n > 1 gets a numbered suffix
         Assert.Contains("file", (await AssertProblemAsync(fake, 400)).Errors!.Keys);
 
         var served = await NewClient().GetAsync(image.Url);
@@ -252,17 +253,19 @@ public sealed class CatalogAdminTests(ApiFixture fixture) : CatalogTestBase(fixt
     [InlineData("jpeg", ".jpg")]
     [InlineData("png", ".png")]
     [InlineData("webp", ".webp")]
-    public async Task Upload_AcceptsJpegPngWebp_ByContent_WithAServerGeneratedName(string format, string extension)
+    public async Task Upload_AcceptsJpegPngWebp_ByContent_WithAnSeoFileName(string format, string extension)
     {
         var admin = await LoginAdminAsync();
         var bytes = format switch { "jpeg" => Jpeg, "png" => Png, _ => Webp };
+        var categoryId = (await CreateCategoryAsync(admin, Unique("cat"))).Id;
+        var product = await CreateProductAsync(admin, categoryId, Unique("p"));
 
         // Client file name and content type are deliberately misleading: only the bytes decide.
-        var response = await UploadAsync(admin, await NewProductIdAsync(admin), bytes, "../../evil name.php", "text/plain");
+        var response = await UploadAsync(admin, product.Id, bytes, "../../evil name.php", "text/plain");
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var url = (await ReadAsync<AdminImageBody>(response)).Url;
-        Assert.Matches("^/media/products/[0-9]+/[0-9a-f]{32}" + System.Text.RegularExpressions.Regex.Escape(extension) + "$", url);
+        Assert.Equal($"/media/products/{product.Id}/{product.Slug}-1{extension}", url);
         var served = await NewClient().GetAsync(url);
         Assert.Equal(HttpStatusCode.OK, served.StatusCode);
         Assert.Equal("nosniff", served.Headers.GetValues("X-Content-Type-Options").Single());

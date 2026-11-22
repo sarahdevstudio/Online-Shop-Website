@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Shop.Application.Catalog;
 using Shop.Application.Common;
 using Shop.Application.Routing;
+using Shop.Application.Translations;
 using Shop.Domain.Catalog;
 using Shop.Domain.Common;
 using Shop.Domain.Inventory;
@@ -484,9 +485,12 @@ internal sealed class CatalogAdminService(
         }
 
         buffer.Position = 0;
-        var path = await media.SaveAsync(buffer, $"products/{productId}", extension, ct);
+        // SEO file name: <product-slug>-<n>.webp instead of a random name (n = this image's 1-based position).
+        var imageNumber = product.Images.Count + 1;
+        var path = await media.SaveAsync(buffer, $"products/{productId}", extension, $"{product.Slug}-{imageNumber}", ct);
         var sortOrder = product.Images.Count == 0 ? 0 : product.Images.Max(i => i.SortOrder) + 1;
-        var image = ProductImage.Create(path, string.IsNullOrWhiteSpace(upload.Alt) ? product.Name : upload.Alt, sortOrder);
+        var defaultAlt = imageNumber > 1 ? Translate.Resolve(Msg.Of("api.catalog.image-alt-numbered", ("name", product.Name), ("n", imageNumber))) : product.Name;
+        var image = ProductImage.Create(path, string.IsNullOrWhiteSpace(upload.Alt) ? defaultAlt : upload.Alt, sortOrder);
         product.Images.Add(image);
         product.Touch(clock.GetUtcNow().UtcDateTime);
         try

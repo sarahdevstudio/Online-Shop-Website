@@ -464,7 +464,7 @@ internal sealed class AdminSiteService(
         }
 
         buffer.Position = 0;
-        var path = await media.SaveAsync(buffer, "site", info.Extension, ct);
+        var path = await media.SaveAsync(buffer, "site", info.Extension, null, ct);
         var now = clock.GetUtcNow().UtcDateTime;
         var row = SiteMedia.Create(path, info.ContentType, info.Width, info.Height, buffer.Length, purpose, currentUser.UserId, now);
         db.SiteMedia.Add(row);
