@@ -84,3 +84,31 @@ The shipping fee, free-shipping threshold, payment-method switches, card details
 - Card-to-card is offered only while it is switched on **and** the card number (16 digits, Luhn, not a placeholder) and holder are valid; otherwise cart, checkout and the public store info simply don't list it. The API no longer refuses to start with placeholder card details.
 - An order freezes the shipping fee (already) and, for card-to-card, the card number, holder and bank at placement; later setting changes never alter an existing order page.
 - Settings are cached in memory and the cache is invalidated by every admin update.
+
+## Admin-created ("phone") orders (G3, 2026-11-22)
+
+`/admin/orders/new`, permission `Orders.Create` (new; `Orders.View`/`Update` don't imply it — reading or advancing an
+order is not the same as creating one). Reuses the shop's own pieces end to end, nothing reimplemented:
+
+- **Draft cart = a real `ICartService` cart.** `AdminDraftOrderController` (`/api/v1/admin/orders/draft/*`) calls the
+  exact same `ICartService` the shop checkout uses, so stock checks, live prices and discount resolution are
+  identical. The only difference from the shop: the token travels as a `?cartToken=` query parameter (set by the
+  admin page in its own `admin_draft_cart` cookie, `Path=/admin`, separate from the shop's `cart` cookie) instead of
+  the storefront's `X-Cart-Token` header, since the caller is the admin session, not a shopper.
+- **Placement = the exact same `IOrderService.PlaceAsync`.** `AdminOrdersController.Place` builds a `PlaceOrderContext`
+  with `Source = OrderSource.Admin` and the admin's own user id; everything else (pricing, atomic stock decrement
+  under `sp_getapplock`, the quote-then-place `price_changed` check against `ExpectedTotal`, idempotency-key replay,
+  discount resolution and its own per-mobile/usage limits) runs through unmodified. No manual price override exists
+  anywhere in this path.
+- **Bypassed: the per-mobile/per-IP unpaid-order cap only.** `OrderService.PlaceCoreAsync` skips
+  `CheckUnpaidLimitAsync` when `context.Source == OrderSource.Admin` — a guest's own orders still count toward their
+  limit as before, and an admin order never lets a guest exceed theirs (the mobile is still locked and still counted
+  for later guest orders).
+- **`Order.Source` / `Order.CreatedByAdminUserId`** (new columns, migration `OrderSourceAndCreatedByAdmin`): the
+  creating admin's id also becomes the initial `OrderStatusLog` entry's `AdminUserId` (the log already had this field
+  for every later transition; creation now uses it too), so "who placed it" shows in the existing status-log UI with
+  no new table. The admin order detail page shows a "phone order" badge when `Source == Admin`.
+- **Product/variant search** reuses `GET /admin/products?q=` (`Catalog.View`): the query now also matches a variant's
+  SKU, not only the product name/slug, so the new order page's combobox can look up by either.
+- After placing, the page shows the order number and the customer's own `/order/{accessToken}` tracking link with a
+  copy button (no SMS — out of scope, no external services).
