@@ -135,12 +135,13 @@ internal sealed class CatalogService(ShopDbContext db, IMediaStorage media, IRou
                     .Select(v => new { v.Price, v.CompareAtPrice }).First(),
                 InStock = p.Variants.Any(v => v.IsActive && v.Stock > 0),
                 Image = p.Images.OrderBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => new { i.Path, i.Alt }).FirstOrDefault(),
+                SingleVariantId = p.Variants.Count(v => v.IsActive) == 1 ? p.Variants.First(v => v.IsActive).Id : (int?)null,
             })
             .ToListAsync(ct);
 
         var items = rows.Select(r => new ProductCardDto(
                 r.Slug, r.Name, routes.PathOf(RouteTargetTypes.Product, r.Id, r.Slug), r.Brand, r.Cheapest.Price, r.Cheapest.CompareAtPrice, r.InStock,
-                r.Image is null ? null : new ImageDto(media.GetUrl(r.Image.Path), r.Image.Alt)))
+                r.Image is null ? null : new ImageDto(media.GetUrl(r.Image.Path), r.Image.Alt), r.SingleVariantId))
             .ToList();
 
         var brandCounts = await Apply(filter, except: Facet.Brand)

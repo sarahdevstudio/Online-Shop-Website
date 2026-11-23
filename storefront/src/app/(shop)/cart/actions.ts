@@ -32,6 +32,23 @@ export async function addToCartAction(formData: FormData): Promise<void> {
   await mutate('POST', '/cart/items', { variantId, quantity });
 }
 
+/**
+ * Same mutation as {@link addToCartAction}, for a card's one-click add: it stays on the page instead of redirecting to
+ * /cart, so the caller can show inline feedback and refresh the header's cart count.
+ */
+export async function quickAddToCartAction(variantId: number): Promise<{ ok: boolean; errorKey?: string }> {
+  if (!Number.isSafeInteger(variantId) || variantId <= 0) return { ok: false, errorKey: 'invalid' };
+
+  const jar = await cookies();
+  const token = jar.get(CART_COOKIE)?.value;
+  const result = await storeFetch<CartMutationDto>('POST', '/cart/items', { body: { variantId, quantity: 1 }, cartToken: token });
+  if (!result.ok) return { ok: false, errorKey: cartErrorKey(result.status, result.problem.code) };
+
+  const active = result.body.newToken ?? token;
+  if (active) jar.set(CART_COOKIE, active, cartCookieOptions());
+  return { ok: true };
+}
+
 export async function updateQuantityAction(formData: FormData): Promise<void> {
   const variantId = parseVariantId(formData.get('variantId'));
   const quantity = parseQuantity(formData.get('quantity'), true);

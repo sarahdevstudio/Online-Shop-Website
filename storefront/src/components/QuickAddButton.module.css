@@ -1,0 +1,7 @@
+.button {
+  position: absolute;
+  z-index: 1;
+  inset-block-end: var(--space-2);
+  inset-inline-end: var(--space-2);
+  box-shadow: var(--shadow-sm);
+}

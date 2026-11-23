@@ -18,9 +18,12 @@ public sealed record BrandDto(string Slug, string Name);
 
 public sealed record ImageDto(string Url, string Alt);
 
-/// <summary>Card in a listing. Price/compare-at are those of the cheapest active variant.</summary>
+/// <summary>
+/// Card in a listing. Price/compare-at are those of the cheapest active variant. <see cref="SingleVariantId"/> is set only when
+/// the product has exactly one active variant (no choice to make), so the storefront can offer a one-click add to cart.
+/// </summary>
 public sealed record ProductCardDto(
-    string Slug, string Name, string Path, string? Brand, long Price, long? CompareAtPrice, bool InStock, ImageDto? Image);
+    string Slug, string Name, string Path, string? Brand, long Price, long? CompareAtPrice, bool InStock, ImageDto? Image, int? SingleVariantId = null);
 
 public sealed record FacetOptionDto(string Slug, string Value, int Count);
 

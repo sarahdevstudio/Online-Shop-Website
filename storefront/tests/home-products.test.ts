@@ -47,4 +47,9 @@ describe('cardFromDetail', () => {
     expect(cardFromDetail(detail({ status: 'archived' }))).toBeNull();
     expect(cardFromDetail(detail({ variants: [] }))).toBeNull();
   });
+  it('sets singleVariantId only when the product has exactly one variant', () => {
+    expect(cardFromDetail(detail())?.singleVariantId).toBeNull();
+    const one = detail({ variants: [{ id: 7, sku: 'a', price: 100, compareAtPrice: null, inStock: true, attributes: {} }] });
+    expect(cardFromDetail(one)?.singleVariantId).toBe(7);
+  });
 });

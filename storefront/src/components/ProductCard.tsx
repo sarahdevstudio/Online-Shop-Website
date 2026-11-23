@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Badge } from './Badge';
 import { Icon } from './Icon';
 import { Price } from './Price';
+import { QuickAddButton } from './QuickAddButton';
 import { discountFraction, formatPercent } from '@/lib/format';
 import { messages } from '@/lib/messages';
 import styles from './ProductCard.module.css';
@@ -20,6 +21,8 @@ export interface ProductCardModel {
   price: number | null;
   compareAtPrice?: number | null;
   inStock: boolean;
+  /** Set only when the product has exactly one variant: a one-click add is possible without visiting the product page. */
+  singleVariantId?: number | null;
 }
 
 interface ProductCardProps {
@@ -62,6 +65,7 @@ export function ProductCard({ product, linkQuery = '', priority = false, imageSi
               </Badge>
             )
           )}
+          {product.inStock && product.singleVariantId != null && <QuickAddButton variantId={product.singleVariantId} />}
         </div>
         <div className={styles.info}>
           {product.brand && <span className={styles.brand}>{product.brand}</span>}

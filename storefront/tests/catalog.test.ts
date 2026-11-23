@@ -28,6 +28,7 @@ describe('toProductCard', () => {
       inStock: true,
       imageUrl: '/media/products/2/a.png',
       imageAlt: 'لامپ',
+      singleVariantId: null,
     });
   });
 
@@ -36,6 +37,13 @@ describe('toProductCard', () => {
     expect(card.imageUrl).toBeNull();
     expect(card.imageAlt).toBe('نام');
     expect(card.brand).toBeNull();
+  });
+
+  it('carries the single-variant id through for a one-click add, and defaults it to null when absent', () => {
+    const withOne = toProductCard({ slug: 's', name: 'نام', path: '/product/s', brand: null, price: 1, compareAtPrice: null, inStock: true, image: null, singleVariantId: 42 });
+    expect(withOne.singleVariantId).toBe(42);
+    const without = toProductCard({ slug: 's', name: 'نام', path: '/product/s', brand: null, price: 1, compareAtPrice: null, inStock: true, image: null });
+    expect(without.singleVariantId).toBeNull();
   });
 });
 

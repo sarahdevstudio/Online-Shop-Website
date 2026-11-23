@@ -41,6 +41,7 @@ export interface ProductCardDto {
   compareAtPrice: number | null;
   inStock: boolean;
   image: ImageDto | null;
+  singleVariantId?: number | null;
 }
 
 export interface FacetOptionDto {
@@ -137,6 +138,7 @@ export function toProductCard(dto: ProductCardDto): ProductCardModel {
     inStock: dto.inStock,
     imageUrl: dto.image?.url ?? null,
     imageAlt: dto.image?.alt ?? dto.name,
+    singleVariantId: dto.singleVariantId ?? null,
   };
 }
 

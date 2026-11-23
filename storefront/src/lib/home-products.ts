@@ -51,5 +51,6 @@ export function cardFromDetail(product: ProductDetailDto): ProductCardModel | nu
     inStock: available.length > 0,
     imageUrl: image?.url ?? null,
     imageAlt: image?.alt ?? product.name,
+    singleVariantId: product.variants.length === 1 ? product.variants[0].id : null,
   };
 }

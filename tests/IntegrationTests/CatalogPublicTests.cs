@@ -192,6 +192,9 @@ public sealed class CatalogPublicTests(ApiFixture fixture) : CatalogTestBase(fix
         Assert.True(all[s.C].InStock); // its 12W variant has stock
         Assert.False(all[s.B].InStock);
         Assert.Equal(Expected(s.A, s.C), Slugs(inStock));
+        Assert.Equal(v.Id, all[s.B].SingleVariantId); // B has exactly one variant: a one-click add is possible
+        Assert.Null(all[s.C].SingleVariantId); // A and C each have two variants: no single choice to quick-add
+        Assert.Null(all[s.A].SingleVariantId);
     }
 
     [Fact]

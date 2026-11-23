@@ -17,7 +17,7 @@ public sealed record AdminImageBody(int Id, string Url, string Alt, int SortOrde
 
 public sealed record AdminProductBody(int Id, string Slug, string Name, string Status, AdminVariantBody[] Variants, AdminImageBody[] Images);
 
-public sealed record CardBody(string Slug, string Name, string? Brand, long Price, long? CompareAtPrice, bool InStock);
+public sealed record CardBody(string Slug, string Name, string? Brand, long Price, long? CompareAtPrice, bool InStock, int? SingleVariantId = null);
 
 public sealed record FacetOptionBody(string Slug, string Value, int Count);
 

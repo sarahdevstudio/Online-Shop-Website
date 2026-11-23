@@ -70,6 +70,7 @@ export const messages = {
   get specs() { return t('shop.specs'); },
   get description() { return t('shop.description'); },
   get addToCart() { return t('shop.add-to-cart'); },
+  get addedToCart() { return t('shop.added-to-cart'); },
   get home() { return t('shop.home'); },
   get categories() { return t('shop.categories'); },
   get newestProducts() { return t('shop.newest-products'); },
