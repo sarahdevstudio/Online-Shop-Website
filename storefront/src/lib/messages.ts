@@ -116,6 +116,7 @@ export const messages = {
   get blogTitle() { return t('shop.blog-title'); },
   get blogDescription() { return t('shop.blog-description'); },
   get blogEmpty() { return t('shop.blog-empty'); },
+  get homeLatestPosts() { return t('shop.home-latest-posts'); },
   get readMore() { return t('shop.read-more'); },
   publishedOn: (date: string) => tf('shop.published-on', { date }),
   get workingHours() { return t('shop.working-hours'); },

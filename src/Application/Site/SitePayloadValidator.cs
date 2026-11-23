@@ -360,6 +360,8 @@ public static partial class SitePayloadValidator
                 ProductRowData row => ValidateRow(row, $"{path}.data", refs, errors),
                 TextBlockData text => ValidateText(text, $"{path}.data", errors),
                 BannerData banner => ValidateBanner(banner, $"{path}.data", refs, errors),
+                FeaturesData features => ValidateFeatures(features, $"{path}.data", errors),
+                BlogPostsData posts => ValidateBlogPosts(posts, $"{path}.data", errors),
                 _ => throw new InvalidOperationException("Unreachable: unknown data type."),
             };
             result.Add(new HomeBlock { Id = id, Type = block.Type, Enabled = block.Enabled, Data = data });
@@ -532,6 +534,45 @@ public static partial class SitePayloadValidator
         }
 
         return new BannerData { MediaId = data.MediaId, Alt = alt, Link = link, Entity = entity, Height = height };
+    }
+
+    private static FeaturesData ValidateFeatures(FeaturesData data, string path, Errors errors)
+    {
+        if (data.Items.Count is < 2 or > 8)
+        {
+            errors.Add($"{path}.items", "api.validation.site-features-count");
+        }
+
+        var items = new List<FeatureItem>();
+        for (var i = 0; i < data.Items.Count; i++)
+        {
+            var item = data.Items[i];
+            var p = $"{path}.items[{i}]";
+            var icon = item.Icon?.Trim() ?? string.Empty;
+            if (!SiteValues.Icons.Contains(icon))
+            {
+                errors.Add($"{p}.icon", "api.validation.site-icon");
+            }
+
+            items.Add(new FeatureItem
+            {
+                Icon = icon,
+                Title = RequiredText(item.Title, 40, $"{p}.title", errors),
+                Text = RequiredText(item.Text, 120, $"{p}.text", errors),
+            });
+        }
+
+        return new FeaturesData { Items = items };
+    }
+
+    private static BlogPostsData ValidateBlogPosts(BlogPostsData data, string path, Errors errors)
+    {
+        if (data.Count is < 2 or > 8)
+        {
+            errors.Add($"{path}.count", "api.validation.site-blogposts-count");
+        }
+
+        return new BlogPostsData { Count = data.Count };
     }
 
     // ---------------------------------------------------------------- chrome

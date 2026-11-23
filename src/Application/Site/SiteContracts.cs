@@ -92,6 +92,12 @@ public sealed record SiteTextDataDto(string Heading, string Body);
 
 public sealed record SiteBannerDataDto(SiteImageRefDto Image, string Alt, string? Link, string Height);
 
+public sealed record SiteFeatureItemDto(string Icon, string Title, string Text);
+
+public sealed record SiteFeaturesDataDto(IReadOnlyList<SiteFeatureItemDto> Items);
+
+public sealed record SiteBlogPostsDataDto(IReadOnlyList<Shop.Application.Blog.BlogPostSummaryDto> Posts);
+
 public sealed record SiteHomeDto(IReadOnlyList<SiteBlockDto> Blocks);
 
 public sealed record SiteChromeDto(

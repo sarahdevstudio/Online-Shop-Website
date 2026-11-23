@@ -94,7 +94,9 @@ export type HomeBlockPayload =
       data: { title: string; source: 'newest' | 'discounted' | 'category' | 'handpicked'; categoryId: number | null; productIds: number[]; limit: number };
     }
   | { id: string; type: 'text'; enabled: boolean; data: { heading: string; body: string } }
-  | { id: string; type: 'banner'; enabled: boolean; data: { mediaId: number; alt: string; link: string | null; entity?: LinkEntity | null; height: 'sm' | 'md' | 'lg' } };
+  | { id: string; type: 'banner'; enabled: boolean; data: { mediaId: number; alt: string; link: string | null; entity?: LinkEntity | null; height: 'sm' | 'md' | 'lg' } }
+  | { id: string; type: 'features'; enabled: boolean; data: { items: { icon: string; title: string; text: string }[] } }
+  | { id: string; type: 'blogPosts'; enabled: boolean; data: { count: number } };
 
 export interface HomePayload {
   blocks: HomeBlockPayload[];

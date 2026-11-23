@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Shop.Application.Blog;
 using Shop.Application.Catalog;
 using Shop.Application.Routing;
 using Shop.Application.Site;
@@ -16,7 +17,7 @@ namespace Shop.Infrastructure.Site;
 /// slugs, disabled blocks and anything that can no longer be resolved are left out. A kind without a usable version falls back
 /// to the built-in defaults, so the document is always complete.
 /// </summary>
-internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media, IRouteTable routes, ISiteLinkTargets linkTargets)
+internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media, IRouteTable routes, ISiteLinkTargets linkTargets, IBlogService blog)
 {
     /// <summary>Name, path and state of every entity the compiled links point to, read once per compile.</summary>
     private IReadOnlyDictionary<string, SiteLinkTargetDto> _targets = new Dictionary<string, SiteLinkTargetDto>();
@@ -168,6 +169,8 @@ internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media, IRoute
                 BannerData banner => image(banner.MediaId) is { } bannerImage
                     ? new SiteBannerDataDto(bannerImage, banner.Alt, Resolve(banner.Link, banner.Entity), banner.Height)
                     : null,
+                FeaturesData features => new SiteFeaturesDataDto(features.Items.Select(i => new SiteFeatureItemDto(i.Icon, i.Title, i.Text)).ToList()),
+                BlogPostsData posts => await CompileBlogPostsAsync(posts, ct),
                 _ => null,
             };
             if (data is not null)
@@ -240,6 +243,12 @@ internal sealed class SiteCompiler(ShopDbContext db, IMediaStorage media, IRoute
             default:
                 return new SiteProductRowDataDto(row.Title, row.Source, row.Limit, null, [], null);
         }
+    }
+
+    private async Task<SiteBlogPostsDataDto?> CompileBlogPostsAsync(BlogPostsData data, CancellationToken ct)
+    {
+        var posts = (await blog.ListAsync(1, ct)).Items.Take(data.Count).ToList();
+        return posts.Count == 0 ? null : new SiteBlogPostsDataDto(posts);
     }
 
     /// <summary>A short hash that changes whenever a published version (or, for the preview, a draft) changes.</summary>

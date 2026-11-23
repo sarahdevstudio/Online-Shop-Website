@@ -154,12 +154,36 @@ public class SitePayloadValidatorTests
             Block(new ProductRowData { Title = "دسته", Source = "category", CategoryId = 2, Limit = 12 }, "productRow"),
             Block(new ProductRowData { Title = "منتخب", Source = "handpicked", ProductIds = [10, 11], Limit = 6 }, "productRow"),
             Block(new TextBlockData { Heading = "وعده‌ها", Body = "**ضمانت**" }, "text"),
-            Block(new BannerData { MediaId = 8, Alt = "بنر", Link = "https://ghr-co.com", Height = "md" }, "banner"));
+            Block(new BannerData { MediaId = 8, Alt = "بنر", Link = "https://ghr-co.com", Height = "md" }, "banner"),
+            Block(new FeaturesData { Items = [new FeatureItem { Icon = "check", Title = "ضمانت", Text = "۱ سال" }, new FeatureItem { Icon = "truck", Title = "ارسال", Text = "رایگان" }] }, "features"),
+            Block(new BlogPostsData { Count = 4 }, "blogPosts"));
 
         var result = Validate(SiteKind.Home, home, Refs((7, "hero"), (8, "banner")));
 
         Assert.True(result.IsValid, string.Join(";", result.Errors.Keys));
-        Assert.Equal(8, ((HomePayload)result.Payload).Blocks.Count);
+        Assert.Equal(10, ((HomePayload)result.Payload).Blocks.Count);
+    }
+
+    [Fact]
+    public void Home_Features_BoundsAndIconAllowList()
+    {
+        var tooFew = Home(Block(new FeaturesData { Items = [new FeatureItem { Icon = "check", Title = "x", Text = "y" }] }, "features"));
+        Assert.Contains("blocks[0].data.items", Validate(SiteKind.Home, tooFew).Errors.Keys);
+
+        var badIcon = Home(Block(new FeaturesData
+        {
+            Items = [new FeatureItem { Icon = "rocket", Title = "x", Text = "y" }, new FeatureItem { Icon = "check", Title = "x", Text = "y" }],
+        }, "features"));
+        Assert.Contains("blocks[0].data.items[0].icon", Validate(SiteKind.Home, badIcon).Errors.Keys);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(9)]
+    public void Home_BlogPosts_CountMustBeInRange(int count)
+    {
+        var home = Home(Block(new BlogPostsData { Count = count }, "blogPosts"));
+        Assert.Contains("blocks[0].data.count", Validate(SiteKind.Home, home).Errors.Keys);
     }
 
     [Fact]

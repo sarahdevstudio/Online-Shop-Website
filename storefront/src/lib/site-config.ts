@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { GA4_ID, SEARCH_CONSOLE_TOKEN } from './seo-patterns';
 import { connection } from 'next/server';
 import { apiBaseUrl } from './api';
+import { ICONS, type IconName } from './icons';
 import { fetchDraftDocument, readPreviewAuth } from './site-preview';
 import { DEFAULT_THEME, sanitizeTheme, type ThemeValues } from './theme-css';
 import { absoluteUrl, site } from './seo';
@@ -49,7 +50,17 @@ export type HomeBlock =
       data: { title: string; source: ProductRowSource; limit: number; categorySlug: string | null; productSlugs: string[]; viewAllHref: string | null };
     }
   | { id: string; type: 'text'; data: { heading: string; body: string } }
-  | { id: string; type: 'banner'; data: { image: SiteImage; alt: string; link: string | null; height: 'sm' | 'md' | 'lg' } };
+  | { id: string; type: 'banner'; data: { image: SiteImage; alt: string; link: string | null; height: 'sm' | 'md' | 'lg' } }
+  | { id: string; type: 'features'; data: { items: { icon: IconName; title: string; text: string }[] } }
+  | { id: string; type: 'blogPosts'; data: { posts: BlogPostSummary[] } };
+
+export interface BlogPostSummary {
+  slug: string;
+  path: string;
+  title: string;
+  excerpt: string;
+  publishedAtUtc: string;
+}
 
 export type AnnouncementStyle = 'primary' | 'accent' | 'neutral';
 
@@ -248,6 +259,28 @@ function parseBlock(raw: unknown): HomeBlock | null {
       const alt = text(data.alt, 150, { min: 1 });
       const height = (['sm', 'md', 'lg'] as const).find((h) => h === data.height) ?? 'md';
       return img && alt ? { id, type: 'banner', data: { image: img, alt, link: link(data.link), height } } : null;
+    }
+    case 'features': {
+      const items = list(data.items, 8).flatMap((item) => {
+        if (!isObject(item)) return [];
+        const icon = typeof item.icon === 'string' && item.icon in ICONS ? (item.icon as IconName) : null;
+        const title = text(item.title, 40, { min: 1 });
+        const body = text(item.text, 120, { min: 1 });
+        return icon && title && body ? [{ icon, title, text: body }] : [];
+      });
+      return items.length > 0 ? { id, type: 'features', data: { items } } : null;
+    }
+    case 'blogPosts': {
+      const posts = list(data.posts, 8).flatMap((item) => {
+        if (!isObject(item)) return [];
+        const slug = text(item.slug, 100, { min: 1 });
+        const path = typeof item.path === 'string' ? item.path : null;
+        const title = text(item.title, 200, { min: 1 });
+        const excerpt = text(item.excerpt, 500) ?? '';
+        const publishedAtUtc = typeof item.publishedAtUtc === 'string' ? item.publishedAtUtc : null;
+        return slug && path && title && publishedAtUtc ? [{ slug, path, title, excerpt, publishedAtUtc }] : [];
+      });
+      return posts.length > 0 ? { id, type: 'blogPosts', data: { posts } } : null;
     }
     default:
       return null; // unknown types are dropped (forward compatibility)

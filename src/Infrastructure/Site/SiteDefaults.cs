@@ -88,6 +88,20 @@ public static class SiteDefaults
                 },
             },
             new() { Id = Guid.NewGuid(), Type = "productRow", Enabled = true, Data = new ProductRowData { Title = "جدیدترین محصولات", Source = "newest", Limit = 8 } },
+            new()
+            {
+                Id = Guid.NewGuid(), Type = "features", Enabled = true,
+                Data = new FeaturesData
+                {
+                    Items =
+                    [
+                        new FeatureItem { Icon = "check", Title = "۱ سال ضمانت واقعی", Text = "بدون شرط و بی‌دردسر" },
+                        new FeatureItem { Icon = "package", Title = "نصب رایگان", Text = "توسط تیم مجرب ما" },
+                        new FeatureItem { Icon = "truck", Title = "ارسال رایگان", Text = "سفارش‌های بالای ۳ میلیون تومان" },
+                        new FeatureItem { Icon = "star", Title = "از سال ۱۳۸۵", Text = "اعتماد هزاران مشتری" },
+                    ],
+                },
+            },
         };
 
         if (topCategoryIds.Count >= 2)
@@ -104,6 +118,7 @@ public static class SiteDefaults
             Id = Guid.NewGuid(), Type = "text", Enabled = true,
             Data = new TextBlockData { Heading = "چرا قصر روشنایی؟", Body = PromisesMarkdown },
         });
+        blocks.Add(new HomeBlock { Id = Guid.NewGuid(), Type = "blogPosts", Enabled = true, Data = new BlogPostsData { Count = 4 } });
         return new HomePayload { Blocks = blocks };
     }
 

@@ -8,6 +8,7 @@ import {
   AUTOPLAY_OPTIONS,
   BANNER_HEIGHTS,
   BLOCK_TYPES,
+  FEATURE_ICONS,
   HOME_LIMITS,
   ROW_LIMIT_OPTIONS,
   ROW_SOURCES,
@@ -16,6 +17,7 @@ import {
   fromPayload,
   moveItem,
   newBlock,
+  newFeature,
   newSlide,
   removeAt,
   replaceAt,
@@ -247,6 +249,51 @@ function BlockFields({ block, index, categories, media, known, onChange }: { blo
             </SelectField>
           </FormGrid>
         </>
+      );
+    }
+    case 'features': {
+      const { data } = block;
+      const set = (items: typeof data.items) => onChange({ ...block, data: { items } });
+      return (
+        <>
+          {data.items.map((item, i) => (
+            <FormGrid key={i}>
+              <SelectField name={`${base}.items[${i}].icon`} label={`${t.feature(formatNumber(i + 1))} — ${t.featureIcon}`} value={item.icon} onChange={(e) => set(replaceAt(data.items, i, { ...item, icon: e.target.value as (typeof FEATURE_ICONS)[number] }))}>
+                {FEATURE_ICONS.map((icon) => (
+                  <option key={icon} value={icon}>
+                    {icon}
+                  </option>
+                ))}
+              </SelectField>
+              <TextField name={`${base}.items[${i}].title`} label={t.featureTitle} value={item.title} onChange={(e) => set(replaceAt(data.items, i, { ...item, title: e.target.value }))} maxLength={HOME_LIMITS.featureTitle} />
+              <TextField name={`${base}.items[${i}].text`} label={t.featureText} value={item.text} onChange={(e) => set(replaceAt(data.items, i, { ...item, text: e.target.value }))} maxLength={HOME_LIMITS.featureText} full />
+              {data.items.length > HOME_LIMITS.features.min && (
+                <Button type="button" variant="secondary" onClick={() => set(removeAt(data.items, i))}>
+                  {t.remove}
+                </Button>
+              )}
+            </FormGrid>
+          ))}
+          {data.items.length < HOME_LIMITS.features.max && (
+            <Button type="button" variant="secondary" onClick={() => set([...data.items, newFeature()])}>
+              {t.addFeature}
+            </Button>
+          )}
+        </>
+      );
+    }
+    case 'blogPosts': {
+      const { data } = block;
+      return (
+        <FormGrid>
+          <SelectField name={`${base}.count`} label={t.blogPostsCount} value={data.count} onChange={(e) => onChange({ ...block, data: { count: Number(e.target.value) } })}>
+            {Array.from({ length: HOME_LIMITS.blogPostsCount.max - HOME_LIMITS.blogPostsCount.min + 1 }, (_, i) => HOME_LIMITS.blogPostsCount.min + i).map((n) => (
+              <option key={n} value={n}>
+                {formatNumber(n)}
+              </option>
+            ))}
+          </SelectField>
+        </FormGrid>
       );
     }
   }

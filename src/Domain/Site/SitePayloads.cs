@@ -8,7 +8,14 @@ public static class SiteValues
 {
     public static readonly IReadOnlyList<string> Fonts = ["vazirmatn", "estedad", "shabnam", "sahel"];
     public static readonly IReadOnlyList<string> Radii = ["none", "sm", "md", "lg"];
-    public static readonly IReadOnlyList<string> BlockTypes = ["hero", "categoryTiles", "productRow", "text", "banner"];
+    public static readonly IReadOnlyList<string> BlockTypes = ["hero", "categoryTiles", "productRow", "text", "banner", "features", "blogPosts"];
+
+    /// <summary>The icon names the storefront's icon set (`lib/icons.ts`) actually draws.</summary>
+    public static readonly IReadOnlyList<string> Icons =
+    [
+        "search", "cart", "user", "menu", "x", "heart", "star", "check", "alert", "info", "trash", "plus",
+        "compare", "minus", "filter", "home", "phone", "mail", "truck", "refresh", "package", "image", "moon", "sun",
+    ];
     public static readonly IReadOnlyList<string> ProductSources = ["newest", "discounted", "category", "handpicked"];
     public static readonly IReadOnlyList<string> BannerHeights = ["sm", "md", "lg"];
     public static readonly IReadOnlyList<string> AnnouncementStyles = ["primary", "accent", "neutral"];
@@ -117,6 +124,23 @@ public sealed record BannerData
     public string Height { get; init; } = string.Empty;
 }
 
+public sealed record FeatureItem
+{
+    public string Icon { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public string Text { get; init; } = string.Empty;
+}
+
+public sealed record FeaturesData
+{
+    public List<FeatureItem> Items { get; init; } = [];
+}
+
+public sealed record BlogPostsData
+{
+    public int Count { get; init; }
+}
+
 /// <summary>One block of the home page. <see cref="Data"/> is the typed record that matches <see cref="Type"/> (null for an unknown type).</summary>
 public sealed record HomeBlock
 {
@@ -132,6 +156,8 @@ public sealed record HomeBlock
         "productRow" => typeof(ProductRowData),
         "text" => typeof(TextBlockData),
         "banner" => typeof(BannerData),
+        "features" => typeof(FeaturesData),
+        "blogPosts" => typeof(BlogPostsData),
         _ => null,
     };
 }

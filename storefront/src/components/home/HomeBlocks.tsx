@@ -1,6 +1,8 @@
 import type { HomeBlock } from '@/lib/site-config';
 import { BannerBlock } from './BannerBlock';
+import { BlogPostsBlock } from './BlogPostsBlock';
 import { CategoryTilesBlock } from './CategoryTilesBlock';
+import { FeaturesBlock } from './FeaturesBlock';
 import { HeroSlider } from './HeroSlider';
 import { ProductRowBlock } from './ProductRowBlock';
 import { TextBlock } from './TextBlock';
@@ -23,6 +25,10 @@ export function HomeBlocks({ blocks }: { blocks: readonly HomeBlock[] }) {
             return <TextBlock key={block.id} data={block.data} headingId={headingId} />;
           case 'banner':
             return <BannerBlock key={block.id} data={block.data} />;
+          case 'features':
+            return <FeaturesBlock key={block.id} data={block.data} />;
+          case 'blogPosts':
+            return <BlogPostsBlock key={block.id} data={block.data} headingId={headingId} />;
         }
       })}
     </>

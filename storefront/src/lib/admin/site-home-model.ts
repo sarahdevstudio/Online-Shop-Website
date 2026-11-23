@@ -1,5 +1,8 @@
+import { ICONS, type IconName } from '../icons';
 import { optionalLink } from './link-model';
 import type { HomeBlockPayload, HomePayload, LinkEntity } from './site-types';
+
+export const FEATURE_ICONS = Object.keys(ICONS) as IconName[];
 
 /**
  * Pure model of the home page editor: the editor works on string-typed state (a text input is never `null`), converted
@@ -7,7 +10,7 @@ import type { HomeBlockPayload, HomePayload, LinkEntity } from './site-types';
  * authority, these only keep the editor usable.
  */
 
-export const BLOCK_TYPES = ['hero', 'categoryTiles', 'productRow', 'text', 'banner'] as const;
+export const BLOCK_TYPES = ['hero', 'categoryTiles', 'productRow', 'text', 'banner', 'features', 'blogPosts'] as const;
 export type BlockType = (typeof BLOCK_TYPES)[number];
 
 export const HOME_LIMITS = {
@@ -23,6 +26,10 @@ export const HOME_LIMITS = {
   rowTitle: 60,
   tileLabel: 40,
   textBody: 3000,
+  features: { min: 2, max: 8 },
+  featureTitle: 40,
+  featureText: 120,
+  blogPostsCount: { min: 2, max: 8 },
 } as const;
 
 export const AUTOPLAY_OPTIONS = [0, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
@@ -70,6 +77,17 @@ export interface BannerState {
   entity: LinkEntity | null;
   height: BannerHeight;
 }
+export interface FeatureItemState {
+  icon: IconName;
+  title: string;
+  text: string;
+}
+export interface FeaturesState {
+  items: FeatureItemState[];
+}
+export interface BlogPostsState {
+  count: number;
+}
 
 interface BlockBase {
   id: string;
@@ -80,7 +98,9 @@ export type BlockState =
   | (BlockBase & { type: 'categoryTiles'; data: CategoryTilesState })
   | (BlockBase & { type: 'productRow'; data: ProductRowState })
   | (BlockBase & { type: 'text'; data: TextState })
-  | (BlockBase & { type: 'banner'; data: BannerState });
+  | (BlockBase & { type: 'banner'; data: BannerState })
+  | (BlockBase & { type: 'features'; data: FeaturesState })
+  | (BlockBase & { type: 'blogPosts'; data: BlogPostsState });
 
 export const newSlide = (): SlideState => ({ mediaId: null, alt: '', title: '', text: '', linkLabel: '', link: '', entity: null });
 
@@ -96,8 +116,14 @@ export function newBlock(type: BlockType, id: string): BlockState {
       return { id, type, enabled: true, data: { heading: '', body: '' } };
     case 'banner':
       return { id, type, enabled: true, data: { mediaId: null, alt: '', link: '', entity: null, height: 'md' } };
+    case 'features':
+      return { id, type, enabled: true, data: { items: [newFeature(), newFeature()] } };
+    case 'blogPosts':
+      return { id, type, enabled: true, data: { count: 4 } };
   }
 }
+
+export const newFeature = (): FeatureItemState => ({ icon: FEATURE_ICONS[0], title: '', text: '' });
 
 /** Moves one element by `delta` positions (-1 up, +1 down); out-of-range moves return the list unchanged. */
 export function moveItem<T>(list: readonly T[], index: number, delta: number): T[] {
@@ -150,6 +176,17 @@ export function fromPayload(payload: HomePayload | null | undefined): BlockState
       case 'banner':
         blocks.push({ id: block.id, type: 'banner', enabled: block.enabled, data: { mediaId: block.data.mediaId, alt: block.data.alt, link: block.data.link ?? '', entity: block.data.entity ?? null, height: block.data.height } });
         break;
+      case 'features':
+        blocks.push({
+          id: block.id,
+          type: 'features',
+          enabled: block.enabled,
+          data: { items: block.data.items.map((i) => ({ icon: (FEATURE_ICONS as readonly string[]).includes(i.icon) ? (i.icon as IconName) : FEATURE_ICONS[0], title: i.title, text: i.text })) },
+        });
+        break;
+      case 'blogPosts':
+        blocks.push({ id: block.id, type: 'blogPosts', enabled: block.enabled, data: { count: block.data.count } });
+        break;
     }
   }
   return blocks;
@@ -176,6 +213,10 @@ export function toPayload(blocks: readonly BlockState[]): HomePayload {
         case 'banner':
           // No image yet: 0 is never a media id, so the server answers with the error under `…data.mediaId`.
           return { id: block.id, type: 'banner', enabled: block.enabled, data: { mediaId: block.data.mediaId ?? 0, alt: block.data.alt, ...optionalLink({ link: block.data.link, entity: block.data.entity }), height: block.data.height } };
+        case 'features':
+          return { id: block.id, type: 'features', enabled: block.enabled, data: { items: block.data.items } };
+        case 'blogPosts':
+          return { id: block.id, type: 'blogPosts', enabled: block.enabled, data: { count: block.data.count } };
       }
     }),
   };
