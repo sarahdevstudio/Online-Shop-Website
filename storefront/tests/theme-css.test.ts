@@ -17,7 +17,7 @@ describe('themeCss', () => {
   });
 
   it('is the built-in look for no input at all', () => {
-    expect(themeTokens(undefined)['--color-primary']).toBe('#8a4f00');
+    expect(themeTokens(undefined)['--color-primary']).toBe('#5b0057');
     expect(themeTokens(null)['--radius-md']).toBe('0.625rem');
     expect(themeTokens(42)['--font-sans']).toContain("'Vazirmatn'");
   });

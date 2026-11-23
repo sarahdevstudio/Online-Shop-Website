@@ -16,14 +16,14 @@ export interface ThemeValues extends ThemeColors {
   radius: RadiusId;
 }
 
-/** Today's look: the semantic tokens of styles/tokens.css (brass on warm neutrals), used whenever no theme is available. */
+/** Today's look: the semantic tokens of styles/tokens.css (purple brand on neutral grey), used whenever no theme is available. */
 export const DEFAULT_THEME: ThemeValues = {
-  primary: '#8a4f00',
-  secondary: '#51493e',
-  accent: '#b46a00',
+  primary: '#5b0057',
+  secondary: '#76007c',
+  accent: '#d8c831',
   background: '#ffffff',
-  surface: '#f7f3ec',
-  text: '#1b1712',
+  surface: '#f2f2f2',
+  text: '#1a1a1a',
   success: '#067647',
   warning: '#9a3f00',
   danger: '#b42318',

@@ -77,23 +77,23 @@
   /* ---------- Color: light theme ---------- */
   --color-bg: #ffffff;
   --color-surface: #ffffff;
-  --color-surface-muted: #f7f3ec;
-  --color-surface-sunken: #eee8de;
+  --color-surface-muted: #f2f2f2;
+  --color-surface-sunken: #e6e6e6;
   --color-overlay: rgb(20 14 6 / 0.55);
 
-  --color-border: #e4ddd1;
-  --color-border-control: #85796a; /* inputs and checkboxes: >= 3:1 against the page */
+  --color-border: #dfdfdf;
+  --color-border-control: #878787; /* inputs and checkboxes: >= 3:1 against the page */
 
-  --color-text: #1b1712;
-  --color-text-muted: #51493e;
-  --color-text-subtle: #675e51;
+  --color-text: #1a1a1a;
+  --color-text-muted: #484848;
+  --color-text-subtle: #6a6a6a;
 
-  /* Lighting store: warm brass/amber on warm neutrals (lamp-light feel, still AA on white). */
-  --color-primary: #8a4f00;
-  --color-primary-hover: #6f3f00;
-  --color-primary-active: #573200;
+  /* Brand palette: purple primary, violet secondary, gold used only on dark text/purple fills. */
+  --color-primary: #5b0057;
+  --color-primary-hover: #490046;
+  --color-primary-active: #3b0039;
   --color-primary-contrast: #ffffff;
-  --color-primary-soft: #fbefd9;
+  --color-primary-soft: #efe6ee;
 
   --color-danger: #b42318;
   --color-danger-hover: #912018;
@@ -137,11 +137,11 @@
   --color-text-muted: #c4baa9;
   --color-text-subtle: #a89d8b;
 
-  --color-primary: #f2b84b;
-  --color-primary-hover: #f7cb78;
-  --color-primary-active: #fbdc9f;
-  --color-primary-contrast: #221500;
-  --color-primary-soft: #3a2a10;
+  --color-primary: #e2a6ff;
+  --color-primary-hover: #e6b3ff;
+  --color-primary-active: #ebc1ff;
+  --color-primary-contrast: #111111;
+  --color-primary-soft: #473649;
 
   --color-danger: #f97066;
   --color-danger-hover: #fda29b;
